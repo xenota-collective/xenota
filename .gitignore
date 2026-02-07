@@ -8,3 +8,8 @@ state.json
 # Editor state
 *.swp
 *~
+
+# Gas Town (added by gt)
+.claude/
+.logs/
+.beads/
