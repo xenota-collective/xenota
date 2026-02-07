@@ -1,0 +1,10 @@
+# Claude Code state
+state.json
+.runtime/
+
+# OS artifacts
+.DS_Store
+
+# Editor state
+*.swp
+*~

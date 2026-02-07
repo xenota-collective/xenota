@@ -1,0 +1,6 @@
+[submodule "handbook"]
+	path = handbook
+	url = git@github.com:xenota-collective/handbook.git
+[submodule "xenon"]
+	path = xenon
+	url = git@github.com:xenota-collective/xenon.git
