@@ -1,0 +1,14 @@
+{
+  "name": "xenota-manifesto-deck",
+  "private": true,
+  "scripts": {
+    "dev": "slidev --open",
+    "build": "slidev build",
+    "export": "slidev export"
+  },
+  "dependencies": {
+    "@iconify-json/ph": "^1.2.1",
+    "@slidev/cli": "^51.4.0",
+    "@slidev/theme-default": "latest"
+  }
+}
