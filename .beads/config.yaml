@@ -1,8 +1,0 @@
-repos:
-  primary: "."
-  additional:
-    - "/Users/jv/gt/xenota/mayor/rig"
-    - "/Users/jv/gt/xenon/mayor/rig"
-
-# Custom issue types for Gas Town
-types.custom: "agent,role,rig,convoy,slot,molecule"
