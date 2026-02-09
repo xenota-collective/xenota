@@ -1,0 +1,5 @@
+issue-prefix: "xc"
+sync-branch: "bd"
+
+# Custom issue types for Gas Town
+types.custom: "agent,role,rig,convoy,slot,molecule,merge-request,event"
