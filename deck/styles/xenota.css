@@ -5,7 +5,6 @@
   --xc-void: #0A1420;
   --xc-void-light: #12202D;
   --xc-teal: #2E8B8B;
-  --xc-teal-bright: #3AA8A8;
   --xc-teal-dark: #1E6666;
   --xc-amber: #C4875C;
   --xc-amber-light: #D4A07A;
@@ -16,7 +15,7 @@
   --xc-text-primary: var(--xc-white);
   --xc-text-secondary: rgba(245, 240, 232, 0.7);
   --xc-text-muted: rgba(245, 240, 232, 0.5);
-  --xc-text-ghost: rgba(245, 240, 232, 0.3);
+  --xc-text-ghost: rgba(245, 240, 232, 0.4);
   --xc-border-teal: rgba(46, 139, 139, 0.3);
   --xc-border-amber: rgba(196, 135, 92, 0.3);
 
@@ -41,13 +40,13 @@
 .slidev-layout h3 {
   font-family: var(--font-heading) !important;
   color: var(--xc-white) !important;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
 }
 
 .slidev-layout h1 {
   font-size: 3rem !important;
   font-weight: 700 !important;
-  line-height: 1.1 !important;
+  line-height: 1.15 !important;
 }
 
 .slidev-layout h2 {
@@ -90,7 +89,6 @@
 /* ---- Color utilities (high specificity to override element selectors) ---- */
 
 .slidev-layout .teal { color: var(--xc-teal) !important; }
-.slidev-layout .teal-bright { color: var(--xc-teal-bright) !important; }
 .slidev-layout .amber { color: var(--xc-amber) !important; }
 .slidev-layout .copper { color: var(--xc-copper) !important; }
 .slidev-layout .muted { color: var(--xc-text-muted) !important; }
@@ -110,7 +108,7 @@
 .dot.teal-bg { background-color: var(--xc-teal); }
 .dot.amber-bg { background-color: var(--xc-amber); }
 
-/* ---- Mission card grid ---- */
+/* ---- Mission card grid (slides 6, 9) ---- */
 
 .mission-grid {
   display: grid;
@@ -119,12 +117,15 @@
   margin-top: 2rem;
 }
 
+.mission-grid .mission-card {
+  text-align: center;
+}
+
 .mission-card {
   background: var(--xc-void-light);
   border: 1px solid var(--xc-border-teal);
   border-radius: 12px;
   padding: 1.5rem;
-  text-align: center;
 }
 
 .mission-card.amber-border {
@@ -137,11 +138,11 @@
 }
 
 .mission-card p {
-  font-size: 0.95rem !important;
+  font-size: 1rem !important;
   color: var(--xc-text-muted) !important;
 }
 
-/* ---- Progression / pipeline ---- */
+/* ---- Progression / pipeline (slide 7) ---- */
 
 .progression {
   display: flex;
@@ -172,29 +173,28 @@
   flex-shrink: 0;
 }
 
-/* ---- Flywheel ---- */
+/* ---- Flywheel loop (slide 12) ---- */
 
 .flywheel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   gap: 0.75rem;
-  margin-top: 2rem;
+  align-items: center;
+  justify-items: center;
+  max-width: 28rem;
+  margin: 1.5rem auto 0;
 }
 
 .flywheel .node {
   background: var(--xc-void-light);
   border: 1px solid var(--xc-border-teal);
   border-radius: 8px;
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1.5rem;
   text-align: center;
+  width: 100%;
 }
 
-.flywheel .arrow {
-  flex-shrink: 0;
-}
-
-/* ---- Timeline ---- */
+/* ---- Timeline (slide 15) ---- */
 
 .timeline {
   display: flex;
@@ -204,14 +204,14 @@
 
 .timeline .phase {
   flex: 1;
-  border-top: 3px solid var(--xc-teal);
-  border-radius: 0 0 8px 8px;
+  border-top: 4px solid var(--xc-teal);
+  border-radius: 8px;
   background: var(--xc-void-light);
   padding: 1.25rem;
 }
 
 .timeline .phase p {
-  font-size: 0.95rem !important;
+  font-size: 1rem !important;
 }
 
 .timeline .phase.future {
@@ -220,6 +220,21 @@
 
 .timeline .phase.far {
   border-top-color: var(--xc-copper);
+}
+
+/* ---- CTA button (slide 17) ---- */
+
+.cta-button {
+  display: inline-block;
+  background: var(--xc-teal);
+  border-radius: 12px;
+  padding: 0.75rem 2rem;
+}
+
+.slidev-layout .cta-button p {
+  color: var(--xc-void) !important;
+  font-weight: 600 !important;
+  font-size: 1.125rem !important;
 }
 
 /* ---- Blockquotes ---- */
