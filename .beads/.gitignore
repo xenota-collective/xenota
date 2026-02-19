@@ -38,6 +38,27 @@ beads.right.meta.json
 sync_base.jsonl
 export-state/
 
+# Dolt embedded database (server mode uses shared dolt at ~/gt/.dolt-data/)
+dolt/
+
+# Legacy SQLite files (named without .db extension)
+sqlite
+sqlite-shm
+sqlite-wal
+
+# Runtime agent lock files
+.locks/
+
+# Runtime/generated docs
+PRIME.md
+
+# Local configuration flags
+.gt-types-configured
+
+# Backup files
+*.bak
+*.bak-*
+
 # NOTE: Do NOT add negation patterns (e.g., !issues.jsonl) here.
 # They would override fork protection in .git/info/exclude, allowing
 # contributors to accidentally commit upstream issue databases.
