@@ -1,7 +1,4 @@
 {
-  "backend": "dolt",
   "database": "dolt",
-  "dolt_database": "xenota",
-  "dolt_mode": "server",
   "jsonl_export": "issues.jsonl"
 }
