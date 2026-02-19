@@ -1,6 +1,8 @@
 # Claude Code state
 state.json
 .runtime/
+.claude/
+.playwright-mcp/
 
 # OS artifacts
 .DS_Store
