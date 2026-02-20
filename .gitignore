@@ -10,3 +10,6 @@ state.json
 # Editor state
 *.swp
 *~
+
+# Beads JSONL export (DB-only mode; use Dolt backend directly)
+.beads/issues.jsonl
