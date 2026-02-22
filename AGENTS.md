@@ -43,6 +43,43 @@ OpenSpec is used as a **change-spec workflow**, not as a second long-lived docum
 - After implementation lands, archive/close the OpenSpec change and ensure handbook docs reflect final behavior.
 - Do not treat archived `xenon/openspec/specs/*` content as current authority when handbook says otherwise.
 
+## Submodule Workflow (Mandatory)
+
+This repo uses git submodules (`xenon/`, `handbook/`). Treat submodules as separate repos with their own commits.
+
+- Always check state in both layers:
+  - Top repo: `git status`
+  - Submodule: `git -C <submodule> status`
+- Never commit top-level pointer changes before submodule commits are pushed.
+- For code changes in `xenon/`:
+  1. Commit and push inside `xenon/` first.
+  2. Then commit the updated `xenon` pointer in top repo.
+  3. Run `git pull --rebase`, `bd sync`, `git push` in top repo.
+- For `handbook/`, follow Handbook Oversight rules above. Do not edit or push handbook content without explicit human approval.
+
+### Rebase/Merge Safety for Submodules
+
+- After any `git pull --rebase` in top repo, verify submodule alignment:
+  - `git submodule status`
+  - If status shows `+` for a submodule, your working tree checkout does not match the commit recorded by top repo.
+- To realign submodule checkout to recorded commit (safe, non-destructive):
+  - `git submodule update --init --recursive <submodule>`
+- If submodule has local edits you intend to keep:
+  1. Commit/push inside the submodule.
+  2. Return to top repo and commit/push updated submodule pointer.
+- If submodule has unexpected changes you did not make:
+  - Stop and ask for human direction before modifying submodule content.
+
+### Quick Diagnostics
+
+- Show recorded commit from top repo: `git ls-tree HEAD <submodule>`
+- Show current submodule HEAD: `git -C <submodule> rev-parse HEAD`
+- Show submodule upstream HEAD: `git -C <submodule> rev-parse @{u}`
+- Healthy state means:
+  - Top repo `git status` clean
+  - Submodule `git status` clean
+  - `git submodule status` has no leading `+`
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
