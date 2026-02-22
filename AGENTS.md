@@ -12,6 +12,13 @@ bd close <id>         # Complete work
 bd sync               # Sync with git
 ```
 
+## Bead Reference Clarity
+
+- Whenever referring to a bead in updates, plans, or handoff notes, always include both:
+  - bead ID (for example `xc-wisp-sm2`)
+  - bead title (for example `update-handbook`)
+- Preferred format: `<id> (<title>)`.
+
 ## Test Xenon Data
 
 - Store all manual test xenon data under repo root `.xenons/`.
