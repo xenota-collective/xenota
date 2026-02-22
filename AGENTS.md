@@ -21,9 +21,15 @@ bd sync               # Sync with git
 
 ## Test Xenon Data
 
-- Store all manual test xenon data under repo root `.xenons/`.
+- Store all manual test xenon data under `~/.xenons/`.
 - Do not create test xenon data directories under `xenon/nucleus/.tmp/`.
-- Use paths like `.xenons/<xenon-name-or-scenario>/` for reproducible manual runs.
+- Use paths like `~/.xenons/<xenon-name-or-scenario>/` for reproducible manual runs.
+
+## Manual Testing CLI Policy
+
+- For manual testing, always use the globally installed `xn` CLI from `PATH`.
+- Do not run `xn` via package-local paths like `.venv/bin/xn` except for explicit debugging.
+- If behavior differs, fix the global install and continue manual testing with global `xn`.
 
 ## Handbook Oversight (Mandatory)
 
