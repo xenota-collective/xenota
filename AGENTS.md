@@ -24,6 +24,13 @@ bd sync               # Sync with git
 - For handbook work, stop after preparing proposals/diffs and wait for a human "approved/proceed" confirmation before applying edits.
 - If handbook changes were made accidentally, stop and ask for human direction before continuing.
 
+## Handbook Reality Boundary
+
+- `handbook/docs/technical/` is for implemented/current reality only.
+- Do not put speculative, draft, or future-state behavior in technical docs.
+- Put proposed/future-state design in `handbook/docs/plans/` (or `handbook/docs/plans/draft/`) until implemented.
+- When implementation lands, update technical docs to match reality and keep plans as planning artifacts.
+
 ## OpenSpec Usage Policy
 
 OpenSpec is used as a **change-spec workflow**, not as a second long-lived documentation system.
