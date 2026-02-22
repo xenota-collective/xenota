@@ -10,6 +10,13 @@ Use this workflow to critically review a target scope in the Xenota handbook:
 The critique is decision-centric. It extracts key decisions, stress-tests each one,
 and returns concrete simplification and reliability/security/cost improvements.
 
+## Critique Modes
+
+- **shallow**: Fast pass for triage and direction-setting. Prioritize major decisions,
+  obvious risks, and highest-value simplifications.
+- **deep**: Full pass for decision hardening. Cover all material decisions with explicit
+  scoring, failure-mode analysis, and concrete revision proposals.
+
 ## Critique Dimensions
 
 1. Mission and philosophy alignment
@@ -31,7 +38,7 @@ Produce a single review document with:
 """
 formula = "critique-handbook"
 type = "workflow"
-version = 1
+version = 2
 
 [[steps]]
 id = "scope"
@@ -61,6 +68,11 @@ rg --files handbook | rg "{{target}}" > /tmp/critique-files.txt
 ```
 
 Fail fast if no files resolve.
+
+Mode behavior:
+- `mode=shallow`: Allow a narrower file subset when scope is large (for example top 5-10
+  highest-impact files by relevance to the target).
+- `mode=deep`: Require comprehensive coverage of all resolved files.
 """
 
 [[steps]]
@@ -78,6 +90,10 @@ For each decision, capture:
 - Implicit assumptions
 
 Write a compact decision inventory as the basis for scoring.
+
+Mode behavior:
+- `mode=shallow`: Capture only top decisions (default 5-12 depending on scope size).
+- `mode=deep`: Capture all material decisions.
 """
 
 [[steps]]
@@ -96,6 +112,10 @@ Checks:
 For weak alignment, propose either:
 - a reframed decision, or
 - explicit constraints that restore alignment.
+
+Mode behavior:
+- `mode=shallow`: Score only high-impact decisions and summarize low-impact ones.
+- `mode=deep`: Score every inventoried decision.
 """
 
 [[steps]]
@@ -113,6 +133,10 @@ Checks:
 
 Output at least one simpler alternative for each medium/high complexity decision,
 including tradeoffs and migration impact.
+
+Mode behavior:
+- `mode=shallow`: Provide simplification alternatives only for top 3-5 complexity hotspots.
+- `mode=deep`: Provide alternatives for every medium/high complexity decision.
 """
 
 [[steps]]
@@ -138,6 +162,10 @@ Security:
 - Supply-chain and automation abuse vectors
 
 For each risk, assign severity (low/medium/high) and a concrete mitigation.
+
+Mode behavior:
+- `mode=shallow`: Focus on critical/high risks and largest cost drivers.
+- `mode=deep`: Include low/medium risks, residual risk, and mitigation sequencing.
 """
 
 [[steps]]
@@ -154,6 +182,10 @@ Checks:
 - Are failure states recoverable without expert intervention?
 
 Recommend changes that reduce burden while preserving control and safety.
+
+Mode behavior:
+- `mode=shallow`: Focus on biggest friction points in approvals and trust.
+- `mode=deep`: Cover full operator journey (onboarding, steady-state, incident response).
 """
 
 [[steps]]
@@ -185,6 +217,10 @@ Rules:
 - Be critical, concrete, and specific.
 - Prefer actionable edits over abstract commentary.
 - Tie each recommendation to one or more source decisions.
+
+Mode behavior:
+- `mode=shallow`: Keep output concise and prioritize top actions only.
+- `mode=deep`: Include full scoring table and complete action backlog.
 """
 
 [vars]
@@ -196,6 +232,10 @@ required = true
 description = "Where to write the critique report"
 default = "handbook/_ai/reviews/critique-handbook.md"
 
+[vars.mode]
+description = "Critique mode: shallow or deep"
+default = "shallow"
+
 [vars.depth]
-description = "Review depth: quick, standard, deep"
+description = "Legacy depth flag (backward compatibility). Map quick/standard to shallow and deep to deep."
 default = "standard"
