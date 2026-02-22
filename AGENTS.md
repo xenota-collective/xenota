@@ -43,3 +43,13 @@ bd sync               # Sync with git
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
+
+## Campground Mode (Always Leave It Better)
+
+Pre-existing problems are never an excuse to skip responsibility.
+
+- NEVER treat "it was already broken" as a reason to avoid fixing tests, lint, build, or tooling failures.
+- If a failure blocks your task, debug it and either fix it directly or create a clearly scoped bead with reproduction, impact, and next action.
+- Do not hand off unknowns without first doing real investigation (logs, repro steps, git history, and local validation).
+- Every session must improve repo health: fewer failures, clearer docs, stronger tests, or better issue tracking than when you started.
+- If you touch an area, leave it cleaner and more reliable than you found it.
