@@ -1,0 +1,237 @@
+description = """
+Critique architecture for plans.
+
+Use this workflow to critically review a plan before execution.
+It is optimized for Xenota handbook plan docs, but can be used for any plan artifact.
+
+## Critique Modes
+
+- **shallow**: Fast feasibility pass. Focus on the biggest risks and simplifications.
+- **deep**: Full execution hardening pass. Validate sequencing, dependencies, controls,
+  and measurable acceptance criteria.
+
+## Critique Dimensions
+
+1. Mission and philosophy alignment
+2. Plan clarity and decision quality
+3. Execution realism (sequence, dependencies, ownership)
+4. Over-engineering and simplification opportunities
+5. Reliability and rollback safety
+6. Token cost and operational efficiency
+7. Security and abuse resistance
+8. Chaperone experience (control, trust, burden)
+
+## Output Contract
+
+Produce a single plan critique report with:
+- Plan summary and assumptions
+- Rubric scores per major plan decision
+- Risks, gaps, and contradictions
+- Simplified alternatives
+- Go/No-Go recommendation with conditions
+- Prioritized remediation backlog
+"""
+formula = "critique-plan"
+type = "workflow"
+version = 1
+
+[[steps]]
+id = "scope"
+title = "Resolve plan target and context"
+description = """
+Resolve what plan to critique from {{target}}.
+
+Accepted target styles:
+- A plan file path (for example `handbook/docs/plans/draft/foo.md`)
+- A directory path containing plan docs
+- A glob expression matching plan docs
+
+Build an explicit plan file list before analysis.
+
+Suggested commands:
+```bash
+if [ -d "{{target}}" ]; then rg --files "{{target}}" > /tmp/plan-critique-files.txt; fi
+if [ -f "{{target}}" ]; then printf "%s\n" "{{target}}" > /tmp/plan-critique-files.txt; fi
+rg --files handbook/docs/plans | rg "{{target}}" > /tmp/plan-critique-files.txt
+```
+
+If `{{include_related}}` is true, also gather nearby context docs (technical/protocols/foundation)
+that the plan depends on.
+
+Fail fast if no files resolve.
+
+Mode behavior:
+- `mode=shallow`: Allow focused subset when target resolves to many plans.
+- `mode=deep`: Require full target coverage plus related context when available.
+"""
+
+[[steps]]
+id = "decompose"
+title = "Extract objectives, decisions, and assumptions"
+needs = ["scope"]
+description = """
+Decompose each plan into a structured inventory.
+
+Capture:
+- Stated objective(s)
+- Key decisions
+- Milestones/phases
+- Dependencies (technical, organizational, external)
+- Explicit and implicit assumptions
+- Success criteria and non-goals
+
+Flag unclear or missing sections.
+
+Mode behavior:
+- `mode=shallow`: Extract top-level objective + top 5-12 decisions.
+- `mode=deep`: Extract all material decisions and assumptions.
+"""
+
+[[steps]]
+id = "alignment"
+title = "Score mission alignment and strategic fit"
+needs = ["decompose"]
+description = """
+Score each major decision for alignment with mission and philosophy.
+
+Checks:
+- Decision supports stated mission outcomes
+- Plan avoids value drift and local optimization
+- Tradeoffs are explicit and defensible
+- Non-goals prevent scope creep
+
+For weak alignment, propose revision or explicit guardrails.
+
+Mode behavior:
+- `mode=shallow`: Score only highest-impact decisions.
+- `mode=deep`: Score every material decision.
+"""
+
+[[steps]]
+id = "execution"
+title = "Stress-test execution realism"
+needs = ["alignment"]
+description = """
+Test whether the plan is executable as written.
+
+Checks:
+- Sequence integrity (prerequisites before dependents)
+- Dependency realism (owner, SLA, fallback)
+- Resource/ownership clarity
+- Decision reversibility and blast radius
+- Validation gates and measurable acceptance criteria
+
+For each major gap, provide a concrete correction.
+
+Mode behavior:
+- `mode=shallow`: Focus on critical path and blocking dependencies.
+- `mode=deep`: Full phase-by-phase execution review.
+"""
+
+[[steps]]
+id = "quality"
+title = "Assess simplification, reliability, cost, and security"
+needs = ["execution"]
+description = """
+Assess operational quality and design discipline.
+
+Simplification:
+- Remove unnecessary abstractions and ceremony
+- Collapse duplicate mechanisms
+
+Reliability:
+- Failure modes
+- Rollback strategy
+- Observability and alerting expectations
+
+Token cost:
+- Workflow verbosity hotspots
+- Repeated context loading
+- Opportunities for staged/targeted critique loops
+
+Security:
+- Data and secret handling risks
+- Boundary/privilege violations
+- Automation abuse vectors
+
+Assign severity and mitigation for each risk.
+
+Mode behavior:
+- `mode=shallow`: Focus on high/critical risks and top cost drivers.
+- `mode=deep`: Include medium/low risks and mitigation sequencing.
+"""
+
+[[steps]]
+id = "chaperone"
+title = "Assess chaperone/operator experience"
+needs = ["quality"]
+description = """
+Evaluate whether the plan is safe and usable for the human chaperone.
+
+Checks:
+- Approval points are explicit and timed correctly
+- Escalation and override paths are clear
+- Cognitive load is manageable per phase
+- Incident handling is understandable and actionable
+
+Recommend changes that reduce burden without reducing control.
+
+Mode behavior:
+- `mode=shallow`: Focus on approval friction and trust clarity.
+- `mode=deep`: Review full operator journey and incident playbooks.
+"""
+
+[[steps]]
+id = "synthesis"
+title = "Produce final plan critique"
+needs = ["chaperone"]
+description = """
+Produce the final critique report at {{output_path}}.
+
+Required sections:
+1. Scope and files reviewed
+2. Plan objective summary
+3. Decision and assumption inventory
+4. Rubric table per major decision:
+   - mission_fit (1-5)
+   - clarity (1-5)
+   - execution_realism (1-5)
+   - simplicity (1-5)
+   - reliability (1-5)
+   - token_efficiency (1-5)
+   - security (1-5)
+   - chaperone_experience (1-5)
+5. Top risks and contradictions (ordered by severity)
+6. Simplification and restructuring opportunities
+7. Go/No-Go recommendation:
+   - Go
+   - Go with conditions
+   - No-Go (with required changes)
+8. Prioritized remediation checklist
+
+Rules:
+- Be specific, critical, and actionable.
+- Tie each recommendation to source plan decisions.
+- Avoid generic commentary.
+
+Mode behavior:
+- `mode=shallow`: Concise report, top findings only.
+- `mode=deep`: Full scoring, full risk register, full remediation backlog.
+"""
+
+[vars]
+[vars.target]
+description = "Plan scope: file path, directory path, or glob"
+required = true
+
+[vars.mode]
+description = "Critique mode: shallow or deep"
+default = "shallow"
+
+[vars.output_path]
+description = "Where to write the plan critique report"
+default = "handbook/_ai/reviews/critique-plan.md"
+
+[vars.include_related]
+description = "Include related non-plan docs for dependency/context checks"
+default = "true"
