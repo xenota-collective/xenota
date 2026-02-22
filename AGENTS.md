@@ -24,6 +24,18 @@ bd sync               # Sync with git
 - For handbook work, stop after preparing proposals/diffs and wait for a human "approved/proceed" confirmation before applying edits.
 - If handbook changes were made accidentally, stop and ask for human direction before continuing.
 
+## OpenSpec Usage Policy
+
+OpenSpec is used as a **change-spec workflow**, not as a second long-lived documentation system.
+
+- Handbook is the source of truth for implemented architecture and behavior.
+- Use OpenSpec for non-trivial/high-risk changes (security boundaries, protocol contracts, data formats, cross-module behavior).
+- Do not create OpenSpec changes for small/local edits that do not benefit from formal deltas.
+- Every OpenSpec change must reference the target handbook doc(s) to update.
+- `openspec validate <change>` must pass before review/merge.
+- After implementation lands, archive/close the OpenSpec change and ensure handbook docs reflect final behavior.
+- Do not treat archived `xenon/openspec/specs/*` content as current authority when handbook says otherwise.
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
