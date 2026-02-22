@@ -3,6 +3,7 @@ state.json
 .runtime/
 .claude/
 .playwright-mcp/
+.xenons/
 
 # OS artifacts
 .DS_Store

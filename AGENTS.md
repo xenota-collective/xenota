@@ -12,6 +12,12 @@ bd close <id>         # Complete work
 bd sync               # Sync with git
 ```
 
+## Test Xenon Data
+
+- Store all manual test xenon data under repo root `.xenons/`.
+- Do not create test xenon data directories under `xenon/nucleus/.tmp/`.
+- Use paths like `.xenons/<xenon-name-or-scenario>/` for reproducible manual runs.
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
@@ -37,4 +43,3 @@ bd sync               # Sync with git
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
-
