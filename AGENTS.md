@@ -18,6 +18,12 @@ bd sync               # Sync with git
 - Do not create test xenon data directories under `xenon/nucleus/.tmp/`.
 - Use paths like `.xenons/<xenon-name-or-scenario>/` for reproducible manual runs.
 
+## Handbook Oversight (Mandatory)
+
+- Never edit, commit, or push changes under `handbook/` without explicit human approval in the current session.
+- For handbook work, stop after preparing proposals/diffs and wait for a human "approved/proceed" confirmation before applying edits.
+- If handbook changes were made accidentally, stop and ask for human direction before continuing.
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
