@@ -16,3 +16,7 @@ state.json
 
 # Beads JSONL export (DB-only mode; use Dolt backend directly)
 .beads/issues.jsonl
+
+# Gas Town (added by gt)
+.claude/commands/
+.logs/
