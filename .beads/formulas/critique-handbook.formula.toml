@@ -1,0 +1,201 @@
+description = """
+Critique architecture for handbook decisions.
+
+Use this workflow to critically review a target scope in the Xenota handbook:
+- the full handbook,
+- a specific plan,
+- a submodule/directory,
+- or any explicitly provided document set.
+
+The critique is decision-centric. It extracts key decisions, stress-tests each one,
+and returns concrete simplification and reliability/security/cost improvements.
+
+## Critique Dimensions
+
+1. Mission and philosophy alignment
+2. Over-engineering and simplification opportunities
+3. Reliability and operational failure modes
+4. Token cost impact and cost controls
+5. Security posture and abuse resistance
+6. Chaperone experience (clarity, burden, trust, control)
+
+## Output Contract
+
+Produce a single review document with:
+- Decision inventory
+- Per-decision rubric scores (1-5)
+- Risks and anti-patterns
+- Simplified alternatives
+- Recommended decision changes (keep, revise, remove)
+- Prioritized action plan
+"""
+formula = "critique-handbook"
+type = "workflow"
+version = 1
+
+[[steps]]
+id = "scope"
+title = "Resolve critique target"
+description = """
+Resolve what to critique from {{target}}.
+
+Accepted target styles:
+- `whole-handbook` (all handbook docs)
+- A file path (for example `handbook/docs/plans/draft/foo.md`)
+- A directory path (for example `handbook/docs/technical`)
+- A glob expression (for example `handbook/docs/plans/**/*.md`)
+
+Build an explicit file list before analysis.
+
+Suggested commands:
+```bash
+# whole handbook
+rg --files handbook/docs > /tmp/critique-files.txt
+
+# path or directory
+if [ -d "{{target}}" ]; then rg --files "{{target}}" > /tmp/critique-files.txt; fi
+if [ -f "{{target}}" ]; then printf "%s\n" "{{target}}" > /tmp/critique-files.txt; fi
+
+# glob fallback
+rg --files handbook | rg "{{target}}" > /tmp/critique-files.txt
+```
+
+Fail fast if no files resolve.
+"""
+
+[[steps]]
+id = "inventory"
+title = "Extract key decisions"
+needs = ["scope"]
+description = """
+Read the resolved files and extract key decisions only (not generic prose).
+
+For each decision, capture:
+- Decision ID (stable slug)
+- Source file(s)
+- Decision statement
+- Intended outcome
+- Implicit assumptions
+
+Write a compact decision inventory as the basis for scoring.
+"""
+
+[[steps]]
+id = "mission-fit"
+title = "Score mission and philosophy alignment"
+needs = ["inventory"]
+description = """
+Score each decision for alignment to Xenota mission and philosophy.
+
+Checks:
+- Direct support of stated mission
+- Consistency with handbook principles
+- Avoidance of value drift or contradictory goals
+- Clarity of why the decision exists
+
+For weak alignment, propose either:
+- a reframed decision, or
+- explicit constraints that restore alignment.
+"""
+
+[[steps]]
+id = "simplification"
+title = "Identify over-engineering and simplification"
+needs = ["mission-fit"]
+description = """
+For every decision, challenge complexity.
+
+Checks:
+- Can this be done with fewer moving parts?
+- Are there duplicate abstractions?
+- Is this premature optimization?
+- Is there unnecessary ceremony in process/tooling?
+
+Output at least one simpler alternative for each medium/high complexity decision,
+including tradeoffs and migration impact.
+"""
+
+[[steps]]
+id = "operations"
+title = "Assess reliability, token cost, and security"
+needs = ["simplification"]
+description = """
+Evaluate operational quality across three dimensions.
+
+Reliability:
+- Single points of failure
+- Fragile dependencies
+- Missing observability or rollback paths
+
+Token cost:
+- Prompt/workflow verbosity hotspots
+- Repeated context loading
+- Opportunities for caching, narrowing scope, and staged review
+
+Security:
+- Data exposure risk
+- Privilege boundary violations
+- Supply-chain and automation abuse vectors
+
+For each risk, assign severity (low/medium/high) and a concrete mitigation.
+"""
+
+[[steps]]
+id = "chaperone"
+title = "Assess chaperone experience"
+needs = ["operations"]
+description = """
+Evaluate the human chaperone/operator experience.
+
+Checks:
+- Can a chaperone understand and trust decisions quickly?
+- Is there too much approval burden or cognitive load?
+- Are control points explicit (approve, reject, escalate)?
+- Are failure states recoverable without expert intervention?
+
+Recommend changes that reduce burden while preserving control and safety.
+"""
+
+[[steps]]
+id = "synthesis"
+title = "Synthesize final critique and recommendations"
+needs = ["chaperone"]
+description = """
+Produce the final critique report at {{output_path}}.
+
+Required sections:
+1. Scope and files reviewed
+2. Decision inventory
+3. Rubric table per decision:
+   - mission_fit (1-5)
+   - simplicity (1-5)
+   - reliability (1-5)
+   - token_efficiency (1-5)
+   - security (1-5)
+   - chaperone_experience (1-5)
+4. Top risks (ordered by severity)
+5. Simplification opportunities
+6. Recommended actions:
+   - Keep
+   - Revise
+   - Remove
+7. Next iteration checklist
+
+Rules:
+- Be critical, concrete, and specific.
+- Prefer actionable edits over abstract commentary.
+- Tie each recommendation to one or more source decisions.
+"""
+
+[vars]
+[vars.target]
+description = "Critique scope: whole-handbook, file path, directory path, or glob"
+required = true
+
+[vars.output_path]
+description = "Where to write the critique report"
+default = "handbook/_ai/reviews/critique-handbook.md"
+
+[vars.depth]
+description = "Review depth: quick, standard, deep"
+default = "standard"
