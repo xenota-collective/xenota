@@ -1,7 +1,9 @@
 # Claude Code state
 state.json
 .runtime/
-.claude/
+.claude/*
+!.claude/commands/
+!.claude/commands/**
 .playwright-mcp/
 .xenons/
 
