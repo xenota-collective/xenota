@@ -33,9 +33,10 @@ bd sync               # Sync with git
 
 ## Handbook Oversight (Mandatory)
 
-- Never edit, commit, or push changes under `handbook/` without explicit human approval in the current session.
-- For handbook work, stop after preparing proposals/diffs and wait for a human "approved/proceed" confirmation before applying edits.
-- If handbook changes were made accidentally, stop and ask for human direction before continuing.
+- You may make local edits under `handbook/` in order to prepare diffs for human review.
+- Never commit or push changes under `handbook/` without explicit human approval in the current session.
+- For handbook work, default to preparing proposals/diffs first, then wait for a human "approved/proceed" confirmation before committing or pushing handbook changes.
+- If handbook changes were made accidentally and you are unsure whether they should be kept, stop and ask for human direction before continuing.
 
 ## Handbook Reality Boundary
 
