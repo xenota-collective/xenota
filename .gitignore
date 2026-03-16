@@ -4,6 +4,8 @@ state.json
 .claude/*
 !.claude/commands/
 !.claude/commands/**
+!.claude/skills/
+!.claude/skills/**
 .playwright-mcp/
 .xenons/
 
