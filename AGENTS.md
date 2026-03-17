@@ -9,7 +9,7 @@ bd ready              # Find available work
 bd show <id>          # View issue details
 bd update <id> --status in_progress  # Claim work
 bd close <id>         # Complete work
-bd sync               # Sync with git
+bd dolt push          # Push beads data to remote
 ```
 
 ## Bead Reference Clarity
@@ -68,7 +68,7 @@ This repo uses git submodules (`xenon/`, `handbook/`). Treat submodules as separ
 - For code changes in `xenon/`:
   1. Commit and push inside `xenon/` first.
   2. Then commit the updated `xenon` pointer in top repo.
-  3. Run `git pull --rebase`, `bd sync`, `git push` in top repo.
+  3. Run `git pull --rebase`, `bd dolt push`, `git push` in top repo.
 - For `handbook/`, follow Handbook Oversight rules above. Do not edit or push handbook content without explicit human approval.
 
 ### Rebase/Merge Safety for Submodules
@@ -106,7 +106,7 @@ This repo uses git submodules (`xenon/`, `handbook/`). Treat submodules as separ
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
-   bd sync
+   bd dolt push
    git push
    git status  # MUST show "up to date with origin"
    ```
