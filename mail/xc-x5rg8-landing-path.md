@@ -35,10 +35,11 @@ This refreshed branch/PR is intentionally narrow:
 Stop at human review/manual-QA:
 
 1. Review `mail/xc-x5rg8-landing-readiness.md`
-2. Review the `2026-03-17` manual validation comments on `xc-x5rg8`
-3. Decide whether the existing packet is sufficient or whether one fresh manual
-   rerun is required on current `xenon/main`
-4. If sufficient, merge the refreshed top-level PR and close `xc-x5rg8`
+2. Review the `2026-03-17` command transcript and the fresh `2026-03-19`
+   rerun evidence on `xc-x5rg8`
+3. Confirm the known console startup/warm-up race is acceptable as operator
+   context, not as a landing blocker
+4. Merge the refreshed top-level PR and close `xc-x5rg8`
 
 ## Closing Rule
 

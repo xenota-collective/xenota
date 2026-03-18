@@ -52,6 +52,32 @@ Manual e2e evidence recorded on the bead comments on `2026-03-17`:
   - no `xc-x5rg8-sleeper` container remains
   - `~/.xenons/xc-x5rg8-e2e` no longer exists
 
+Fresh manual rerun completed on `2026-03-19` against current `xenon/main`:
+- rebuilt `localhost/xenon-nucleus:latest` from the checked-out `xenon` repo
+- reinitialized disposable instance at
+  `~/.xenons/xc-x5rg8-e2e/xenon-2a48ee97`
+- registered `proj-sleeper` as `suspended` on the fresh schema
+- injected operator dispatch `Research the Xenota landing lane status and report back.`
+- processed tick `1`; emitted one instruction and created one `start` job
+- reconciled cortex start successfully:
+  - projection state moved to `active`
+  - mapped container `xc-x5rg8-sleeper` reached `running`
+- submitted a report dispatch back from `proj-sleeper`
+- processed tick `2`; report dispatch was accepted/actioned with no further instruction
+- forced idle reconciliation and verified cortex auto-sleep:
+  - created one `stop` job
+  - `stop|succeeded`
+  - projection returned to `suspended`
+  - `xc-x5rg8-sleeper` returned to `Exited`
+- operator verification after console warm-up:
+  - `xn state projections .` showed `proj-sleeper | test | suspended | 1 | -`
+  - `xn state dispatches --limit 5` showed both the operator request and the
+    `proj-sleeper` report dispatch
+- cleanup completed:
+  - disposable `xc-x5rg8-e2e` instance torn down and removed
+  - `xc-x5rg8-sleeper` container removed
+  - live nucleus `xenon-152f4bf8_nucleus_1` restored on `127.0.0.1:7600`
+
 ## Operator Note
 
 Fresh disposable instances have a startup race immediately after:
@@ -79,9 +105,8 @@ review/manual-QA gate.
 
 1. Confirm the parent `xc-x5rg8` comments and child close reasons match the
    landed xenon reality.
-2. Confirm the `2026-03-17` manual validation packet is still sufficient for
-   the landed cortex follow-up state, or explicitly request a fresh rerun on
-   current `xenon/main`.
+2. Review the fresh `2026-03-19` rerun evidence together with the
+   `2026-03-17` transcript and confirm manual QA is satisfied.
 3. Confirm the `console.json` startup race is acceptable as operator context,
    not as a blocker.
 4. Confirm this refreshed top-level PR should replace the prior placeholder
