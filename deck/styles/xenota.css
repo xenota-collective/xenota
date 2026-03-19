@@ -1,266 +1,360 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Fira+Code:wght@400;500&display=swap');
 
 :root {
-  /* Core Palette */
-  --xc-void: #0A1420;
-  --xc-void-light: #12202D;
-  --xc-teal: #2E8B8B;
-  --xc-teal-dark: #1E6666;
-  --xc-amber: #C4875C;
-  --xc-amber-light: #D4A07A;
-  --xc-copper: #A65D3F;
-  --xc-white: #F5F0E8;
-
-  /* Semantic */
-  --xc-text-primary: var(--xc-white);
-  --xc-text-secondary: rgba(245, 240, 232, 0.7);
-  --xc-text-muted: rgba(245, 240, 232, 0.5);
-  --xc-text-ghost: rgba(245, 240, 232, 0.4);
-  --xc-border-teal: rgba(46, 139, 139, 0.3);
+  --xc-void: #0a1420;
+  --xc-void-light: #12202d;
+  --xc-void-panel: rgba(18, 32, 45, 0.88);
+  --xc-teal: #58b8b2;
+  --xc-teal-deep: #2e8b8b;
+  --xc-amber: #c4875c;
+  --xc-copper: #a65d3f;
+  --xc-white: #f5f0e8;
+  --xc-text-secondary: rgba(245, 240, 232, 0.76);
+  --xc-text-muted: rgba(245, 240, 232, 0.56);
+  --xc-text-ghost: rgba(245, 240, 232, 0.38);
+  --xc-border-teal: rgba(88, 184, 178, 0.24);
   --xc-border-amber: rgba(196, 135, 92, 0.3);
-
-  /* Typography */
   --font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-code: 'Fira Code', 'SF Mono', monospace;
 }
 
-/* ---- Global ---- */
-
 .slidev-layout {
-  background: var(--xc-void) !important;
-  color: var(--xc-text-primary) !important;
+  background:
+    radial-gradient(circle at top, rgba(88, 184, 178, 0.1), transparent 36%),
+    linear-gradient(180deg, #0b1620 0%, #081019 100%) !important;
+  color: var(--xc-white) !important;
   font-family: var(--font-body) !important;
 }
 
-/* ---- Typography ---- */
-
 .slidev-layout h1,
 .slidev-layout h2,
-.slidev-layout h3 {
-  font-family: var(--font-heading) !important;
+.slidev-layout h3,
+.slidev-layout h4 {
   color: var(--xc-white) !important;
-  letter-spacing: -0.02em;
+  font-family: var(--font-heading) !important;
+  letter-spacing: -0.03em;
 }
 
 .slidev-layout h1 {
-  font-size: 3rem !important;
+  font-size: 3.25rem !important;
   font-weight: 700 !important;
-  line-height: 1.15 !important;
+  line-height: 1.08 !important;
 }
 
 .slidev-layout h2 {
-  font-size: 2rem !important;
+  font-size: 1.8rem !important;
   font-weight: 600 !important;
-  line-height: 1.25 !important;
-}
-
-.slidev-layout h3 {
-  font-size: 1.5rem !important;
-  font-weight: 600 !important;
-  line-height: 1.3 !important;
+  line-height: 1.2 !important;
 }
 
 .slidev-layout p,
 .slidev-layout li {
-  font-family: var(--font-body) !important;
   color: var(--xc-text-secondary) !important;
-  font-size: 1.15rem !important;
-  line-height: 1.6 !important;
+  font-family: var(--font-body) !important;
+  font-size: 1.08rem !important;
+  line-height: 1.55 !important;
+}
+
+.slidev-layout ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.slidev-layout li + li {
+  margin-top: 0.45rem;
 }
 
 .slidev-layout code {
   font-family: var(--font-code) !important;
-  background: rgba(46, 139, 139, 0.15) !important;
-  color: var(--xc-teal) !important;
 }
 
-.slidev-layout a {
-  color: var(--xc-teal) !important;
-}
-
-.section-label {
-  font-size: 0.85rem !important;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
+.eyebrow {
   font-family: var(--font-heading) !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0.18em;
+  margin-bottom: 0.9rem !important;
+  text-transform: uppercase;
 }
 
-/* ---- Color utilities (high specificity to override element selectors) ---- */
-
-.slidev-layout .teal { color: var(--xc-teal) !important; }
-.slidev-layout .amber { color: var(--xc-amber) !important; }
-.slidev-layout .copper { color: var(--xc-copper) !important; }
-.slidev-layout .muted { color: var(--xc-text-muted) !important; }
-.slidev-layout .ghost { color: var(--xc-text-ghost) !important; }
-.slidev-layout .bright { color: var(--xc-white) !important; }
-
-/* ---- Dot indicators ---- */
-
-.dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
+.teal {
+  color: var(--xc-teal) !important;
 }
 
-.dot.teal-bg { background-color: var(--xc-teal); }
-.dot.amber-bg { background-color: var(--xc-amber); }
-
-/* ---- Mission card grid (slides 6, 9) ---- */
-
-.mission-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-top: 2rem;
+.amber {
+  color: var(--xc-amber) !important;
 }
 
-.mission-grid .mission-card {
-  text-align: center;
-}
-
-.mission-card {
-  background: var(--xc-void-light);
-  border: 1px solid var(--xc-border-teal);
-  border-radius: 12px;
-  padding: 1.5rem;
-}
-
-.mission-card.amber-border {
-  border-color: var(--xc-border-amber) !important;
-}
-
-.mission-card h3 {
-  font-size: 1.25rem !important;
-  margin-bottom: 0.5rem;
-}
-
-.mission-card p {
-  font-size: 1rem !important;
-  color: var(--xc-text-muted) !important;
-}
-
-/* ---- Progression / pipeline (slide 7) ---- */
-
-.progression {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.progression .stage {
-  background: var(--xc-void-light);
-  border: 1px solid var(--xc-border-teal);
-  border-radius: 8px;
-  padding: 1rem 1.5rem;
-  text-align: center;
-  flex: 1;
-}
-
-.progression .stage.active {
-  border-color: rgba(46, 139, 139, 0.5);
-}
-
-.progression .stage.final {
-  border-color: var(--xc-border-amber);
-}
-
-.progression .arrow {
-  flex-shrink: 0;
-}
-
-/* ---- Flywheel loop (slide 12) ---- */
-
-.flywheel {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 0.75rem;
-  align-items: center;
-  justify-items: center;
-  max-width: 28rem;
-  margin: 1.5rem auto 0;
-}
-
-.flywheel .node {
-  background: var(--xc-void-light);
-  border: 1px solid var(--xc-border-teal);
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  text-align: center;
-  width: 100%;
-}
-
-/* ---- Timeline (slide 15) ---- */
-
-.timeline {
-  display: flex;
-  gap: 1.5rem;
-  margin-top: 2rem;
-}
-
-.timeline .phase {
-  flex: 1;
-  border-top: 4px solid var(--xc-teal);
-  border-radius: 8px;
-  background: var(--xc-void-light);
-  padding: 1.25rem;
-}
-
-.timeline .phase p {
-  font-size: 1rem !important;
-}
-
-.timeline .phase.future {
-  border-top-color: var(--xc-amber);
-}
-
-.timeline .phase.far {
-  border-top-color: var(--xc-copper);
-}
-
-/* ---- CTA button (slide 17) ---- */
-
-.cta-button {
-  display: inline-block;
-  background: var(--xc-teal);
-  border-radius: 12px;
-  padding: 0.75rem 2rem;
-}
-
-.slidev-layout .cta-button p {
-  color: var(--xc-void) !important;
-  font-weight: 600 !important;
-  font-size: 1.125rem !important;
-}
-
-/* ---- Blockquotes ---- */
-
-.slidev-layout blockquote {
-  background: rgba(46, 139, 139, 0.08) !important;
-  border-left: 3px solid var(--xc-teal) !important;
-  border-radius: 8px;
-  padding: 1.25rem 1.5rem !important;
-  margin: 1.5rem 0 !important;
-}
-
-.slidev-layout blockquote.amber-quote {
-  background: rgba(196, 135, 92, 0.08) !important;
-  border-left-color: var(--xc-amber) !important;
-}
-
-.slidev-layout blockquote p {
-  font-size: 1.3rem !important;
-  font-style: italic !important;
+.bright {
   color: var(--xc-white) !important;
 }
 
-/* ---- Slide number ---- */
+.hero-shell,
+.section-shell {
+  margin: 0 auto;
+  max-width: 58rem;
+}
 
-.slidev-page-number {
-  color: var(--xc-text-muted) !important;
-  font-family: var(--font-body) !important;
+.section-shell.narrow {
+  max-width: 44rem;
+}
+
+.hero-shell {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.9rem;
+}
+
+.hero-mark {
+  height: 7rem;
+  width: 4.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.hero-title {
+  max-width: 10ch;
+}
+
+.hero-subtitle {
+  color: var(--xc-teal) !important;
+  max-width: 20ch;
+}
+
+.hero-copy,
+.closing-copy {
+  max-width: 42rem;
+  font-size: 1.18rem !important;
+}
+
+.statement-block {
+  margin: 0 auto;
+  max-width: 50rem;
+  text-align: center;
+}
+
+.pull-quote {
+  color: var(--xc-white) !important;
+  font-family: var(--font-heading) !important;
+  font-size: 1.65rem !important;
+  line-height: 1.25 !important;
+  margin: 1.4rem auto !important;
+  max-width: 24ch;
+}
+
+.supporting-copy {
+  margin: 1rem auto 0 !important;
+  max-width: 44rem;
+}
+
+.three-up,
+.two-up,
+.mission-grid,
+.split-panel {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.three-up {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.two-up {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.split-panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mission-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.feature-card,
+.comparison-card,
+.mission-panel,
+.trust-stage,
+.roadmap-phase {
+  background: var(--xc-void-panel);
+  border: 1px solid var(--xc-border-teal);
+  border-radius: 18px;
+  padding: 1.25rem 1.35rem;
+  backdrop-filter: blur(10px);
+}
+
+.amber-border {
+  border-color: var(--xc-border-amber) !important;
+}
+
+.feature-title,
+.comparison-title,
+.mission-name,
+.stack-title,
+.trust-stage-title,
+.roadmap-label {
+  color: var(--xc-white) !important;
+  font-family: var(--font-heading) !important;
+  font-size: 1.2rem !important;
+  font-weight: 600 !important;
+  margin: 0 0 0.4rem !important;
+}
+
+.feature-copy,
+.mission-copy,
+.stack-copy,
+.trust-stage-copy,
+.roadmap-copy {
+  margin: 0 !important;
+  color: var(--xc-text-secondary) !important;
+}
+
+.stack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.stack-row {
+  align-items: flex-start;
+  background: rgba(18, 32, 45, 0.72);
+  border: 1px solid rgba(88, 184, 178, 0.18);
+  border-radius: 18px;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: auto 1fr;
+  padding: 1rem 1.2rem;
+}
+
+.stack-index {
+  align-items: center;
+  background: rgba(88, 184, 178, 0.12);
+  border: 1px solid var(--xc-border-teal);
+  border-radius: 999px;
+  color: var(--xc-teal) !important;
+  display: inline-flex;
+  font-family: var(--font-heading) !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  height: 2.25rem;
+  justify-content: center;
+  width: 2.25rem;
+}
+
+.amber-chip {
+  background: rgba(196, 135, 92, 0.12);
+  border-color: var(--xc-border-amber);
+  color: var(--xc-amber) !important;
+}
+
+.trust-track {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: stretch;
+}
+
+.trust-stage-final {
+  border-color: var(--xc-border-amber);
+}
+
+.trust-arrow {
+  align-items: center;
+  color: var(--xc-amber);
+  display: flex;
+  font-family: var(--font-heading) !important;
+  font-size: 2rem !important;
+  justify-content: center;
+}
+
+.kicker {
+  color: var(--xc-white) !important;
+  font-family: var(--font-heading) !important;
+  font-size: 1.35rem !important;
+  line-height: 1.3 !important;
+  max-width: 40rem;
+}
+
+.roadmap {
+  display: grid;
+  gap: 1.1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 2.2rem;
+}
+
+.mission-splash {
+  position: relative;
+}
+
+.mission-speech {
+  margin: 0 auto;
+  max-width: 46rem;
+}
+
+.splash-panel::before,
+.mission-splash::before {
+  background: linear-gradient(180deg, rgba(8, 16, 25, 0.38), rgba(8, 16, 25, 0.74));
+  content: '';
+  inset: 0;
+  position: absolute;
+}
+
+.splash-panel > *,
+.mission-splash > * {
+  position: relative;
+  z-index: 1;
+}
+
+.deep-time-bg {
+  background:
+    radial-gradient(circle at center, rgba(8, 16, 25, 0.18), rgba(8, 16, 25, 0.82)),
+    url('/images/deep-time.jpg') center/cover !important;
+}
+
+.emergence-bg {
+  background:
+    radial-gradient(circle at center, rgba(8, 16, 25, 0.16), rgba(8, 16, 25, 0.78)),
+    url('/images/emergence.jpg') center/cover !important;
+}
+
+.life-bg {
+  background:
+    linear-gradient(180deg, rgba(8, 16, 25, 0.36), rgba(8, 16, 25, 0.82)),
+    url('/images/koru-fern-lush.jpg') center/cover !important;
+}
+
+.earth-bg {
+  background:
+    linear-gradient(180deg, rgba(8, 16, 25, 0.32), rgba(8, 16, 25, 0.78)),
+    url('/images/coral-reef.jpg') center/cover !important;
+}
+
+.star-bg {
+  background:
+    linear-gradient(180deg, rgba(8, 16, 25, 0.34), rgba(8, 16, 25, 0.78)),
+    url('/images/nebula.jpg') center/cover !important;
+}
+
+@media (max-width: 900px) {
+  .slidev-layout h1 {
+    font-size: 2.45rem !important;
+  }
+
+  .slidev-layout h2 {
+    font-size: 1.45rem !important;
+  }
+
+  .three-up,
+  .two-up,
+  .split-panel,
+  .mission-grid,
+  .roadmap,
+  .trust-track {
+    grid-template-columns: 1fr;
+  }
+
+  .trust-arrow {
+    transform: rotate(90deg);
+  }
 }
