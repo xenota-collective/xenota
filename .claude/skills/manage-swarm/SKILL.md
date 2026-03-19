@@ -19,6 +19,17 @@ Prime imperative:
 - An active task that is not being progressed is intolerable.
 - If an active task is sitting still, you must intervene until it is moving, explicitly rerouted, or escalated with a concrete decision request.
 
+## P0 Priority Rule
+
+P0 beads take absolute priority over all other work.
+
+During every wrangle pass:
+1. Check for open P0 beads: `bd list -p P0 -s open --flat` and `bd list -p P0 -s in_progress --flat`
+2. If any P0 bead exists and has no active worker, immediately assign the most suitable idle crew member to it. If no crew is idle, preempt the lowest-priority active lane.
+3. P0 beads skip the normal epic-child sequencing. They do not need to wait for their parent epic's phase ordering.
+4. When a P0 bead reaches landing readiness, it jumps the landing queue. The dedicated landing worker should land P0 stacks before any other pending landing.
+5. P0 beads that are blocked must be escalated to the human immediately, not parked.
+
 ## Core Rules
 
 - Prefer direct evidence from live tmux panes over bead status when checking whether someone is actually working.
@@ -29,9 +40,18 @@ Prime imperative:
 - After sending a nudge, verify that it changed the pane state. A delivered nudge is not progress until the worker visibly resumes motion or explicitly replies with a blocker.
 - The wrangler's job is to restore motion, not merely report status. Do not stop at naming the problem if you can push the next action, route the dependency, or reassign the owner yourself.
 - Treat lack of movement on an active task as a failure condition requiring intervention, not as a passive status outcome.
+- Treat crew workers as prone to one-shot request/response behavior. Assume they will often complete one asked-for slice and then park unless given a standing order to self-chain.
+- Default to standing-order nudges, not single-slice nudges. Require the worker to keep choosing and executing the next concrete slice on the same epic until they hit a real blocker or explicit handoff gate.
+- Every wrangle pass must end by re-arming the local reminder injector so `wrangle the swarm` is sent back into the earthshot pane after a delay. This is part of the wrangle loop, not an optional convenience.
+- The reminder delay should be dynamic, not fixed. Speed up when many lanes needed intervention; slow down when the swarm is already flowing without help.
+- If a Claude pane is over 20% context used, compact it during the wrangle pass before leaving the lane unattended.
+- Do not compact Codex panes just because they exist or are active.
+- Outside the Claude-over-20% rule, compact only when a session is explicitly handing off work or starting a new task and needs context cleanup.
 - If a worker is moving, do not interrupt just to restate bead status.
 - If a worker is blocked by tracker noise or Dolt config but git/code work can continue, tell them to keep going.
 - If a worker is blocked by another person or unresolved review findings, make that explicit and route the dependency.
+- Never try to land work ad hoc. Every landing must go through the landing formula.
+- Treat dedicated landing workers as a landing-only pool. If someone is serving as the landing owner for the swarm (for example `last`), do not reallocate them to implementation, review, or manual-test beads.
 
 Status rubric:
 - `active now`: the worker pane shows current execution, active reasoning, or a live gate they are presently driving
@@ -53,6 +73,8 @@ When splitting work across crew:
 - require a feature branch and PR-based landing for each workstream
 - ask for the exact branch name, first bead, and next 2 planned beads
 - when a crew member finishes an epic, reaches a real handoff point, or goes idle while still owning an active epic, immediately reassign them or push them onto the next slice
+- do not assume a worker will self-chain from a one-off request unless you explicitly told them to keep working through the epic
+- if a crew member is the dedicated landing worker, only reassign them onto another landing task; do not spend that lane on implementation follow-up just because they became free
 
 Suggested commands:
 
@@ -63,13 +85,45 @@ bd update <epic> -a xenota/crew/<name>
 gt nudge xenota/crew/<name> --mode immediate --message 'Reply with exact branch name, first bead, next 2 beads, and confirm PR-based landing.'
 ```
 
+Standing-order nudge pattern:
+- state the active epic and current priority clearly
+- tell the worker to never stop at a passing test, local summary, or completed micro-slice
+- tell the worker to choose and execute the next concrete slice themselves after each completed slice
+- do not train the worker to optimize for a rigid reply format instead of execution
+- tell the worker not to merge or land anything themselves unless they are the designated landing owner and using the landing formula
+- if the worker includes `NEXT` / `BLOCKED`, treat it as optional status metadata, not the main objective
+
+Preferred wording:
+
+```bash
+gt nudge xenota/crew/<name> --mode immediate --message 'Your active assignment is <epic>. Start immediately. Never stop at a passing test, summary, or completed micro-slice. After each slice, choose and execute the next concrete slice on the same epic yourself. If you are not truly blocked, keep going instead of composing a status reply. Only stop at a real blocker or an explicit handoff gate.'
+```
+
+Do not use:
+
+```bash
+gt nudge ... 'Reply only with NEXT=... BLOCKED=...'
+```
+
+Why this is harmful:
+- it encourages the worker to emit a tidy status line and then park
+- it turns `NEXT` into a planning ritual instead of actual execution
+- it creates false confidence because `BLOCKED=none` often appears right before the worker stops
+
+Better alternative:
+- tell the worker to continue executing by default
+- if you need a status tuple, ask for it only at a checkpoint, not as the standing contract
+- for active implementation, the default should be action, not reply formatting
+
 ## Check-Ins
 
 Default check-in order:
 1. Capture the worker tmux pane directly
 2. Capture the active polecat pane if there is a gate in progress
 3. Check for recent command/output motion in the pane
-4. Only then look at hook, branch, bead, and PR state for corroboration
+4. If the pane is a Claude session and context usage is over 20%, compact it before walking away from the lane
+5. Do not compact Codex panes here; only compact them at handoff/new-task boundaries if the context reset is actually needed
+5. Only then look at hook, branch, bead, and PR state for corroboration
 
 Commands:
 
@@ -106,13 +160,19 @@ Idleness test:
 - if an active task remains idle after one intervention cycle, escalate within the ladder immediately rather than waiting
 
 Post-nudge verification:
-1. Send the nudge with an exact next action and required reply shape
+1. Send the nudge with a standing order plus the exact next action and required reply shape
 2. Re-capture the pane after delivery
 3. Verify one of:
    - the pane shows new live motion on the requested slice
-   - the worker replies with the requested branch / file / command / blocker
+   - the worker replies with a real blocker or explicit handoff gate
 4. If the pane is still sitting at a prompt with no new motion, do not mark the epic as moving
 5. If the nudge landed but the pane did not change, escalate: resend with sharper instruction, use Escape-first tmux injection, or restart/reassign
+6. If the worker completes one slice and returns to a prompt without a blocker, treat that as non-compliance with the standing order and intervene again immediately
+
+Session family map for this swarm:
+- Claude panes are the ones whose tmux title explicitly shows `Claude Code` (for example `xc-crew-earthshot:0.1`)
+- Codex panes in this rig usually show `node` as the pane command (for example `xc-crew-harbor:0.0`, `xc-crew-life:0.0`, `xc-crew-starshot:0.0`, `xc-crew-prosperity:0.0`, `xc-crew-quay:0.0`, `xc-crew-last:0.0`, `xc-crew-earthshot:0.0`)
+- Helper shell/timer panes usually show `zsh` or `sleep` and are neither Claude nor Codex worker panes
 
 Blocker handling:
 1. Do not accept a blocker claim at face value if it only names another epic, boundary, or future dependency
@@ -139,6 +199,7 @@ Intervention ladder:
 2. `restart worker`
    - if the pane is wedged, ignoring input, or stuck in bad modal/editor state
    - use Escape-first injection first for Claude panes, then restart if still dead
+   - if a worker remains a repeat offender across multiple wrangle passes, close the crew session entirely and start a fresh one rather than preserving poisoned long-lived context
 3. `reconfigure task plan and reassign`
    - if the current owner cannot productively advance the slice
    - break the work into a more concrete next bead, reroute ownership, or move the worker to a better-fit slice
@@ -153,6 +214,8 @@ Never-stop rule:
   - the task has been decomposed into a concrete next slice with an owner who accepted it
   - a human decision is truly required and the escalation states exactly why
 - Do not leave an active task in a parked state just because you understand the situation.
+- Do not accept "completed one requested slice" as sufficient if the epic still has obvious next work and no real blocker.
+- If the same crew session repeatedly fails to take reassignment or keeps reviving stale context, escalate from soft resets to full close-and-restart instead of repeating the same weak intervention.
 
 Epic classification pass:
 1. Read the worker pane
@@ -162,13 +225,93 @@ Epic classification pass:
 5. If the worker is idle and still owns the active epic, push them to the next slice immediately
 6. If the worker answers with a blocker, decide hard vs soft blocker and act on it yourself until ownership and next action are explicit
 
-Required output shape for swarm status:
-- `current state`: what the pane is doing right now
-- `evidence now`: the specific live signal used for the classification
-- `recent history`: any useful prior progress visible in scrollback
-- `classification`: `active now`, `idle but advanced`, `assigned only`, or `stalled`
+## Swarm State File
+
+The wrangler maintains a persistent state file at `swarm-state.yaml` in the earthshot repo.
+
+This file is the single source of truth for the swarm's last-known state. It is updated at the end of every wrangle pass.
+
+### State file schema
+
+```yaml
+updated_at: "2026-03-20T09:15:00+13:00"
+hooked_epic: xc-ds1y
+p0_beads: []  # list of {id, title, assigned_to, status}
+
+beads:
+  - id: xc-wc20
+    title: "Nucleus snapshots, diff, and restore"
+    status: in_progress
+    assigned_to: xenota/crew/life
+    pr_state: "xenon#17 CONFLICT, xenota#9 none"
+    classification: active now
+    next_action: "rebase onto main, resolve conflicts"
+
+crew:
+  - name: life
+    agent: codex
+    hooked_bead: xc-wc20
+    branch: feature/xc-wc20-nucleus-snapshots-clean
+    classification: active now
+  - name: prosperity
+    agent: codex
+    hooked_bead: none
+    branch: main
+    classification: idle
+    recommended_assignment: "xc-c77i (P0 dependabot setup)"
+
+ready_for_landing:
+  - id: xc-ds1y.2
+    title: "Support Gemini as RPT backend"
+    gate: "human review"
+```
+
+### Reading and writing the state file
+
+At the start of each wrangle pass:
+1. Read `swarm-state.yaml` if it exists. This is the previous state.
+2. Gather fresh evidence (panes, beads, PRs, hooks, branches).
+3. Build the new state.
+4. Compare new state against previous state to find changes.
+5. Write the updated state back to `swarm-state.yaml`.
+
+### Wrangle output: changes only
+
+Do not print the full state every wrangle pass. Instead, report only what changed since the last pass:
+
+- **Transitions**: beads or crew that changed classification (e.g. `active now` -> `stalled`)
+- **New assignments**: crew members that got assigned or reassigned
+- **New blockers**: beads that became blocked or stalled
+- **PR state changes**: PRs that gained/lost conflicts, CI passed/failed, or were merged
+- **Landed / closed**: beads that moved to closed or landed since last pass
+- **P0 alerts**: any P0 bead that appeared, changed state, or needs attention
+- **Idle crew**: crew members that became idle with recommended next assignment
+- **Ready for landing**: beads newly reaching landing readiness
+
+If nothing changed, say "no changes since last wrangle" and skip the full dump.
+
+If the state file does not exist (first wrangle), print the full state and create the file.
+
+### Ready for landing
+
+- always surface ready-for-landing beads in wrangle output, even if unchanged, so they do not get forgotten
+- for each item include the bead ID, title, and concrete gate status (e.g. `human review`, `manual QA`, `landing formula`, or `ready for landing owner`)
+- after reporting the wrangle result, re-arm the reminder injector in `xc-crew-earthshot:0.2` so it sleeps, then sends `wrangle the swarm` followed by a separate `Enter` into `xc-crew-earthshot:0.0`
+- prefer the live tmux shell-pane timer over detached background children, because detached `sleep` processes may be reaped before firing in this environment
+- choose the reminder delay from the current wrangle result:
+  - `20s` if 3 or more active lanes needed kicks/reassignment/restart
+  - `30s` if 2 active lanes needed kicks/reassignment/restart
+  - `45s` if 1 active lane needed a kick/reassignment/restart
+  - `60s` if no active lanes needed intervention
+- count only real interventions on active lanes for this purpose; do not speed up the timer just because you updated tracker metadata or observed already-moving work
 
 Separate current state from recent history. Do not merge them into one judgment.
+
+Reminder re-arm pattern:
+
+```bash
+tmux send-keys -t xc-crew-earthshot:0.2 'sleep <SECONDS>; /opt/homebrew/bin/tmux -L gt send-keys -t xc-crew-earthshot:0.0 "wrangle the swarm"; sleep 1; /opt/homebrew/bin/tmux -L gt send-keys -t xc-crew-earthshot:0.0 Enter' C-m
+```
 
 Claude vim-mode note:
 - Some Claude crew panes run with vim-style input modes.
@@ -259,11 +402,21 @@ EOF
 ## Landing
 
 Do not let implementation owners improvise submodule landing.
+Do not merge, close, or call work landed outside the landing formula.
 
 For submodule-backed features:
 - use the `land-submodule-stack` formula
 - keep submodule PRs and the top-level pointer PR as one coordinated landing unit
 - delay submodule merges until the top-level PR is integration-tested and ready to merge
+
+Landing rule:
+- if a stack is ready to land, hand it to the landing formula
+- if manual QA or another gate is still pending, hold the stack at that gate and do not merge anything
+- if someone starts landing work outside the formula, intervene immediately and redirect them onto the formula path
+- do not close the parent epic as landed until the formula-run landing is complete
+- if you clear a dedicated landing worker off a finished or blocked landing task, immediately route them to the next landing task, not to general implementation work
+- when handing a new landing task to a dedicated landing worker, tell them explicitly to use the landing skill / landing formula on that task rather than improvising or switching back into implementation mode
+- P0 stacks jump the landing queue. If both a P0 and a P1 stack are ready to land, the landing worker must take the P0 first. If the landing worker is mid-flight on a non-P0 landing and a P0 becomes landing-ready, finish the current landing then immediately take the P0 next.
 
 Current landing formula:
 - `land-submodule-stack`
@@ -294,25 +447,40 @@ gt crew start xenota <name> --agent <codex|claude>
 
 Then nudge the fresh session with the new assignment.
 
+Dedicated landing-worker reassignment rule:
+- when the dedicated landing worker becomes free, first clear or restart the session so stale implementation context does not leak into the next landing task
+- then assign only the next landing-owned bead/epic that is actually at a landing or landing-readiness gate
+- in the handoff message, explicitly instruct the worker to use the landing skill / landing formula for the new task
+
+Landing-worker handoff pattern:
+
+```bash
+tmux kill-session -t xc-crew-<name>
+gt crew start xenota <name> --agent <codex|claude>
+gt nudge xenota/crew/<name> --mode immediate --message 'Your new active assignment is <landing-bead>. This is a landing task. Start immediately and use the landing skill / landing formula for this task. Do not switch into implementation or review work unless a real landing blocker forces an explicit reroute.'
+```
+
 For Claude sessions that may be in vim mode:
 - try the `Escape`-first tmux pattern before restarting
 - if the pane still stays at a prompt without consuming the instruction, restart and resend immediately
 
 ## Default Manage-Swarm Loop
 
-1. Check all crew panes.
-2. Check active gate polecats.
-3. For each active epic, verify there is a worker actively moving it now or an explicit active dependency.
-4. Classify each epic as `active now`, `idle but advanced`, `assigned only`, or `stalled`.
-5. Nudge idle owners onto the next slice immediately.
-6. Verify the nudge changed pane state or produced an explicit blocker reply.
-7. If the reply is a blocker, classify it as hard or soft and route the next action immediately.
-8. Re-check any worker who gave a blocker reply until they are moving, rerouted, or explicitly released.
-9. If nudging fails, move up the intervention ladder: restart, re-plan/reassign, then human escalation only if still unresolved.
-10. Convert completed implementation into review gate.
-11. Convert completed review into manual execution gate.
-12. Hand complete stacks to `land-submodule-stack`.
-13. Keep one summary in your own notes of who owns what, which PRs exist, and what gate is still open.
+1. **P0 scan**: Check for any open or in-progress P0 beads (`bd list -p P0 -s open --flat` and `bd list -p P0 -s in_progress --flat`). If any exist without an active worker, they take priority over everything below. Assign immediately, preempting lower-priority lanes if needed.
+2. **Bead pass**: List all children of the hooked epic. For each non-closed bead, check status, assignee, PR state, and classify.
+3. **Crew pass**: For each crew member, capture pane, check hook, branch, and classify. Identify idle crew.
+4. **Idle crew reallocation**: For each idle crew member, first check for unowned P0 beads, then scan the hooked epic's children for unassigned open work, beads needing review/manual-test/landing-prep, or stalled beads that need a fresh owner. Recommend or execute a concrete reassignment.
+4. Check active gate polecats.
+5. For each active bead, verify there is a worker actively moving it now or an explicit active dependency.
+6. Nudge idle owners onto the next slice immediately.
+7. Verify the nudge changed pane state or produced an explicit blocker reply.
+8. If the reply is a blocker, classify it as hard or soft and route the next action immediately.
+9. Re-check any worker who gave a blocker reply until they are moving, rerouted, or explicitly released.
+10. If nudging fails, move up the intervention ladder: restart, re-plan/reassign, then human escalation only if still unresolved.
+11. Convert completed implementation into review gate.
+12. Convert completed review into manual execution gate.
+13. Hand complete stacks to `land-submodule-stack` and do not allow any other landing path.
+14. Read previous `swarm-state.yaml`, build new state, write updated file, and output only the changes (transitions, new blockers, idle crew, PR state changes, ready-for-landing). If first run, output full state.
 
 ## Do Not
 
@@ -324,6 +492,9 @@ For Claude sessions that may be in vim mode:
 - Do not treat a blocker explanation as success if you have not routed the dependency or forced the next action.
 - Do not leave ownership ambiguous after a blocker claim.
 - Do not stop with an active task still idle if another intervention is available.
+- Do not send only micro-slice nudges when the real need is a standing order to keep chaining work on the same epic.
 - Do not start manual testing before review findings are resolved.
 - Do not merge submodule PRs early just because submodule tests pass.
+- Do not merge, close, or describe work as landed unless it went through the landing formula.
 - Do not leave a completed worker idle when another epic or gate needs an owner.
+- Do not reallocate the dedicated landing worker onto non-landing work just because they are free.

@@ -1,3 +1,6 @@
+# Swarm runtime state
+swarm-state.yaml
+
 # Claude Code state
 state.json
 .runtime/
