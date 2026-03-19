@@ -288,24 +288,38 @@ Do not print the full state every wrangle pass. Instead, report only what change
 - **Idle crew**: crew members that became idle with recommended next assignment
 - **Ready for landing**: beads newly reaching landing readiness
 
-If nothing changed, say "no changes since last wrangle" and skip the full dump.
+If nothing changed, say "no changes" and move on.
 
-If the state file does not exist (first wrangle), print the full state and create the file.
+If the state file does not exist (first wrangle), write the file but still only output a brief summary (crew count, active beads, idle crew, P0s, ready-for-landing). Do not dump the full YAML to the user.
+
+### Wrangle output format
+
+Keep wrangle output to a few lines. Example:
+
+```
+wrangle: 2 transitions, 1 idle crew reassigned, 1 P0 alert
+- starshot: idle -> active now (xc-ds1y.1.3)
+- prosperity: idle, assigned to xc-c77i (P0)
+- ready for landing: xc-ds1y.2 (human review)
+```
+
+The full state lives in `swarm-state.yaml`. The user can read it directly if they want detail. The wrangle output is a changelog, not a report.
 
 ### Ready for landing
 
-- always surface ready-for-landing beads in wrangle output, even if unchanged, so they do not get forgotten
-- for each item include the bead ID, title, and concrete gate status (e.g. `human review`, `manual QA`, `landing formula`, or `ready for landing owner`)
-- after reporting the wrangle result, re-arm the reminder injector in `xc-crew-earthshot:0.2` so it sleeps, then sends `wrangle the swarm` followed by a separate `Enter` into `xc-crew-earthshot:0.0`
-- prefer the live tmux shell-pane timer over detached background children, because detached `sleep` processes may be reaped before firing in this environment
-- choose the reminder delay from the current wrangle result:
-  - `20s` if 3 or more active lanes needed kicks/reassignment/restart
-  - `30s` if 2 active lanes needed kicks/reassignment/restart
-  - `45s` if 1 active lane needed a kick/reassignment/restart
-  - `60s` if no active lanes needed intervention
-- count only real interventions on active lanes for this purpose; do not speed up the timer just because you updated tracker metadata or observed already-moving work
+- always mention ready-for-landing beads in wrangle output, even if unchanged
+- one line each: bead ID, title, gate status
 
-Separate current state from recent history. Do not merge them into one judgment.
+### Reminder re-arm
+
+- after reporting, re-arm the reminder injector in `xc-crew-earthshot:0.2`
+- prefer the live tmux shell-pane timer over detached background children
+- choose the reminder delay from the current wrangle result:
+  - `20s` if 3+ active lanes needed kicks/reassignment/restart
+  - `30s` if 2 active lanes needed intervention
+  - `45s` if 1 active lane needed intervention
+  - `60s` if no intervention needed
+- count only real interventions, not metadata updates
 
 Reminder re-arm pattern:
 
