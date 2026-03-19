@@ -50,8 +50,11 @@ During every wrangle pass:
 - If a worker is moving, do not interrupt just to restate bead status.
 - If a worker is blocked by tracker noise or Dolt config but git/code work can continue, tell them to keep going.
 - If a worker is blocked by another person or unresolved review findings, make that explicit and route the dependency.
+- If the pane shows recent direct human input from the current chat session, treat that as a strong coordination signal: do not aggressively reallocate, redirect, or pile on messages just because the lane is momentarily paused.
+- When the human is present in the chat, only send a worker message if the worker is actually stuck and not working. Human-steered lanes should default to observation and minimal interference.
 - Never try to land work ad hoc. Every landing must go through the landing formula.
 - Treat dedicated landing workers as a landing-only pool. If someone is serving as the landing owner for the swarm (for example `last`), do not reallocate them to implementation, review, or manual-test beads.
+- If a landing blocker has already been explicitly routed back to an implementation owner, the landing worker must not start branch surgery on that same branch unless ownership is explicitly reassigned. Landing coordination and implementation refresh are separate lanes.
 
 Status rubric:
 - `active now`: the worker pane shows current execution, active reasoning, or a live gate they are presently driving
@@ -143,6 +146,7 @@ Interpretation:
 - repeated failed command or obvious confusion = intervene immediately
 - pane shows only historical summary or completed handoff text = likely idle, not active
 - no live output and no valid active dependency = classify as `assigned only` or `stalled`, not `active now`
+- recent human-authored prompts or instructions in the pane = be conservative; prefer letting that guidance play out before sending more messages or reallocating the lane
 
 Hard check before calling anything `active now`:
 1. Is the pane currently sitting at a prompt?
@@ -158,6 +162,7 @@ Idleness test:
 - worker idle + epic already handed to a reviewer/manual tester/landing owner = acceptable
 - recent commits or PRs without current active work do not count as progress
 - if an active task remains idle after one intervention cycle, escalate within the ladder immediately rather than waiting
+- exception: if the pane shows current-session human steering and the worker has not yet had a fair chance to act on it, do not treat the lane as intervention-ready just because it is briefly idle
 
 Post-nudge verification:
 1. Send the nudge with a standing order plus the exact next action and required reply shape
@@ -168,6 +173,7 @@ Post-nudge verification:
 4. If the pane is still sitting at a prompt with no new motion, do not mark the epic as moving
 5. If the nudge landed but the pane did not change, escalate: resend with sharper instruction, use Escape-first tmux injection, or restart/reassign
 6. If the worker completes one slice and returns to a prompt without a blocker, treat that as non-compliance with the standing order and intervene again immediately
+7. If the human is actively steering the lane from chat, do not keep nudging on top of that unless the worker is clearly stuck and not working
 
 Session family map for this swarm:
 - Claude panes are the ones whose tmux title explicitly shows `Claude Code` (for example `xc-crew-earthshot:0.1`)
@@ -196,6 +202,7 @@ Intervention ladder:
 1. `nudge and check`
    - send an exact next action
    - re-capture the pane and verify motion or an explicit blocker reply
+   - if recent human input is visible in the pane and the worker is not clearly stuck, skip this step and continue observing instead of layering more instructions
 2. `restart worker`
    - if the pane is wedged, ignoring input, or stuck in bad modal/editor state
    - use Escape-first injection first for Claude panes, then restart if still dead
@@ -203,6 +210,7 @@ Intervention ladder:
 3. `reconfigure task plan and reassign`
    - if the current owner cannot productively advance the slice
    - break the work into a more concrete next bead, reroute ownership, or move the worker to a better-fit slice
+   - do not jump to reassignment while the current human is visibly steering the worker unless the lane is truly stuck and non-productive
 4. `escalate to human`
    - only when the blocker is genuinely high-leverage and cannot be resolved through nudging, restart, or reassignment
    - escalation should include the exact blocker, what was tried, and the concrete decision needed
@@ -314,6 +322,7 @@ The full state lives in `swarm-state.yaml`. The user can read it directly if the
 
 - after reporting, re-arm the reminder injector in `xc-crew-earthshot:0.2`
 - prefer the live tmux shell-pane timer over detached background children
+- treat the timer pane as an operational surface, not just a command sink
 - choose the reminder delay from the current wrangle result:
   - `20s` if 3+ active lanes needed kicks/reassignment/restart
   - `30s` if 2 active lanes needed intervention
@@ -326,6 +335,31 @@ Reminder re-arm pattern:
 ```bash
 tmux send-keys -t xc-crew-earthshot:0.2 'sleep <SECONDS>; /opt/homebrew/bin/tmux -L gt send-keys -t xc-crew-earthshot:0.0 "wrangle the swarm"; sleep 1; /opt/homebrew/bin/tmux -L gt send-keys -t xc-crew-earthshot:0.0 Enter' C-m
 ```
+
+Timer pane hygiene:
+
+- before re-arming, stop any currently running timer in the pane with `Ctrl-C`
+- if the pane still shows stacked old timer commands or noisy shell output, clean it before re-arming:
+
+```bash
+tmux send-keys -t xc-crew-earthshot:0.2 C-c
+tmux clear-history -t xc-crew-earthshot:0.2
+tmux send-keys -t xc-crew-earthshot:0.2 'clear' Enter
+```
+
+- then inject exactly one fresh timer arm with the reminder re-arm pattern above
+
+Post-arm verification:
+
+- re-arm is not complete until you re-capture `xc-crew-earthshot:0.2` and verify the pane is operationally clean
+- acceptable outcomes:
+  - a clean prompt plus one current timer arm
+  - a clearly running timer command with no stacked stale arms above it
+- unacceptable outcomes:
+  - multiple old `sleep ... tmux send-keys ...` arms still visible in the active viewport
+  - visibly dirty pane state where it is unclear which arm is current
+- if the pane is still dirty after the first arm attempt, do not claim success; repeat the hygiene sequence and re-arm once more
+- if it still remains visually dirty, report the re-arm as unverified instead of pretending it succeeded
 
 Claude vim-mode note:
 - Some Claude crew panes run with vim-style input modes.
