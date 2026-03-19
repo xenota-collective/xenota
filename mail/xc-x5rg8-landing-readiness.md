@@ -9,6 +9,7 @@ Top-level repo state:
 Implementation reality:
 - the xenon implementation is already landed on `xenon/main`
 - current top-level `main` already tracks a newer `xenon` commit than the original `xc-x5rg8` landing work
+- this landing branch adds a follow-on `xenon-cli` warm-up reliability fix via `xenon#26`
 
 Key landed xenon evidence:
 - `4712094` `add projection auto-spawn and idle-sleep with lifecycle persistence`
@@ -78,15 +79,15 @@ Fresh manual rerun completed on `2026-03-19` against current `xenon/main`:
   - `xc-x5rg8-sleeper` container removed
   - live nucleus `xenon-152f4bf8_nucleus_1` restored on `127.0.0.1:7600`
 
-## Operator Note
-
-Fresh disposable instances have a startup race immediately after:
-
-`xn up -d && xn status && xn state projections .`
-
-The final `xn state projections .` can fail before `console.json` is written.
-A short wait/retry resolves it. This is operator context, not a blocker to the
-validated lifecycle behavior.
+Follow-on CLI hardening now staged in this landing path:
+- `xenon#26` updates `xenon-cli` to retry warm-up handshakes and read-only
+  console state requests with a fresh bearer token
+- mutating console POSTs remain single-shot so the CLI does not replay side
+  effects on disconnect
+- local validation for the follow-on fix:
+  - `uv run --directory xenon/xenon-cli pytest`
+  - `uv run --directory xenon/xenon-cli black --check src tests`
+  - `uv run --directory xenon/xenon-cli flake8 src tests`
 
 ## Current Landing Decision
 
@@ -99,7 +100,7 @@ because:
   metadata, and packet artifacts
 
 This refreshed PR is the real top-level landing vehicle for the remaining human
-review/manual-QA gate.
+review/manual-QA gate, including the `xenon#26` follow-on reliability fix.
 
 ## Human Verification Checklist
 
@@ -107,12 +108,12 @@ review/manual-QA gate.
    landed xenon reality.
 2. Review the fresh `2026-03-19` rerun evidence together with the
    `2026-03-17` transcript and confirm manual QA is satisfied.
-3. Confirm the `console.json` startup race is acceptable as operator context,
-   not as a blocker.
+3. Review `xenon#26` and confirm the warm-up retry fix is acceptable for the
+   landing stack.
 4. Confirm this refreshed top-level PR should replace the prior placeholder
    interpretation of `xenota#12`.
 
 ## Final Merge Intent
 
-If human review/manual-QA accepts the existing packet, this top-level PR can be
-merged and `xc-x5rg8` can then be closed as landed.
+If human review/manual-QA accepts the existing packet, merge `xenon#26` first,
+then merge this top-level PR and close `xc-x5rg8` as landed.
