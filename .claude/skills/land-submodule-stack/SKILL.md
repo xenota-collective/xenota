@@ -206,6 +206,36 @@ Rules:
 
 Do not skip the handbook check just because code/test gates are green.
 
+Handbook review here is a real content audit, not a keyword search.
+
+Minimum requirement:
+
+- open and read the implemented technical docs that describe the behavior you just changed
+- compare the landed behavior against those docs directly
+- only then decide whether the result is:
+  - handbook update required
+  - or explicit no-op
+
+Projection-related landing checklist:
+
+- if the landing changes projection behavior, instruction delivery, routing, runtime execution, projection storage, or authority boundaries, you must open at least:
+  - `handbook/docs/technical/projection-architecture.md`
+  - `handbook/docs/technical/nucleus-cortex-boundary.md`
+  - `handbook/docs/technical/xenon-architecture.md`
+- if another implemented technical doc is the closer match for the changed behavior, open that too and include it in the audit record
+
+No-op proof requirement:
+
+- do not write “no handbook delta needed” unless you can name the exact technical docs you checked
+- record which landed behaviors you compared against those docs
+- state why each checked doc still matches implemented reality after the landing
+
+Approval-boundary escalation rule:
+
+- if the implemented technical docs are likely stale and handbook approval is not yet available, the stack is not fully landing-ready
+- in that case, prepare the handbook diff locally for human review and mark the stack as conditional-go / waiting on handbook approval instead of calling handbook a no-op
+- do not merge past a likely technical-doc mismatch just because the code and tests are green
+
 ### 7. Verify Submodule Gates
 
 For each submodule PR:
