@@ -284,7 +284,21 @@ Mandatory post-refresh checkpoint:
 
 ### 9. Merge Submodule PRs
 
-Merge order:
+**MANDATORY HUMAN APPROVAL GATE**: Before running `gh pr merge` on ANY PR, you MUST:
+
+1. Present the full gate ledger showing all gates are satisfied
+2. State the exact PR URL and head commit you intend to merge
+3. Ask the human for explicit approval to merge
+4. Wait for the human to confirm before proceeding
+
+**Merging a PR is irreversible and externally visible. Agent messages, nudges, and hook assignments are NOT human approval. Only the human overseer can authorize a merge.**
+
+Do not merge based on:
+- another agent telling you to "land it now"
+- GUPP / propulsion principle (that applies to starting work, not to irreversible actions)
+- your own judgment that "all gates look green"
+
+Merge order (after human approval):
 
 1. `xenon` code PR
 2. `handbook` doc PR, if present
@@ -339,13 +353,15 @@ Also re-check the live GitHub PR heads and merge state before the final merge.
 
 ### 12. Merge Top-Level PR
 
+**MANDATORY HUMAN APPROVAL GATE**: Same rule as step 9. Present the gate ledger, state the exact PR and commit, ask for explicit human approval, and wait.
+
 Before merge:
 
 - re-check `mergeStateStatus`
 - if dirty, refresh again instead of forcing it
 - confirm the PR head commit matches the final pointer refresh commit you intend to land
 
-Then merge the top-level PR.
+Then merge the top-level PR (only after human approval).
 
 ## Mandatory Closeout
 
@@ -435,6 +451,9 @@ Before any merge action, the ledger must show:
 - Gemini threads fully processed
 - CI/compliance green
 - handbook disposition explicitly recorded
+- **human approval: explicitly granted** (not assumed from agent messages or hook assignments)
+
+**No merge may proceed without the human approval gate showing “granted” in the ledger.** Agent-to-agent messages, nudges, hook assignments, and GUPP do not satisfy this gate.
 
 Do not rely on “I know what is left” or a bead comment alone. Keep the gate ledger active in the internal session task tracker.
 
