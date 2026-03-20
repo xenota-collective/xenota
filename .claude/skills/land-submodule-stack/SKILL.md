@@ -34,6 +34,16 @@ It replaces the old landing formula path for submodule-backed stacks.
 
 At the start of every landing run, create and maintain a concrete task list for the stack.
 
+Use the agent's internal session task tracker/plan to hold this list live during the landing run.
+
+Rules for the internal task tracker:
+
+- initialize it before substantial landing work begins
+- keep exactly one step `in_progress` at a time
+- update it after every major landing slice completes or changes direction
+- do not treat memory or bead comments as a substitute for the internal task tracker
+- beads remain the persistent project tracker; the internal task tracker is the live execution checklist for this landing session
+
 The list must include, at minimum:
 
 1. resolve stack and PR heads
@@ -53,6 +63,7 @@ The list must include, at minimum:
 13. checkout `main` and realign submodules
 
 Do not begin landing without first making the task list explicit in your working notes or user update.
+Do not let the internal task tracker drift out of sync with the actual landing state.
 
 ## Preflight
 
@@ -258,6 +269,19 @@ If `main` moved in any repo:
 
 For submodule PRs, do this in the submodule repo first.
 
+Mandatory post-refresh checkpoint:
+
+- stop after the refresh push and update the internal task tracker
+- explicitly re-evaluate the remaining landing gates before continuing
+- at minimum, record the current status of:
+  - design council review
+  - Gemini thread handling
+  - manual testing
+  - GitHub CI/compliance
+  - handbook audit / no-op proof / approval gate
+- do not continue from “branch is mergeable again” straight to merge prep
+- a successful refresh clears stale-branch blockers only; it does not satisfy the rest of the landing formula
+
 ### 9. Merge Submodule PRs
 
 Merge order:
@@ -391,6 +415,28 @@ When reporting landing state, use:
 - `merge order`: what merged, in what order
 - `alignment`: final submodule and PR-head verification
 - `final state`: merged commit SHAs and local workspace alignment
+
+## Live Gate Ledger
+
+Keep a visible gate ledger in the internal task tracker or working notes throughout the landing.
+
+Minimum gates to track explicitly:
+
+- design council: not started / in progress / complete with verdict
+- Gemini review threads: unresolved / replied / fixed / declined
+- manual testing: not started / running / passed / failed
+- GitHub CI/compliance: pending / green / failing
+- handbook: audit pending / no-op proven / update prepared / awaiting approval / landed
+- merge readiness: blocked / conditional-go / ready to merge / merged
+
+Before any merge action, the ledger must show:
+
+- design council complete
+- Gemini threads fully processed
+- CI/compliance green
+- handbook disposition explicitly recorded
+
+Do not rely on “I know what is left” or a bead comment alone. Keep the gate ledger active in the internal session task tracker.
 
 ## Anti-Patterns
 
