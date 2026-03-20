@@ -30,6 +30,21 @@ During every wrangle pass:
 4. When a P0 bead reaches landing readiness, it jumps the landing queue. The dedicated landing worker should land P0 stacks before any other pending landing.
 5. P0 beads that are blocked must be escalated to the human immediately, not parked.
 
+## Branch and PR Discipline
+
+Workers MUST use feature branches and PRs. Direct pushes to main are a policy violation.
+
+Related skills that workers must follow:
+- **start-feature**: How to begin work — branch naming, rebase off origin/main, bead hygiene
+- **prepare-review**: How to submit work — rebase, test, create PR with bead reference
+
+Every nudge assigning new work must tell the worker to read start-feature first. Every nudge about completed work must tell the worker to read prepare-review.
+
+If you detect a worker has pushed directly to main (check with `git log --oneline origin/main -5 --format='%h %an | %s'`), immediately:
+1. Flag it as a violation in the wrangle output
+2. Nudge the worker to stop and read start-feature
+3. Escalate to the human if it keeps happening
+
 ## Core Rules
 
 - Prefer direct evidence from live tmux panes over bead status when checking whether someone is actually working.
@@ -53,6 +68,7 @@ During every wrangle pass:
 - If the pane shows recent direct human input from the current chat session, treat that as a strong coordination signal: do not aggressively reallocate, redirect, or pile on messages just because the lane is momentarily paused.
 - When the human is present in the chat, only send a worker message if the worker is actually stuck and not working. Human-steered lanes should default to observation and minimal interference.
 - Never try to land work ad hoc. Every landing must go through the landing formula.
+- Never treat a worker handoff as merge authorization. Landing workers must still read the landing skill and wait for explicit human approval before any merge.
 - Treat dedicated landing workers as a landing-only pool. If someone is serving as the landing owner for the swarm (for example `last`), do not reallocate them to implementation, review, or manual-test beads.
 - If a landing blocker has already been explicitly routed back to an implementation owner, the landing worker must not start branch surgery on that same branch unless ownership is explicitly reassigned. Landing coordination and implementation refresh are separate lanes.
 
@@ -94,12 +110,13 @@ Standing-order nudge pattern:
 - tell the worker to choose and execute the next concrete slice themselves after each completed slice
 - do not train the worker to optimize for a rigid reply format instead of execution
 - tell the worker not to merge or land anything themselves unless they are the designated landing owner and using the landing formula
+- if you assign a landing task, explicitly tell the worker to read the landing skill before acting and to stop for human approval once the branch/PR is merge-ready
 - if the worker includes `NEXT` / `BLOCKED`, treat it as optional status metadata, not the main objective
 
 Preferred wording:
 
 ```bash
-gt nudge xenota/crew/<name> --mode immediate --message 'Your active assignment is <epic>. Start immediately. Never stop at a passing test, summary, or completed micro-slice. After each slice, choose and execute the next concrete slice on the same epic yourself. If you are not truly blocked, keep going instead of composing a status reply. Only stop at a real blocker or an explicit handoff gate.'
+gt nudge xenota/crew/<name> --mode immediate --message 'Your active assignment is <bead>. Read the start-feature skill FIRST — you must work on a feature branch off origin/main, never push to main. Branch name: <crew>/<bead-id>-<slug>. Start immediately. Never stop at a passing test, summary, or completed micro-slice. After each slice, choose and execute the next concrete slice yourself. When your work is complete, read the prepare-review skill and submit a PR. Do not push to main. Do not merge anything. Only stop at a real blocker or an explicit handoff gate.'
 ```
 
 Do not use:
@@ -203,10 +220,11 @@ Intervention ladder:
    - send an exact next action
    - re-capture the pane and verify motion or an explicit blocker reply
    - if recent human input is visible in the pane and the worker is not clearly stuck, skip this step and continue observing instead of layering more instructions
-2. `restart worker`
+2. `reset worker`
    - if the pane is wedged, ignoring input, or stuck in bad modal/editor state
-   - use Escape-first injection first for Claude panes, then restart if still dead
-   - if a worker remains a repeat offender across multiple wrangle passes, close the crew session entirely and start a fresh one rather than preserving poisoned long-lived context
+   - use Escape-first injection first for Claude panes, then `/clear` if still dead
+   - if a worker remains a repeat offender across multiple wrangle passes, `/clear` the session and re-nudge with a fresh standing order rather than preserving poisoned long-lived context
+   - do NOT kill crew sessions — use `/clear` to reset context within the running session
 3. `reconfigure task plan and reassign`
    - if the current owner cannot productively advance the slice
    - break the work into a more concrete next bead, reroute ownership, or move the worker to a better-fit slice
@@ -223,7 +241,7 @@ Never-stop rule:
   - a human decision is truly required and the escalation states exactly why
 - Do not leave an active task in a parked state just because you understand the situation.
 - Do not accept "completed one requested slice" as sufficient if the epic still has obvious next work and no real blocker.
-- If the same crew session repeatedly fails to take reassignment or keeps reviving stale context, escalate from soft resets to full close-and-restart instead of repeating the same weak intervention.
+- If the same crew session repeatedly fails to take reassignment or keeps reviving stale context, `/clear` and re-nudge with explicit fresh instructions instead of repeating the same weak intervention.
 
 Epic classification pass:
 1. Read the worker pane
@@ -463,7 +481,9 @@ Landing rule:
 - if someone starts landing work outside the formula, intervene immediately and redirect them onto the formula path
 - do not close the parent epic as landed until the formula-run landing is complete
 - if you clear a dedicated landing worker off a finished or blocked landing task, immediately route them to the next landing task, not to general implementation work
-- when handing a new landing task to a dedicated landing worker, tell them explicitly to use the landing skill / landing formula on that task rather than improvising or switching back into implementation mode
+- when handing a new landing task to a dedicated landing worker, tell them explicitly to read the landing skill / landing formula before acting on that task rather than improvising or switching back into implementation mode
+- landing workers must get explicit human approval in the current session before running any merge command or taking any action that actually lands the branch/PR
+- readiness to merge is a stop-and-escalate gate, not implicit permission to merge
 - P0 stacks jump the landing queue. If both a P0 and a P1 stack are ready to land, the landing worker must take the P0 first. If the landing worker is mid-flight on a non-P0 landing and a P0 becomes landing-ready, finish the current landing then immediately take the P0 next.
 
 Current landing formula:
@@ -488,36 +508,63 @@ If a crew member finishes or reaches a real wait-state:
 
 Session reset pattern:
 
+Do NOT kill crew sessions. Instead, use `/clear` to reset context within the running session:
+
 ```bash
-tmux kill-session -t xc-crew-<name>
-gt crew start xenota <name> --agent <codex|claude>
+tmux send-keys -t xc-crew-<name>:0.0 '/clear' Enter
 ```
 
-Then nudge the fresh session with the new assignment.
+Then nudge the cleared session with the new assignment.
 
 Dedicated landing-worker reassignment rule:
-- when the dedicated landing worker becomes free, first clear or restart the session so stale implementation context does not leak into the next landing task
+- when the dedicated landing worker becomes free, first `/clear` the session so stale implementation context does not leak into the next landing task
 - then assign only the next landing-owned bead/epic that is actually at a landing or landing-readiness gate
-- in the handoff message, explicitly instruct the worker to use the landing skill / landing formula for the new task
+- in the handoff message, explicitly instruct the worker to read and follow the landing skill / landing formula for the new task
+- in the handoff message, explicitly instruct the worker that they must stop and request human approval once the branch/PR is ready to merge
 
 Landing-worker handoff pattern:
 
 ```bash
-tmux kill-session -t xc-crew-<name>
-gt crew start xenota <name> --agent <codex|claude>
-gt nudge xenota/crew/<name> --mode immediate --message 'Your new active assignment is <landing-bead>. This is a landing task. Start immediately and use the landing skill / landing formula for this task. Do not switch into implementation or review work unless a real landing blocker forces an explicit reroute.'
+tmux send-keys -t xc-crew-<name>:0.0 '/clear' Enter
+gt nudge xenota/crew/<name> --mode immediate --message 'Your new active assignment is <landing-bead>. This is a landing task. Read the landing skill / landing formula before taking any landing action. Start immediately and use that formula for this task. Do not switch into implementation or review work unless a real landing blocker forces an explicit reroute. Do not merge on your own authority. When the branch/PR is ready, stop and ask the human for approval before merging.'
 ```
 
+Required landing handoff wording elements:
+- "Read the landing skill before you take any landing action"
+- "Do not merge on your own authority"
+- "When the branch/PR is ready, stop and ask the human for approval before merging"
+
 For Claude sessions that may be in vim mode:
-- try the `Escape`-first tmux pattern before restarting
-- if the pane still stays at a prompt without consuming the instruction, restart and resend immediately
+- try the `Escape`-first tmux pattern before `/clear`
+- if the pane still stays at a prompt without consuming the instruction, `/clear` and re-nudge immediately
+
+## Work Priority Order
+
+Every allocation decision — whether assigning idle crew, preempting, or choosing the next slice — follows this strict priority cascade:
+
+1. **P0 beads** — absolute top priority, any open or in-progress P0 regardless of parent epic
+2. **Assigned epic children** — any workable bead within the earthshot-assigned epic (currently xc-ds1y) and its full child tree, ordered by priority within that tree
+3. **Standalone P1 beads** — any P1 bead that is not a child of the assigned epic (e.g. standalone tasks, bugs, follow-ups)
+4. **Other P1 epics and their children** — P1 epics outside the assigned epic tree, pick the most advanced or unblocked child
+5. **P2 and below** — only when all of the above are either fully staffed or blocked
+
+An idle crew member is a failure state. The wrangler must always assign work from the highest available tier. If there is genuinely no workable bead at any tier — no open P0s, no unworked children of the assigned epic, no standalone P1s, no other P1 epic children — then the wrangler MUST escalate loudly to the human:
+
+```
+ESCALATION: {N} crew members idle with no workable beads.
+The backlog is empty or fully blocked. Human must scope new work,
+create beads, or unblock gates before capacity is wasted.
+Idle crew: {list names}
+```
+
+Do not silently accept idle workers. Do not park them on research or cleanup unless explicitly told to by the human. Unused capacity is wasted money.
 
 ## Default Manage-Swarm Loop
 
 1. **P0 scan**: Check for any open or in-progress P0 beads (`bd list -p P0 -s open --flat` and `bd list -p P0 -s in_progress --flat`). If any exist without an active worker, they take priority over everything below. Assign immediately, preempting lower-priority lanes if needed.
 2. **Bead pass**: List all children of the hooked epic. For each non-closed bead, check status, assignee, PR state, and classify.
 3. **Crew pass**: For each crew member, capture pane, check hook, branch, and classify. Identify idle crew.
-4. **Idle crew reallocation**: For each idle crew member, first check for unowned P0 beads, then scan the hooked epic's children for unassigned open work, beads needing review/manual-test/landing-prep, or stalled beads that need a fresh owner. Recommend or execute a concrete reassignment.
+4. **Idle crew reallocation**: For each idle crew member, walk the Work Priority Order top to bottom. Assign the first workable bead found. If no workable bead exists at any tier, escalate to the human immediately — do not leave the crew member parked.
 4. Check active gate polecats.
 5. For each active bead, verify there is a worker actively moving it now or an explicit active dependency.
 6. Nudge idle owners onto the next slice immediately.
@@ -546,3 +593,6 @@ For Claude sessions that may be in vim mode:
 - Do not merge, close, or describe work as landed unless it went through the landing formula.
 - Do not leave a completed worker idle when another epic or gate needs an owner.
 - Do not reallocate the dedicated landing worker onto non-landing work just because they are free.
+- Do not silently accept idle crew. If a worker has no bead, walk the Work Priority Order and assign one. If the backlog is genuinely empty, escalate loudly to the human.
+- Do not skip priority tiers. P0 first, then assigned epic children, then standalone P1s, then other P1 epics. Never assign P2 work while P1 work is available.
+- Do not park idle workers on vague research or cleanup to avoid escalation. If there is no scoped bead, tell the human to scope more work.
