@@ -65,7 +65,7 @@ sleep 1
 if (( next_wrangle_count % 5 == 0 )); then
   arm_cmd="sleep ${seconds}; ${script_dir}/restart_wrangle.sh"
 else
-  arm_cmd="sleep ${seconds}; /opt/homebrew/bin/tmux -L gt send-keys -t ${worker_target} 'wrangle the swarm'; sleep 1; /opt/homebrew/bin/tmux -L gt send-keys -t ${worker_target} Enter"
+  arm_cmd="sleep ${seconds}; ${script_dir}/send_worker_message.sh ${worker_target} 'wrangle the swarm'"
 fi
 
 "${tmux_cmd[@]}" send-keys -t "$timer_target" "$arm_cmd" C-m

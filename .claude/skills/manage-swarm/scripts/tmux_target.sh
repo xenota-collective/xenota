@@ -4,6 +4,21 @@ set -euo pipefail
 tmux_cmd=(/opt/homebrew/bin/tmux -L gt)
 default_shell="${SHELL:-/bin/zsh} -l"
 
+tmux_pane_title() {
+  local target="$1"
+  "${tmux_cmd[@]}" display-message -p -t "$target" '#{pane_title}'
+}
+
+tmux_pane_current_command() {
+  local target="$1"
+  "${tmux_cmd[@]}" display-message -p -t "$target" '#{pane_current_command}'
+}
+
+tmux_pane_start_command() {
+  local target="$1"
+  "${tmux_cmd[@]}" display-message -p -t "$target" '#{pane_start_command}'
+}
+
 tmux_recent_pane_text() {
   local target="$1"
   "${tmux_cmd[@]}" capture-pane -p -t "$target"
@@ -63,6 +78,127 @@ tmux_pane_looks_like_agent_ui() {
   return 1
 }
 
+tmux_pane_family() {
+  local target="$1"
+  local pane_title current_command start_command recent
+
+  pane_title="$(tmux_pane_title "$target")"
+  current_command="$(tmux_pane_current_command "$target")"
+  start_command="$(tmux_pane_start_command "$target")"
+  recent="$(tmux_recent_pane_text "$target")"
+
+  if [[ "$pane_title" == *"Claude Code"* ]] || [[ "$start_command" == *"/claude"* ]] || grep -Fq 'Claude Code' <<<"$recent"; then
+    printf 'claude\n'
+    return 0
+  fi
+
+  if [[ "$start_command" == *"gemini"* ]] || grep -Fq 'Type your message' <<<"$recent" || grep -Fq '? for shortcuts' <<<"$recent"; then
+    printf 'gemini\n'
+    return 0
+  fi
+
+  if [[ "$start_command" == *"codex"* ]] || grep -Fq 'OpenAI Codex' <<<"$recent"; then
+    printf 'codex\n'
+    return 0
+  fi
+
+  if [[ "$current_command" == "zsh" || "$current_command" == "bash" || "$current_command" == "fish" || "$current_command" == "sh" ]]; then
+    printf 'shell\n'
+    return 0
+  fi
+
+  if tmux_pane_looks_like_agent_ui "$recent"; then
+    printf 'agent\n'
+    return 0
+  fi
+
+  printf 'shell\n'
+}
+
+tmux_clear_reset_command() {
+  local family="$1"
+
+  case "$family" in
+    claude|gemini|codex|agent)
+      printf '/clear\n'
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+tmux_send_raw_keys() {
+  local target="$1"
+  shift
+  "${tmux_cmd[@]}" send-keys -t "$target" "$@"
+}
+
+tmux_send_literal_text() {
+  local target="$1"
+  local text="$2"
+
+  if [[ "$text" == *$'\n'* ]]; then
+    "${tmux_cmd[@]}" set-buffer -- "$text"
+    "${tmux_cmd[@]}" paste-buffer -d -t "$target"
+    return 0
+  fi
+
+  "${tmux_cmd[@]}" send-keys -t "$target" -l "$text"
+}
+
+tmux_prepare_prompt_for_input() {
+  local target="$1"
+  local family
+
+  family="$(tmux_pane_family "$target")"
+
+  case "$family" in
+    shell)
+      tmux_send_raw_keys "$target" Escape
+      sleep 0.2
+      tmux_send_raw_keys "$target" C-c
+      sleep 0.2
+      tmux_send_raw_keys "$target" C-u
+      ;;
+    gemini)
+      tmux_send_raw_keys "$target" Escape
+      sleep 0.2
+      tmux_send_raw_keys "$target" Escape
+      sleep 0.2
+      tmux_send_raw_keys "$target" C-u
+      ;;
+    claude|codex|agent)
+      tmux_send_raw_keys "$target" Escape
+      sleep 0.2
+      tmux_send_raw_keys "$target" C-u
+      ;;
+    *)
+      tmux_send_raw_keys "$target" Escape
+      sleep 0.2
+      tmux_send_raw_keys "$target" C-u
+      ;;
+  esac
+}
+
+tmux_recent_has_command_rejection() {
+  local recent="$1"
+
+  if grep -Fq 'What should Claude do instead?' <<<"$recent"; then
+    return 0
+  fi
+
+  if grep -Fq "Unrecognized command '/" <<<"$recent"; then
+    return 0
+  fi
+
+  if grep -Eq 'no such file or directory: /|command not found: /' <<<"$recent"; then
+    return 0
+  fi
+
+  return 1
+}
+
 tmux_wait_for_ready_prompt() {
   local target="$1"
   local attempts="${2:-15}"
@@ -70,6 +206,9 @@ tmux_wait_for_ready_prompt() {
 
   for (( attempt = 1; attempt <= attempts; attempt += 1 )); do
     recent="$(tmux_recent_pane_text "$target")"
+    if tmux_recent_has_command_rejection "$recent"; then
+      return 1
+    fi
     if tmux_pane_ready_for_input "$recent"; then
       return 0
     fi
@@ -77,6 +216,45 @@ tmux_wait_for_ready_prompt() {
   done
 
   return 1
+}
+
+tmux_send_prompt_line() {
+  local target="$1"
+  local text="$2"
+
+  tmux_prepare_prompt_for_input "$target"
+  sleep 0.2
+  tmux_send_literal_text "$target" "$text"
+  sleep 0.2
+  tmux_send_raw_keys "$target" Enter
+}
+
+tmux_wait_for_text() {
+  local target="$1"
+  local needle="$2"
+  local attempts="${3:-10}"
+  local attempt recent
+
+  for (( attempt = 1; attempt <= attempts; attempt += 1 )); do
+    recent="$(tmux_recent_pane_text "$target")"
+    if grep -Fq "$needle" <<<"$recent"; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  return 1
+}
+
+tmux_reset_session() {
+  local target="$1"
+  local family clear_command
+
+  family="$(tmux_pane_family "$target")"
+  clear_command="$(tmux_clear_reset_command "$family")" || return 1
+
+  tmux_send_prompt_line "$target" "$clear_command"
+  tmux_wait_for_ready_prompt "$target"
 }
 
 tmux_target_exists() {
