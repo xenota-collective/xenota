@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$script_dir/tmux_target.sh"
+
 if [[ $# -lt 1 || $# -gt 2 ]]; then
   echo "usage: $0 <seconds> [state-file]" >&2
   exit 2
@@ -51,9 +54,8 @@ awk -v next_count="$next_wrangle_count" '
 }
 mv "$tmp_file" "$state_file"
 
-tmux_cmd=(/opt/homebrew/bin/tmux -L gt)
-timer_target="xc-crew-earthshot:0.2"
-worker_target="xc-crew-earthshot:0.0"
+timer_target="$(resolve_earthshot_timer_target)"
+worker_target="$(resolve_earthshot_worker_target)"
 
 "${tmux_cmd[@]}" send-keys -t "$timer_target" C-c
 "${tmux_cmd[@]}" clear-history -t "$timer_target"
@@ -61,8 +63,7 @@ worker_target="xc-crew-earthshot:0.0"
 sleep 1
 
 if (( next_wrangle_count % 5 == 0 )); then
-  # Correct every-5th-pass re-arm with separate /clear and Enter
-  arm_cmd="sleep ${seconds}; /opt/homebrew/bin/tmux -L gt send-keys -t ${worker_target} '/clear'; sleep 1; /opt/homebrew/bin/tmux -L gt send-keys -t ${worker_target} Enter; sleep 3; /opt/homebrew/bin/tmux -L gt send-keys -t ${worker_target} 'read the manage-swarm skill, then wrangle the swarm'; sleep 1; /opt/homebrew/bin/tmux -L gt send-keys -t ${worker_target} Enter"
+  arm_cmd="sleep ${seconds}; ${script_dir}/restart_wrangle.sh"
 else
   arm_cmd="sleep ${seconds}; /opt/homebrew/bin/tmux -L gt send-keys -t ${worker_target} 'wrangle the swarm'; sleep 1; /opt/homebrew/bin/tmux -L gt send-keys -t ${worker_target} Enter"
 fi
