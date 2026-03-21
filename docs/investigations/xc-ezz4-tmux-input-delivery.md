@@ -1,5 +1,7 @@
 # xc-ezz4: tmux send-keys Input Delivery Investigation
 
+> **Scope**: Investigation record only. Not operational guidance. No code changes.
+
 ## Problem
 
 During live reset testing on disposable session `xc-crew-resettest-claude:0.0`,
@@ -15,6 +17,9 @@ warning), `tmux send-keys -l` delivers text to the pane's terminal input
 successfully (return code 0), but the dialog's input handler discards
 non-navigation keystrokes. The text is consumed and permanently lost — it does
 not appear in the input buffer after the dialog is dismissed.
+
+This manifests when sessions bypass the standard `AcceptStartupDialogs` call
+(e.g., manually created disposable test lanes that skip the `gt` spawn path).
 
 ### Reproduction Steps
 
@@ -37,25 +42,10 @@ not appear in the input buffer after the dialog is dismissed.
 
 5. Observe: Claude prompt is empty. "hello" was consumed by the dialog.
 
-### What the disposable test lane did wrong
-
-The `xc-crew-resettest-claude` session was created manually (not through the
-standard `gt` spawn path), so it **did not call `AcceptStartupDialogs`** before
-attempting to send input. The standard polecat/crew/daemon spawn paths all call
-`AcceptStartupDialogs` after `WaitForCommand`, which handles this.
-
 ## Existing Mitigations
 
-The gastown codebase already has comprehensive dialog handling:
-
-- `AcceptStartupDialogs()` — polls for trust + bypass dialogs and dismisses them
-- `AcceptWorkspaceTrustDialog()` — polls with 8s timeout, 500ms interval
-- `AcceptBypassPermissionsWarning()` — polls for bypass dialog
-- `DismissStartupDialogsBlind()` — blind sequence for remediation
-
-All standard spawn paths (`polecat_spawn`, `crew/manager`, `daemon/lifecycle`,
-`witness/manager`, `refinery/manager`, `deacon/manager`) correctly call
-`AcceptStartupDialogs` after session creation.
+All standard spawn paths call `AcceptStartupDialogs` after session creation,
+which polls for and dismisses trust/bypass dialogs before input is sent.
 
 ## Key Findings
 
@@ -65,27 +55,25 @@ All standard spawn paths (`polecat_spawn`, `crew/manager`, `daemon/lifecycle`,
 2. **Not a detached-session issue.** `send-keys` works correctly on detached
    Claude sessions that have passed the dialog phase.
 
-3. **Not a timing race (mostly).** Even text sent before Claude finishes
-   initializing ends up in the input buffer correctly — unless a dialog
-   intercepts it.
+3. **Not a general timing race.** Text sent before init completes lands in the
+   buffer correctly. The failure is specifically dialog interception, not
+   general timing.
 
 4. **The `sendKeysLiteralWithRetry` function cannot detect dialog state.** It
    only retries on transient tmux errors (session gone, server down), not on
    application-level input rejection.
 
-## Recommendations
+## Confirmed Mitigation
 
-1. **For manual/disposable test lanes**: Always call `AcceptStartupDialogs` (or
-   `DismissStartupDialogsBlind`) before sending any input. Document this in
-   testing runbooks.
+Manual and disposable test lanes must call `AcceptStartupDialogs` before sending
+any input. All standard spawn paths already do this.
 
-2. **For `gt nudge` robustness**: Consider adding dialog detection to the nudge
-   delivery path. Currently, nudge assumes the prompt is ready if `pane_in_mode`
-   is 0, but a startup dialog is not a tmux mode — it's an application state.
+## Possible Follow-up
 
-3. **For the NudgeSession function**: Add a pre-flight check that captures the
-   pane and looks for dialog indicators before sending literal text. If a dialog
-   is detected, call `AcceptStartupDialogs` first.
+The nudge delivery path (`NudgeSession`) currently has no dialog pre-flight
+check — it assumes the prompt is ready if `pane_in_mode` is 0, but a startup
+dialog is not a tmux mode. Adding dialog detection or post-send delivery
+verification to the nudge path would close this gap.
 
 ## Test Evidence
 
