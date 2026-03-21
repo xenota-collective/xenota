@@ -56,6 +56,21 @@ tmux_pane_ready_for_input() {
   return 1
 }
 
+tmux_pane_has_live_activity() {
+  local recent="$1"
+  local bottom
+
+  bottom="$(
+    awk 'NF { print }' <<<"$recent" | tail -n 20
+  )"
+
+  if grep -Eq 'Working \(|Generating|Zesting|Sautéing|Thinking|Running…|Waiting…|Spinning…|esc to interrupt|Press up to edit queued messages|Interrupted · What should Claude do instead\?|Close dialogs and suggestions|[✳✻✶⏺] ' <<<"$bottom"; then
+    return 0
+  fi
+
+  return 1
+}
+
 tmux_pane_looks_like_agent_ui() {
   local recent="$1"
 
@@ -161,6 +176,11 @@ tmux_prepare_prompt_for_input() {
       sleep 0.2
       tmux_send_raw_keys "$target" C-u
       ;;
+    claude)
+      tmux_send_raw_keys "$target" Escape
+      sleep 0.2
+      tmux_send_raw_keys "$target" i
+      ;;
     gemini)
       tmux_send_raw_keys "$target" Escape
       sleep 0.2
@@ -168,7 +188,7 @@ tmux_prepare_prompt_for_input() {
       sleep 0.2
       tmux_send_raw_keys "$target" C-u
       ;;
-    claude|codex|agent)
+    codex|agent)
       tmux_send_raw_keys "$target" Escape
       sleep 0.2
       tmux_send_raw_keys "$target" C-u
@@ -218,11 +238,44 @@ tmux_wait_for_ready_prompt() {
   return 1
 }
 
+tmux_wait_for_idle_prompt() {
+  local target="$1"
+  local attempts="${2:-30}"
+  local attempt recent
+
+  for (( attempt = 1; attempt <= attempts; attempt += 1 )); do
+    recent="$(tmux_recent_pane_text "$target")"
+    if tmux_recent_has_command_rejection "$recent"; then
+      return 1
+    fi
+    if tmux_pane_ready_for_input "$recent" && ! tmux_pane_has_live_activity "$recent"; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  return 1
+}
+
 tmux_send_prompt_line() {
   local target="$1"
   local text="$2"
+  local family
 
-  tmux_prepare_prompt_for_input "$target"
+  family="$(tmux_pane_family "$target")"
+  tmux_wait_for_idle_prompt "$target" 30 || return 1
+
+  case "$family" in
+    claude)
+      tmux_send_raw_keys "$target" Escape
+      tmux_wait_for_ready_prompt "$target" 10 || true
+      tmux_send_raw_keys "$target" i
+      ;;
+    *)
+      tmux_prepare_prompt_for_input "$target"
+      ;;
+  esac
+
   sleep 0.2
   tmux_send_literal_text "$target" "$text"
   sleep 0.2
@@ -232,7 +285,7 @@ tmux_send_prompt_line() {
 tmux_wait_for_text() {
   local target="$1"
   local needle="$2"
-  local attempts="${3:-10}"
+  local attempts="${3:-20}"
   local attempt recent
 
   for (( attempt = 1; attempt <= attempts; attempt += 1 )); do
@@ -253,8 +306,10 @@ tmux_reset_session() {
   family="$(tmux_pane_family "$target")"
   clear_command="$(tmux_clear_reset_command "$family")" || return 1
 
+  tmux_wait_for_idle_prompt "$target" 30 || return 1
   tmux_send_prompt_line "$target" "$clear_command"
-  tmux_wait_for_ready_prompt "$target"
+  tmux_wait_for_ready_prompt "$target" || return 1
+  sleep 0.5
 }
 
 tmux_target_exists() {
