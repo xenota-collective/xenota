@@ -28,7 +28,8 @@ wait_for_text() {
 
 pane_title="$("${tmux_cmd[@]}" display-message -p -t "$target" '#{pane_title}')"
 is_claude_pane=0
-if [[ "$pane_title" == *"Claude Code"* ]]; then
+recent_before_clear="$(tmux_recent_pane_text "$target")"
+if [[ "$pane_title" == *"Claude Code"* ]] || tmux_pane_looks_like_agent_ui "$recent_before_clear"; then
   is_claude_pane=1
 fi
 

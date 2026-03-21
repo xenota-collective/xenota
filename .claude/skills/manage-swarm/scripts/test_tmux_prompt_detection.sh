@@ -24,6 +24,26 @@ assert_not_ready() {
   fi
 }
 
+assert_agent_ui() {
+  local label="$1"
+  local payload="$2"
+
+  if ! tmux_pane_looks_like_agent_ui "$payload"; then
+    echo "expected agent ui: $label" >&2
+    exit 1
+  fi
+}
+
+assert_not_agent_ui() {
+  local label="$1"
+  local payload="$2"
+
+  if tmux_pane_looks_like_agent_ui "$payload"; then
+    echo "expected non-agent ui: $label" >&2
+    exit 1
+  fi
+}
+
 codex_ready_payload="$(cat <<'EOF'
 Token usage: total=49,069 input=45,549 (+ 192,000 cached) output=3,520 (reasoning 1,500)
 To continue this session, run codex resume 019d0e99-c6d5-7d11-9927-4131ed65ee63
@@ -91,5 +111,8 @@ assert_ready "shell prompt" "$shell_ready_payload"
 assert_ready "gemini prompt" "$gemini_ready_payload"
 assert_not_ready "busy codex footer without prompt" "$busy_payload"
 assert_not_ready "rejected clear message" "$rejected_clear_payload"
+assert_agent_ui "codex ui history" "$codex_ready_payload"
+assert_agent_ui "gemini ui history" "$gemini_ready_payload"
+assert_not_agent_ui "shell history" "$shell_ready_payload"
 
 echo "tmux prompt detection checks passed"

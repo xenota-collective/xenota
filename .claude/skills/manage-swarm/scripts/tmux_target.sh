@@ -26,11 +26,37 @@ tmux_pane_ready_for_input() {
     return 0
   fi
 
+  if grep -q '^❯' <<<"$bottom"; then
+    return 0
+  fi
+
   if grep -Fq 'Type your message' <<<"$bottom"; then
     return 0
   fi
 
   if [[ "$last_line" == "❯"* ]] || [[ "$last_line" =~ [\$#%][[:space:]]*$ ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+tmux_pane_looks_like_agent_ui() {
+  local recent="$1"
+
+  if grep -Fq 'OpenAI Codex' <<<"$recent"; then
+    return 0
+  fi
+
+  if grep -Fq 'Claude Code' <<<"$recent"; then
+    return 0
+  fi
+
+  if grep -Fq 'Type your message' <<<"$recent"; then
+    return 0
+  fi
+
+  if grep -q '^›' <<<"$recent"; then
     return 0
   fi
 
