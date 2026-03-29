@@ -1,6 +1,10 @@
 # Swarm runtime state
 swarm-state.yaml
 
+# Design council scratch
+.design-council/
+.xsm-local/
+
 # Claude Code state
 state.json
 .runtime/
