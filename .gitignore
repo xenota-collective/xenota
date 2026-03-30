@@ -4,6 +4,7 @@ swarm-state.yaml
 # Design council scratch
 .design-council/
 .xsm-local/
+.xsm/
 
 # Claude Code state
 state.json
