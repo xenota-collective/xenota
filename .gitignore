@@ -3,6 +3,8 @@ swarm-state.yaml
 
 # Design council scratch
 .design-council/
+
+# XSM runtime directories
 .xsm-local/
 .xsm/
 
