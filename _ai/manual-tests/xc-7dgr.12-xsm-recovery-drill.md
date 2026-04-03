@@ -20,7 +20,7 @@
 
 | Step | Action | Expected | Pass/Fail |
 |------|--------|----------|-----------|
-| 1 | `cd xenon/packages/xsm && uv run pytest tests/test_recovery_drill.py -v` | All 23 tests pass | |
+| 1 | `cd xenon/packages/xsm && uv run pytest tests/test_recovery_drill.py -v` | All 27 tests pass | |
 | 2 | Review test names cover: restart recovery, epoch rotation, census mismatch, quarantine, safe resume, lifecycle integrity, end-to-end | All 7 drill categories represented | |
 
 **Pass criteria:** All tests green. No skipped tests.
