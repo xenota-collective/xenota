@@ -1,0 +1,191 @@
+I now have a thorough understanding of the system. Let me write the security signoff.
+
+---
+
+# XSM Security Signoff — Safety and Governance Audit
+
+**System:** Xenon Swarm Manager (XSM)
+**Auditor role:** Safety and Governance Auditor
+**Date:** 2026-04-06
+**Scope:** Can XSM be trusted to autonomously intervene on AI agents? Is blast radius bounded?
+
+---
+
+## 1. Strongest Elements
+
+**Authority model is the best part of this system.** Specific strengths:
+
+- **Zero `shell=True`** across the entire xenon codebase. All subprocess calls use list-form arguments. This eliminates the highest-impact injection class.
+- **Deterministic-first architecture.** LLM calls are subordinate to structural gates, never the other way around. The wrangle engine is pure state-machine logic with no model in the decision loop.
+- **One fact, one authority.** The authority map (principles doc §2.1) assigns unambiguous ownership to every state fact with explicit violation responses. This is unusually rigorous for an early-stage system.
+- **Monotonic intervention ladder with structural termination.** Agents cannot be nudged forever — exhaustion latches and the bounded `max_reinvokes_per_bead` prevent infinite loops.
+- **Content-addressed QA.** Approval is bound to exact commit SHA and auto-invalidated on rebase. This closes the review-detachment gap that plagues most CI systems.
+- **Hash-chained audit log** with append-only JSONL and SHA-256 chain linking. Tamper-evident by construction.
+- **Fencing epochs.** Zombie agents from prior swarm lifetimes are structurally rejected. This is the right answer to the stale-agent problem.
+- **Repo content treated as adversarial input** (principles §1.3) with deterministic structural gates after any LLM call that touches repo content.
+- **Localhost-only console** with role-based sessions, TTL expiry, and secure random tokens.
+
+---
+
+## 2. Top 5 Risks
+
+### RISK-1: Pane Text → LLM → Pane Ouroboros (CRITICAL)
+
+**Chain:** Pane capture → `diagnose_idle` or `classify_blocker` repertoire routine (LLM call) → routine output becomes intervention message → injected back into pane via actuator → captured again next cycle.
+
+The repertoire bridge (`repertoire_bridge.py:41`) passes `pane_text` as a variable to LLM routines. A malicious payload in pane text (from repo content an agent processed, a crafted error message, or adversarial CLAUDE.md) could:
+1. Influence the LLM's diagnostic output
+2. Generate a crafted intervention message
+3. Which is injected into the pane and captured next cycle
+
+The one-shot nature of the repertoire call limits context window accumulation, but the cycle still exists. **The deterministic gate after repo-content-touching LLM calls (principle §1.3) is not yet implemented for repertoire bridge output** — the bridge returns JSON and the wrangle engine acts on it.
+
+**Blast radius:** An attacker controlling pane text could influence intervention messages sent to agents, potentially steering agent behavior across intervention cycles.
+
+### RISK-2: Cross-Agent Contamination via Shared Tmux Server
+
+All agents share a single tmux server. The actuator targets specific sessions, but tmux buffer operations (`set-buffer` → `paste-buffer` in `actuator.py:75-79`) use the global buffer space. A race between two concurrent paste operations for different agents could deliver the wrong content.
+
+**Blast radius:** Message intended for Agent A delivered to Agent B. Bounded by session targeting on `paste-buffer -d -t target`, but the `set-buffer` step is global.
+
+### RISK-3: Default API Key `"local-dev"` in Production Paths
+
+`console.py:299` falls back to `DEFAULT_API_KEY = "local-dev"` when `XENON_CONSOLE_API_KEY` is unset. The localhost-only middleware limits exposure, but any process on the same machine (including a compromised agent) can authenticate to the console with the default key and obtain an `override` role session.
+
+**Blast radius:** Full console control including strand decision override, projection start/stop, quarantine release. Bounded only by localhost restriction.
+
+### RISK-4: Repertoire Bridge Timeout as DoS Vector
+
+The repertoire bridge (`repertoire_bridge.py:19`) has a 60-second default timeout. During a `diagnose_and_inject` step, the wrangle engine blocks on this subprocess. A slow or hanging LLM provider stalls the entire wrangle pass for all agents, not just the one being diagnosed.
+
+**Blast radius:** Swarm-wide supervision blackout for up to 60 seconds per hanging routine call, compounding across agents.
+
+### RISK-5: Pane Capture Credential Leakage
+
+Pane capture (`tmux capture-pane`) reads all visible terminal content including any secrets that agents may have printed (API keys in error messages, `.env` contents during debugging). This content flows to:
+- Audit logs (wrangle event stream)
+- Repertoire bridge LLM calls
+- Status tuple parsing
+
+**Blast radius:** Credential exfiltration to LLM provider APIs via repertoire calls. Mitigated by principle §2.4 (no production credentials in agent contexts), but this is a policy control, not a structural one.
+
+---
+
+## 3. Missing Guardrails
+
+1. **No structural gate on repertoire bridge output.** Principle §1.3 mandates deterministic gates after repo-content-touching LLM calls. The repertoire bridge returns JSON that the wrangle engine acts on without structural validation of the intervention instruction content.
+
+2. **No per-agent tmux buffer isolation.** The `set-buffer`/`paste-buffer` sequence uses tmux's global buffer. Named buffers per agent session would prevent cross-contamination.
+
+3. **No credential scrubbing on pane capture.** Pane text is passed raw to LLM routines and audit logs. A regex-based scrubber for common secret patterns (API keys, tokens, base64 PEM blocks) before external transmission is missing.
+
+4. **No rate limit on console session creation.** The handshake endpoint creates sessions without throttling. A local process could create sessions at high rate to exhaust memory or flood the audit log.
+
+5. **No circuit breaker on repertoire bridge failures.** If the LLM provider is down, every agent hitting `diagnose_and_inject` will block for 60 seconds sequentially. There's no mechanism to skip repertoire calls after N consecutive failures.
+
+6. **Fencing epoch implementation gap.** The principles document defines fencing epochs (§2.3), but the XSM wrangle engine code does not carry or validate epoch stamps on intervention actions. `WrangleAction.fencing_epoch` exists as a field but is never populated or checked in `wrangle.py`.
+
+---
+
+## 4. Minimal Spec Changes
+
+1. **Add to xsm-swarm-principles.md §3.1:** "Repertoire routine output is treated as untrusted LLM output. Intervention messages derived from repertoire calls must pass a structural content gate (length bound, character allowlist, no shell metacharacters) before pane injection."
+
+2. **Add to xsm-swarm-principles.md §2.3:** "Fencing epoch validation is mandatory in the wrangle engine. Every `WrangleAction` must carry the current epoch and the actuator must reject actions with mismatched epochs."
+
+3. **Add to xsm.md Actuator section:** "Multiline text injection via tmux buffer must use per-session named buffers to prevent cross-agent buffer races."
+
+4. **Add to xsm-swarm-principles.md §8 (new):** "Pane content transmitted to external systems (LLM providers, audit endpoints) must be scrubbed for common credential patterns before transmission."
+
+---
+
+## 5. One 30-Day Change
+
+**Implement the repertoire output gate.** This is the highest-leverage change because it closes the ouroboros loop (RISK-1) while the system is still pre-production.
+
+Concretely:
+- Add a `validate_intervention_content(text: str) -> str` function in the actuator module
+- Enforce: max length (e.g. 2000 chars), ASCII + common unicode only, no shell metacharacters (`; | & $ \`` backtick), no URL schemes beyond `http/https`
+- Strip or reject content that fails validation
+- Wire this into `send_prompt_line` and `send_literal_text` as a mandatory pre-send step
+- Add a circuit breaker to the repertoire bridge: after 3 consecutive failures/timeouts, skip repertoire calls for 5 minutes and fall back to generic reset messages
+
+This single change addresses RISK-1, RISK-4, and missing guardrail #1 and #5.
+
+---
+
+## 6. Verdict: CONDITIONAL GO
+
+XSM is safe to deploy as a swarm coordinator **with the required controls below implemented first.**
+
+**Rationale:** The architecture is sound. The authority model, deterministic-first design, and bounded intervention ladder are better than most production systems I've reviewed. The risks are real but bounded — the worst case (pane injection ouroboros) can influence agent behavior but cannot escape the tmux/worktree sandbox, cannot modify git remote state without going through PR gates, and cannot access production credentials (if §2.4 is enforced). The blast radius is fundamentally bounded by the worktree isolation, fencing epoch design, and human merge gate.
+
+What prevents a full GO is the implementation gap between the principles document and the code: fencing epochs are specified but not enforced in wrangle, and the repertoire output gate mandated by §1.3 doesn't exist yet.
+
+---
+
+## 7. Required Controls Before Ship
+
+| # | Control | Blocks Ship? | Effort |
+|---|---------|-------------|--------|
+| RC-1 | Implement repertoire output content gate (length, charset, no metacharacters) | **Yes** | 1-2 days |
+| RC-2 | Populate and validate `fencing_epoch` on all `WrangleAction` instances | **Yes** | 2-3 days |
+| RC-3 | Require `XENON_CONSOLE_API_KEY` to be explicitly set; refuse to start with default `"local-dev"` outside `NODE_ENV=development` | **Yes** | Hours |
+| RC-4 | Use named tmux buffers per agent session for multiline injection | **Yes** | Hours |
+| RC-5 | Add circuit breaker to repertoire bridge (3 failures → 5min skip) | **Yes** | 1 day |
+| RC-6 | Add basic credential pattern scrubbing before pane text enters LLM calls | Recommended | 1-2 days |
+| RC-7 | Rate limit console session creation (max 10/minute) | Recommended | Hours |
+
+---
+
+## 8. Residual Risks (Accepted)
+
+These risks survive all proposed controls and are accepted for v1:
+
+1. **Human reviewer fatigue** (from principles doc). The human merge gate is the final defense against semantic attacks. No structural control can fully replace human judgment at this layer. **Mitigation:** PR size limits, complexity-gated cooling periods, rotation.
+
+2. **Epoch race window at spawn boundary.** A narrow window exists where both old and new epochs are live. Cannot be eliminated in a non-distributed-consensus system. **Mitigation:** Quarantine on mismatch, not termination.
+
+3. **Semantic prompt injection through structural gates.** Code that passes lint, tests, and review but contains malicious runtime behavior. This is an industry-wide unsolved problem. **Mitigation:** Layered QA, CI sandboxing, network egress gating.
+
+4. **LLM provider as side channel.** Pane content sent to LLM APIs via repertoire bridge could be logged/retained by the provider. Even with credential scrubbing, agent work content reaches external systems. **Mitigation:** Use provider data retention agreements, consider local models for sensitive routines.
+
+5. **Tmux as single point of failure.** If tmux crashes, all supervision and actuation is lost simultaneously. **Mitigation:** XSM detects session loss via `stopped`/`crashed` states and the monitor daemon restarts cleanly.
+
+---
+
+## 9. Kill Conditions
+
+The swarm must halt immediately and require human acknowledgment when:
+
+| # | Condition | Already Implemented? |
+|---|-----------|---------------------|
+| K-1 | Budget exhaustion (token, wall-clock, or action count) | Yes (principles §6.1) |
+| K-2 | Fencing epoch violation / split-brain detected | Spec'd, needs RC-2 |
+| K-3 | Prompt injection quarantine triggered | Yes (principles) |
+| K-4 | Merge bomb (3+ simultaneous rebase conflicts) | Yes (principles §7.3) |
+| K-5 | No forward progress within TTL / operator revocation | Yes (principles) |
+| K-6 | **NEW:** Repertoire bridge circuit breaker trips (3 consecutive failures) | Needs RC-5 |
+| K-7 | **NEW:** Console audit log hash chain broken (tamper detected) | Not implemented |
+| K-8 | **NEW:** Agent produces output matching credential patterns and repertoire bridge has already transmitted pane content | Not implemented |
+
+**K-7 and K-8 are monitoring recommendations, not ship blockers.** They should be implemented within the first 30 days of production operation.
+
+---
+
+## Monitoring Requirements
+
+| What to Watch | How | Alert Threshold |
+|---|---|---|
+| Repertoire bridge latency | Timing in wrangle event stream | p95 > 30s |
+| Intervention ladder exhaustion rate | Count of `exhaustion_reported` per hour | > 50% of agents exhausted |
+| Console session creation rate | Audit log analysis | > 10/minute |
+| Pane capture containing credential patterns | Regex scan on capture before LLM call | Any match |
+| Audit log hash chain integrity | Periodic verification script | Any break |
+| Wrangle pass duration | Timing in event stream | > 2x normal |
+| Fencing epoch mismatches | Quarantine entry count | Any non-zero |
+| Agent state oscillation | State transition frequency per agent | > 5 transitions/minute |
+
+---
+
+**Summary:** XSM's architecture is strong — deterministic coordination, bounded intervention, content-addressed QA, and a clear authority model put it well ahead of most autonomous agent systems. The gap is between the excellent principles document and the implementation: fencing epochs aren't enforced and the repertoire output gate doesn't exist yet. Close those two gaps (RC-1, RC-2) and this is a GO.

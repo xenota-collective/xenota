@@ -1,8 +1,7 @@
 # Swarm runtime state
 swarm-state.yaml
 
-# Design council scratch
-.design-council/
+# Design council scratch (xsm-code-review kept for audit record)
 .xsm-local/
 
 # Claude Code state

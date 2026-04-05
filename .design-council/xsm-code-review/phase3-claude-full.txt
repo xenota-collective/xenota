@@ -1,0 +1,128 @@
+Now I have a thorough picture. Here's the safety simplification audit.
+
+---
+
+# XSM Safety Simplification Audit
+
+## 1. Strongest Safety Elements to Preserve
+
+These are **load-bearing** and must survive any simplification:
+
+**A. Lease-based mutual exclusivity** (`state.py:338-363`)
+Three unique partial indexes enforce one-agent-per-bead, one-bead-per-agent, one-agent-per-worktree. This is the single strongest safety property in the system. It prevents two agents from stepping on each other's work with a mechanism that's enforced at the database level, not by application logic. **Non-negotiable.**
+
+**B. Control epoch fencing** (`state.py:488-508`, `main.py:1510-1521`)
+Prevents stale wrangle daemons from executing actions after a new daemon starts. This is the split-brain prevention mechanism. The implementation is clean: rotate on start, check before every action. **Keep as-is.**
+
+**C. Zero shell=True** (entire codebase)
+Every subprocess call uses list-based arguments. `repertoire_bridge.py:41`, `tmux.py:999`, all actuator calls — none use `shell=True`. This eliminates an entire class of injection attacks. **Never relax this.**
+
+**D. Deterministic classifier priority hierarchy** (`classifier.py:115-189`)
+The `classify_worker` function uses a strict if/elif chain: session_alive → blank → ambiguous → rate_limited → blocked → declared_state → recent_output → prompt → fallback. This deterministic ordering means classification is reproducible and auditable. The extended `classify_worker_state` follows the same principle with richer signals. **Preserve the deterministic, ordered classification.**
+
+**E. Append-only audit trail** (`audit.py`)
+Every wrangle pass records snapshot + decisions + action outcomes to JSONL. The audit log is write-once per event and the path-traversal check at `audit.py:232` prevents directory escape during pruning. **Keep, but fix integrity gaps (see below).**
+
+## 2. Top 5 Simplification Opportunities (Safety-Preserving)
+
+### 2.1 CUT the repertoire bridge from v1
+
+**What:** Remove `repertoire_bridge.py` (64 lines) and the `call_repertoire` action handler in `main.py:1527-1627`.
+
+**Why this is safe to cut:** The bridge passes live pane text into `xr run` variables (`main.py` enriches with `pane_text`, `intervention_history`). This pane text flows into LLM prompts inside the repertoire routine. An attacker-controlled agent can write arbitrary text to its pane, which then gets reflected into the diagnostic LLM's prompt — textbook prompt injection. The fallback when repertoire fails is already `reset_and_assign`, which is the correct safe default.
+
+**What you lose:** LLM-based disambiguation of ambiguous states. The classifier already marks `needs_llm_disambiguation=True` (`classifier.py:410`), but that flag is advisory — the deterministic classifier still produces a usable state.
+
+**Net safety impact:** Removes the most dangerous input-to-LLM pipeline. The `AMBIGUOUS_CAPTURE` state already has a handler that skips (re-samples). The LLM adds marginal value over "wait and re-sample."
+
+### 2.2 Pane text as HINT, not SIGNAL
+
+**What:** The current system uses pane text regex matching (`tmux.py:14-176`) as the primary classifier input. Change architecture so:
+- **Authoritative signals:** tmux options (`@xsm_assignment`, `@xsm_action`, `@xsm_assignment_epoch`), SQLite state, process presence, git state
+- **Hint signals:** pane text regex matches (used to confirm/refine, never to override structured data)
+
+**Concrete change:** In `classify_worker_state` (`classifier.py:204-421`), the `status_tuple` signals (parsed from pane text at `signals.py:101-123`) currently override everything after the session-exists check. Move them below the structured signals (progress events, heartbeat). If structured signals say ACTIVE but pane text says BLOCKED — trust structured signals, log the discrepancy.
+
+**What you lose:** Fast detection of worker-declared blockers via pane text. Workers would need to use a structured channel (tmux option or bead backend) to declare blockers.
+
+**Net safety impact:** Eliminates the core Phase 2 finding. Pane text is untrusted by definition. Treating it as authoritative means any agent can fake any state by printing the right regex pattern.
+
+### 2.3 DB corruption: fail CLOSED, not open
+
+**What:** `_prepare_db_path` (`state.py:308-311`) currently deletes a non-SQLite file and recreates the DB. Every `_is_sqlite_db` check (`state.py:290-293`) returns None/empty when the file is corrupt, which means: no leases found, no epoch, no lifecycle records. The system proceeds as if the state is blank.
+
+**Change:** When `_is_sqlite_db` returns False for an existing file:
+1. Copy the corrupt file to a timestamped quarantine path
+2. Raise an error that halts the wrangle loop
+3. Log to audit trail: "state DB corruption detected, halting"
+
+This is **removing** the implicit "delete and continue" behavior, not adding new code. The `unlink()` at line 311 is the dangerous line.
+
+### 2.4 Remove QA operator_override for v1
+
+**What:** `qa.py:116-150` includes an `operator_override` field with `requested/approved/rejected` status. When `approved`, it bypasses all gate checks. This is the "QA override bypasses all gates" finding from Phase 1.
+
+**Change:** For v1, remove the override path entirely. All QA gates must pass. If a gate fails, the bead stays blocked until the gate genuinely passes. This removes ~20 lines from `evaluate_qa_verdict_payload` and simplifies the landing eligibility check to: "all required gates must be in passing status, period."
+
+**What you lose:** Emergency override capability. For v1 this is acceptable — if something genuinely needs to bypass QA, a human can modify the bead directly.
+
+### 2.5 Collapse the classifier state space
+
+**What:** `WorkerState` (`classifier.py:14-51`) has 17 states. Several are operationally identical:
+- `ACTIVE_WORKING` and `ACTIVE` — both mean "leave it alone"
+- `PARKED_OFF_MISSION` and `IDLE_PROMPT` and `STALLED` — all trigger the same intervention ladder
+- `BLOCKED_DECLARED` and `BLOCKED_EXTERNAL` — same handler behavior
+- `CRASHED` and `ORPHANED` — both need cleanup
+
+**Change:** Collapse to ~8 states: `LAUNCHING`, `ACTIVE`, `PARKED`, `BLOCKED`, `RATE_LIMITED`, `AMBIGUOUS`, `DEAD`, `STOPPED`. Keep the rich evidence in the `WorkerStateResult` for audit purposes, but the state machine acts on fewer categories. Fewer states = fewer handler branches = fewer edge cases = fewer bugs.
+
+## 3. Missing Guardrails
+
+### 3.1 No subprocess timeout on the wrangle loop itself
+
+The wrangle loop (`main.py:1333-1346`) has no global watchdog. If `_run_wrangle_pass` hangs (e.g., waiting 30s for idle prompt × N agents), the entire daemon freezes silently. Need a per-pass wall-clock timeout that forces a skip-and-log when exceeded.
+
+### 3.2 No swarm-level circuit breaker
+
+If 3+ agents are simultaneously in `transport_failure` state, something systemic is wrong (tmux server crash, disk full, network partition). The system currently treats each agent independently. Need: "if >50% of agents fail in a single pass, halt the daemon and escalate to human."
+
+### 3.3 Audit log has no integrity protection
+
+`audit.py` writes JSONL to disk with no checksums, no signing, no write-once enforcement. Any process with file access can modify the audit trail after the fact. For v1, a simple per-event HMAC chain (each event signs over the previous event's hash) would make tampering detectable.
+
+### 3.4 No input size limit before regex classification
+
+`tmux.py` regex patterns run against unbounded pane text. A malicious agent that floods its pane with megabytes of text could cause catastrophic regex backtracking. Truncate pane capture to a reasonable limit (e.g., 10KB) before any regex matching.
+
+### 3.5 `_ensure_current_epoch` fails open when state_path is None
+
+`main.py:1516-1517`: if `state_path is None` or `expected_epoch is None`, the function returns `True` (allow action). This means any code path that passes None for either argument bypasses epoch fencing entirely. Should default to deny.
+
+## 4. Minimal Spec Changes
+
+### The trust boundary in ONE sentence:
+
+> **XSM trusts only what it wrote (tmux options, SQLite state, audit log) and verifies everything else (pane text, process state, git state) as advisory evidence that can be wrong or adversarial.**
+
+### Minimum safe XSM spec:
+
+1. **Observe** via structured channels (tmux options, SQLite, process table). Pane text is a hint.
+2. **Classify** deterministically with ordered priority rules. No LLM in the classification path.
+3. **Decide** via intervention ladder with cooldown. No repertoire bridge.
+4. **Act** via list-based subprocess (never shell). Epoch-fenced. Audited.
+5. **Audit** every observe-classify-decide-act cycle with tamper-evident logging.
+6. **Gate** all landings on QA verdicts with no override path.
+7. **Halt** on DB corruption or systemic failure (>50% agent failure rate).
+
+## 5. One 30-Day Change
+
+**Implement the "pane text as hint" architecture change (item 2.2).**
+
+This is the highest-leverage safety change because it addresses the root cause of the most critical Phase 2 finding (pane text treated as authoritative when untrusted), and it's primarily achieved by **reordering existing code** rather than writing new code:
+
+- Week 1: Add a structured blocker/handoff declaration channel via tmux options (`@xsm_declared_state`, `@xsm_blocker_reason`). Workers set these options directly; XSM reads them as authoritative.
+- Week 2: Reorder `classify_worker_state` so structured signals (progress, heartbeat, tmux options) take priority over pane text regex. Pane text matches become tiebreakers for ambiguous cases only.
+- Week 3: Cut `repertoire_bridge.py` and the `call_repertoire` action path. Replace with skip-and-escalate for ambiguous states.
+- Week 4: Add the circuit breaker (halt on >50% failure rate), DB fail-closed behavior, and audit HMAC chain.
+
+This sequence is ordered so each week's change is independently shippable and each builds on the previous. The total diff is net-negative LOC (removing the repertoire bridge and operator override removes more code than the structured channel and circuit breaker add).
