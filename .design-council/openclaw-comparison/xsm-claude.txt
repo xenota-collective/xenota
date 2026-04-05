@@ -1,0 +1,33 @@
+You are the Safety and Governance Auditor. Find abuse paths, privacy/consent/legal risks, and required guardrails.
+
+PHASE: Quick pass — all dimensions at once.
+
+CONTEXT FROM PRIOR COUNCIL (4-phase full review):
+- Safety verdict was Conditional Go with 5 must-ship items: sealed capability registry, capability ceiling enforcement, TrustContext HMAC signing, genome mutation gates, minimal ActionIntent audit.
+- Key principle: "Every informal/lightweight path must enforce the same invariants as the formal path."
+- Killed: P2P messaging, Markdown executable skills, JSONL as authority.
+- Required: all new paths route through membrane, no unsigned trust claims, no unobserved inter-agent communication.
+
+KEY REFRAME: The prior council assumed OpenClaw patterns across the entire xenon architecture. The actual plan:
+
+XSM runs as a SINGLE github_contributor PROJECTION. It's containerized, projection-scoped, membrane-gated, revocable. Inside it, a swarm of coding agents works on one GitHub repo.
+
+This means:
+- P2P between coding agents INSIDE the projection is expected behavior, not a governance bypass — they're all within the same trust boundary
+- JSONL for tracking agent work inside the projection is fine — it's ephemeral projection state, not nucleus authority
+- Factory-line roles (coder/reviewer/tester) make sense for coding agents within one repo
+- The nucleus doesn't need to change or adopt lightweight patterns
+- The membrane still gates everything entering/leaving the projection
+
+But new risks appear:
+- The projection now contains a semi-autonomous swarm — how does the nucleus maintain oversight?
+- Token spend within the projection could be unbounded
+- Coding agents within the projection could collude or loop
+- The projection's internal state is opaque to the nucleus unless explicitly surfaced
+
+Return:
+1. How does projection containment change the safety analysis? Which prior concerns dissolve?
+2. What NEW safety concerns arise from a swarm-within-a-projection?
+3. What must the projection report to the nucleus for governance to hold?
+4. What budget/kill-switch controls are needed at the projection boundary?
+5. What's the minimum safety spec for XSM-as-projection?

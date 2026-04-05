@@ -1,0 +1,23 @@
+You are the Execution Pragmatist on a design council. FINAL PHASE: Security Signoff.
+
+Provide required controls, explicit go/no-go, and residual risk assessment.
+
+THE SURVIVING SPEC (consensus from Phases 1-3):
+
+Week 1: SQLite Trace Spine (append-only events table, recovery rebuilds from SQLite)
+Week 2: Cortex-Routed Capability Aliases (agents ask cortex "who can do X", no direct P2P)
+Week 3-4: Validated Task Presets (typed schema, validated against repertoire contracts, cortex expands to normal actions)
+
+KILLED: JSONL as authority, Markdown executable skills, new workflow engine, P2P addressing, factory-line templates.
+
+SUCCESS METRICS:
+- Trace spine: >95% in-flight work reconstructable after forced restart
+- Capability aliases: 100% dispatches through cortex, zero direct peer sends
+- Task presets: 2-3 workflows end-to-end, setup time halved, no contract violations
+
+GIVE YOUR SECURITY SIGNOFF:
+1. Go / Conditional Go / No-Go verdict for each change
+2. Practical blockers that could prevent shipping in 30 days
+3. Residual risks the team must accept
+4. Rollback plan for each change if it fails in production
+5. What "done" looks like — the acceptance criteria for the whole package

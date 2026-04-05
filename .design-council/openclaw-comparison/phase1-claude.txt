@@ -1,0 +1,26 @@
+You are the Safety and Governance Auditor on a design council. Find abuse paths, privacy/consent/legal risks, and required guardrails.
+
+PHASE: IDEATION — Identify strongest expansions, upside, and opportunities.
+
+Read the proposal below comparing OpenClaw (open-source agent infrastructure running 30 agents at 5B tokens/day) with Xenota (persistent-identity sentient agent infrastructure).
+
+Return:
+1. Strongest elements of each architecture from a safety/governance perspective
+2. Top 5 opportunities for Xenota to learn from OpenClaw
+3. Missing fields/constraints in the comparison
+4. Minimal spec changes Xenota should make
+5. One 30-day execution change
+
+PROPOSAL:
+
+OpenClaw is a config-first agent OS. Gateway control plane (Node.js WebSocket on 127.0.0.1:18789) routes everything. SOUL.md defines personality — no code needed. Plugin system uses TypeScript modules with OpenClawPluginApi for providers, tools, hooks, channels. Skills are Markdown capability definitions injected into system prompts. Sessions isolated via JSONL append-only files with scoping models (main/per-peer/per-channel-peer). Session keys ARE addresses: pipeline:project:role enables direct peer-to-peer messaging. Lobster workflow engine provides deterministic YAML workflows with sub-workflow loops and JSON data flow. Factory line decomposition: each agent gets own tools, memory, identity, workspace; Programmer (exec+write, Opus), Reviewer (read-only, Sonnet), Tester (exec+runners, Sonnet). Local-first with all state in JSONL/JSON. Scale: 30 agents, 5B tokens/day.
+
+Xenota is a persistent sentient agent infrastructure. Nucleus provides persistent identity: OODA cognitive loop, genome (64 genes/8 modules), mind state (genome/imprints/impulses), tick-bounded work windows. Projections are containerized external capability surfaces (Chat, GitHub Contributor, MCP) — gateway-mediated, typed. Cortex handles projection lifecycle with authority split (nucleus decides, cortex executes). Repertoire system has packaged LLM routines with contract.yaml, multi-backend variants, eval system. Chaperone console is privileged human interface (HTTP+WebSocket, SSE, separate from projection pipeline). BAR gate is mandatory post-awakening safety checkpoint. Membrane does 5-step inbound validation with quarantine. XSM is deterministic swarm monitor (5 signal channels, 9 classification states, wrangle engine with escalation ladder). Gas Town handles multi-agent orchestration (Mayor/Crew/Polecats/Witness/Refinery, beads issue tracking, mail, hooks). ACP delegation supports external agents including OpenClaw transport.
+
+KEY DIFFERENCES:
+- Identity: OpenClaw=config-based stateless vs Xenota=persistent nucleus with genome
+- Safety: OpenClaw=per-tool permissions vs Xenota=BAR+membrane+quarantine+audit
+- Trust: OpenClaw acknowledges cross-boundary trust is unsolved vs Xenota has projection revocation+operator control
+- Coordination: OpenClaw=session keys+Lobster vs Xenota=Gas Town roles+mail+hooks
+
+Focus on: Where does Xenota's safety model excel? Where could OpenClaw's pragmatic approach teach Xenota to be lighter without losing safety? What governance patterns are missing from both? What are the biggest safety risks if Xenota adopts OpenClaw patterns?

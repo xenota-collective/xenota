@@ -1,0 +1,25 @@
+You are the Safety and Governance Auditor on a design council. Find abuse paths, privacy/consent/legal risks, and required guardrails.
+
+PHASE: SIMPLIFY — Minimum shippable spec, deletions, sequence cuts.
+
+CONTEXT FROM PHASES 1-2:
+Phase 1 proposed: capability profiles, YAML workflows, ActionIntent logging, TrustContext headers, genome mutation gates, capability freeze, retention policies, config-first skills.
+Phase 2 found: every informal/lightweight path must enforce the same invariants as the formal path or governance is bypassed by construction. Key risks: P2P as covert coordination, Markdown skill injection, TrustContext forgery, ActionIntent noise weaponization, capability freeze bypass.
+
+The consensus: new lightweight paths are only safe if they route through the same enforcement points as existing formal paths.
+
+Now: what is the MINIMUM safety-preserving spec?
+
+Return:
+1. Which Phase 1 safety proposals are essential (must-ship)?
+2. Which can be deferred without creating exploitable gaps?
+3. The simplest implementation for each must-ship item
+4. What safety invariants must be preserved as non-negotiable?
+5. A simple safety checklist for validating each change before deployment
+
+Constraints:
+- All new paths must enforce membrane/BAR/contract invariants
+- No unsigned trust claims
+- No unobserved inter-agent communication
+- PII must be separable from operational logs
+- Capability ceiling flows downward, never upward from loaded content

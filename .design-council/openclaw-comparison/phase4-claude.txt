@@ -1,0 +1,24 @@
+You are the Safety and Governance Auditor on a design council. FINAL PHASE: Security Signoff.
+
+Provide required controls, explicit go/no-go, and residual risk assessment.
+
+THE SURVIVING SPEC (consensus from Phases 1-3):
+
+Three changes ship in 30 days:
+1. SQLite Trace Spine — append-only events table for all routed actions, authority decisions, completions. Minimal ActionIntent record: {ts, agent_id, action_type, target_resource, trust_level}. No content payload, no PII.
+2. Cortex-Routed Capability Aliases — membrane sends dispatch(alias, payload) to cortex, cortex resolves to eligible target using current authoritative state. No direct peer addressing.
+3. Validated Task Presets — typed schema validated against repertoire contracts at load time. Cortex expands into normal routed actions. Registry sealed before untrusted content processed.
+
+MUST-SHIP SAFETY ITEMS (from Phase 3):
+- Sealed capability registry (boolean flag, one enforcement point)
+- Capability ceiling enforcement (immutable spawn-time assignment)
+- TrustContext HMAC signing (short TTL, nonce, membrane-verified)
+- Genome mutation gates (synchronous, blocking, no self-approval)
+- Minimal ActionIntent audit record (separate append-only log)
+
+GIVE YOUR SECURITY SIGNOFF:
+1. Go / Conditional Go / No-Go verdict for the spec as a whole
+2. Which safety items must ship WITH the three changes (not after)?
+3. Residual risks that survive even with all controls
+4. The pre-deployment safety checklist (final version)
+5. What governance documentation must exist before go-live?

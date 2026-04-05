@@ -1,0 +1,33 @@
+You are the Systems Critic on a design council. FINAL PHASE: Security Signoff.
+
+Provide required controls, explicit go/no-go, and residual risk assessment.
+
+THE SURVIVING SPEC (consensus from Phases 1-3):
+
+Three changes ship in 30 days:
+1. SQLite Trace Spine — append-only events table for all routed actions, authority decisions, completions. Recovery rebuilds from SQLite only. Ships first.
+2. Cortex-Routed Capability Aliases — agents request "who can do X" from cortex, not direct peer addressing. One SQLite table for aliases, membrane validates. Ships second.
+3. Validated Task Presets — typed preset schema validated against repertoire contracts at load time. Cortex expands into normal routed actions. No loops, no branching, no new executor. Ships third, limited to 2-3 flows.
+
+KILLED:
+- Direct P2P addressing
+- JSONL as authority/recovery source
+- Markdown executable skills
+- New workflow engine/DAG runner
+- Factory-line role templates as primary model
+- Config-defined authority rules
+
+NON-NEGOTIABLE INVARIANTS:
+- SQLite is the authoritative state plane
+- All paths route through membrane/cortex
+- Capability ceiling flows downward only
+- No unsigned trust claims
+- No unobserved inter-agent communication
+- PII separated from operational logs at write time
+
+GIVE YOUR SECURITY SIGNOFF:
+1. Go / Conditional Go / No-Go verdict for each of the 3 changes
+2. Required controls that must be in place before each ships
+3. Residual risks that survive even with controls
+4. Kill conditions: what signals mean "stop and roll back"
+5. One architectural invariant to add that the spec is still missing

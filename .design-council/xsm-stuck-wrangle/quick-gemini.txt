@@ -1,0 +1,30 @@
+# Proposal: urgent XSM fixes after live swarm stuck state
+
+Observed live failures:
+- XSM repeatedly injected command text into Claude panes in a mangled form, e.g. /clearYou are blocked..., causing Unknown skill: clearYou and accumulated unsent/half-submitted input.
+- XSM reused stale or closed bead assignments (for example xc-7dgr.34 and xc-7dgr.13) instead of invalidating assignment context and reassigning workers.
+- XSM treated hard-blocked last like a generic worker and kept resetting/reassigning the same blocked landing task instead of escalating/rerouting.
+- Horizon operator pane was not giving trustworthy visible wrangle output, making live ops blind.
+
+Constraints:
+- Keep XSM core as neutral as possible; policy/routing should live in the RPT/runtime package where feasible.
+- Tmux state remains the primary truth of whether a worker is actively working.
+- bead/git/worktree state are augmentation only.
+
+Need from council:
+1. Immediate urgent fix plan for the stuck-state failure mode.
+2. Separation of core fixes vs RPT/runtime-package policy fixes.
+3. Concrete acceptance criteria for a P0 bead.
+4. Minimal implementation sequence that restores trustworthy wrangling quickly.
+
+
+ROLE: You are the Execution Pragmatist. Reduce to minimal implementable spec and rollout steps.
+PHASE: quick review — identify the urgent fix plan.
+RETURN:
+1. Strongest elements
+2. Top 5 risks/failure modes
+3. Missing fields/constraints
+4. Minimal spec changes
+5. One 30-day execution change
+6. Core-vs-RPT split
+7. P0 acceptance criteria

@@ -1,0 +1,90 @@
+You are the Execution Pragmatist. Reduce to minimal implementable spec and rollout steps.
+
+PHASE: IDEATION — Identify strongest expansions, upside, and opportunities.
+
+PROPOSAL:
+# XSM Swarm Principles: Design Council Proposal
+
+## Objective
+
+Define the principles, architecture, and operating constraints for XSM running as a single `github_contributor` projection that coordinates a swarm of coding agents on a GitHub repository.
+
+## What XSM Is
+
+XSM (Xenon Swarm Manager) is a deterministic swarm monitor and coordinator. It runs inside a single containerized projection and manages multiple coding agents (Claude Code, Codex, Gemini CLI) working on the same repo in parallel via tmux panes and git worktrees.
+
+## What XSM Already Has (Implemented)
+
+- **5-channel signal model**: tmux pane observation, process driver inspection, explicit status markers, git worktree state, bead (issue) state
+- **9 deterministic classification states**: launching, active, idle_prompt, stalled, blocked_declared, handoff_ready, stopped, crashed, orphaned
+- **Monitor daemon**: once-mode snapshots + continuous monitoring with change detection
+- **Wrangle engine**: iterative passes with escalation ladder (nudge → diagnose+inject → escalate)
+- **Leader inbox**: JSONL with atomic append and file locking for notifications
+- **Tmux actuator**: TUI-family aware input for Claude Code, Codex, Gemini CLI, Shell
+- **Repertoire bridge**: calls `diagnose_idle` routine for stalled agent analysis
+
+## Architectural Context
+
+XSM operates inside Xenota's projection system:
+- **Projection boundary**: containerized (Podman/Docker), projection-scoped storage, membrane-gated communication with nucleus
+- **Authority split**: nucleus decides WHAT repo to work on; XSM decides HOW (which agents, what tasks, when to escalate)
+- **Nucleus interface**: typed dispatch events in, typed status events out. Projection outputs are proposals/observations, never authority.
+- **Revocation**: operator can halt the projection immediately at any time
+
+## OpenClaw Learnings to Incorporate
+
+From the prior council analysis of OpenClaw (30 agents, 5B tokens/day, 1.5M LOC refactored):
+
+1. **Session keys as addresses** — flat, routable identifiers for agents within the swarm (e.g., `repo:bead-123:coder`)
+2. **Deterministic workflow orchestration** — YAML task definitions injected into agent workspaces, not LLM-controlled routing
+3. **Factory-line role decomposition** — coder/reviewer/tester with different tool access and model selection
+4. **Append-only tracing** — every action logged for replay and debugging
+5. **Infrastructure as the product** — the bottleneck is infrastructure legibility, not model capability
+6. **Absorption gap** — infrastructure must absorb agent-scale change safely
+7. **Tolerance threshold** — "What's the slowest station? Get it out"
+8. **Boundaries enable coordination** — constraints are how agents achieve coordination, not obstacles to it
+
+## Key Design Questions
+
+1. What are the core principles that govern XSM swarm behavior?
+2. How does XSM coordinate work assignment, progress tracking, and completion verification?
+3. How does XSM handle failure (stuck agents, bad output, merge conflicts, loops)?
+4. What is the projection-to-nucleus reporting contract?
+5. How does XSM manage resource budgets (tokens, time, agent count)?
+6. What are the hard ownership rules (agent:bead:worktree relationships)?
+7. How does XSM handle recovery after crash/restart?
+8. What makes a "good" swarm vs a "thrashing" swarm?
+
+## Prior Council Constraints (Inherited)
+
+From the OpenClaw comparison council:
+- One projection, one repo, one coordinator (XSM)
+- SQLite is the authoritative local state store
+- No direct agent-to-agent messaging that affects work state — XSM coordinates
+- Aggregate budget enforcement at projection boundary
+- Loop circuit breaker (N touches without forward progress → halt)
+- PR verification gate before marking work resolved
+- Credential isolation (projection holds credentials, not individual agents)
+- Repo content is always untrusted input
+- No authority artifacts committed to the repo
+- Deterministic recovery: same state + same repo = same reconciliation
+- Membrane treats projection outputs as observations, never authority
+
+## What This Council Should Produce
+
+A clear principles document that covers:
+- Core operating principles (numbered, concise, defensible)
+- Work lifecycle (how a bead goes from assigned to resolved)
+- Agent lifecycle (how agents are spawned, monitored, wrangled, terminated)
+- Failure taxonomy (what can go wrong and how XSM responds)
+- Budget model (what resources are tracked and how limits are enforced)
+- Reporting contract (what the nucleus sees)
+- Recovery protocol (what happens on crash/restart)
+- Quality model (how XSM knows the swarm is producing good output)
+
+Return:
+1. What's the simplest possible work lifecycle (bead assigned → resolved)?
+2. What's the simplest possible agent lifecycle (spawn → terminate)?
+3. What budget model actually works in practice for coding agents?
+4. What recovery protocol is simple enough to implement reliably?
+5. Draft the top 10 principles — concise, actionable, no fluff

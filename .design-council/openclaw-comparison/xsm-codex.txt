@@ -1,0 +1,39 @@
+You are the Systems Critic. Find top design flaws, missing constraints, and what will fail first.
+
+PHASE: Quick pass — all dimensions at once.
+
+CONTEXT FROM PRIOR COUNCIL (4-phase full review):
+- Codex: "Coordination entropy will fail first. Too many rich concepts, not enough cheap addressing." Proposed cortex-routed capability aliases, SQLite trace spine, validated task presets.
+- Claude: "Every lightweight path must enforce the same invariants as the formal path." Required sealed capability registry, TrustContext signing, genome mutation gates.
+- Gemini: "Tokens/day is a vanity metric; resolved beads per hour is what matters." Proposed YAML-to-formula compiler, JSONL volatile cache, monitored P2P sidecar.
+- Consensus: Conditional Go on narrowed spec. KILLED: direct P2P, JSONL as authority, Markdown executable skills, new workflow engine, factory-line templates as primary model.
+
+KEY REFRAME: The prior council assumed OpenClaw patterns would be adopted across the ENTIRE xenon architecture. The actual plan is much more contained:
+
+XSM (swarm manager) runs as a SINGLE github_contributor PROJECTION. It orchestrates coding agents working on one GitHub repo. The nucleus doesn't change. The projection is:
+- Containerized (Podman/Docker)
+- Has its own workspace under /var/xenon/data/repos/<owner>/<repo>
+- Communicates with nucleus only through the membrane
+- Cannot directly mutate nucleus state
+- Has projection-scoped storage only
+- Can be revoked by the operator
+
+Inside this projection, XSM would:
+- Manage coding agents in tmux panes (Claude Code, Codex, Gemini CLI)
+- Use deterministic signal classification (5 channels, 9 states) for agent health
+- Use wrangle engine to nudge/diagnose/escalate stuck agents
+- Coordinate work via beads assigned to agents
+- Use git worktrees for parallel work
+
+WHAT CHANGES:
+- OpenClaw-style patterns (session keys, YAML workflows, factory-line roles, P2P) operate WITHIN the projection boundary, not at nucleus/cortex level
+- The membrane still validates all inbound dispatches
+- Authority split preserved: nucleus decides what repo, projection decides how
+- Patterns previously "killed" (P2P, JSONL, factory-line) may be safe inside a single projection's trust boundary
+
+Return:
+1. How does the projection containment change your prior analysis?
+2. Which "killed" proposals should be un-killed for this scope?
+3. Top 5 failure modes specific to swarm-within-a-projection
+4. What's the minimal spec for XSM-as-projection?
+5. What new invariants are needed at the projection boundary?

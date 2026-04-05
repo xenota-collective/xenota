@@ -1,0 +1,153 @@
+You are the Systems Critic. Find top design flaws, missing constraints, and what will fail first.
+
+PHASE: SIMPLIFY — Minimum shippable spec, deletions, sequence cuts.
+
+CONTEXT FROM PRIOR PHASES:
+# Phase 1 Summary: Ideation
+
+## Codex (Systems Critic)
+- Strongest element: deterministic coordination first, model intelligence second
+- Will fail first: ownership ambiguity — unresolved authority split between SQLite, beads, git, tmux
+- Must-have principles: (1) every fact has one authority, (2) exclusive fenced ownership with leases, (3) progress requires evidence not markers, (4) admission constrained by absorption capacity, (5) recovery must be idempotent
+- Missing: authority map, lease/heartbeat model, admission control, merge/landing model, forward progress definition, handoff artifacts, replay-safe vs dedupe actions, prompt injection hardening
+
+## Claude (Safety Auditor)
+- Core principle: "The swarm produces proposals. Humans produce decisions."
+- Must-have: human authority over merges is absolute, repo content is adversarial, attribution is immutable, scope enforced structurally not behaviorally, budget exhaustion stops work never relaxes gates
+- Top abuse paths: prompt injection via repo content, merge bomb via parallel conflicts, supply chain injection via dependencies, status spoofing to game XSM classification, credential exfiltration via agent-written code
+- QA model: 5 layers (structural gates, adversarial cross-model review, integration verification, human review thresholds, rollback capability)
+- Approval laundering prevention: PR rate limiting, no auto-merge for swarm PRs, reviewer rotation, complexity-gated cooling periods
+
+## Gemini (Pragmatist)
+- Simplest work lifecycle: ASSIGNED → ISOLATED → ACTIVE → VERIFYING → RESOLVED/FAILED
+- Simplest agent lifecycle: SPAWN → MONITOR → WRANGLE → TERMINATE
+- Budget model: wall-clock TTL per bead, action budget (max N nudges), financial cap at projection boundary
+- Recovery: read SQLite → scan infrastructure → resolve dissonance → resume
+- Top 10 principles drafted: infrastructure is authority, one worktree per bead, flat identifiers, append-only state, factory-line decomposition, deterministic intervention, aggressive pruning, untrusted outputs, no direct inter-agent messaging, stateless resumption in <5s
+
+# Phase 2 Summary: Black Hat
+
+## Top Failure Scenarios (consensus across all 3 seats)
+
+1. **Split-brain on crash/restart** — zombie agents, duplicate leases, conflicting PRs (all 3 seats, #1-2 priority). Fix: fencing epochs, live tmux census before SQLite, quarantine-before-respawn.
+2. **Prompt injection via repo content into XSM orchestration** — diagnose_idle ingests adversarial content, LLM makes compromised decisions (all 3 seats). Fix: repo content never reaches orchestration as instructions; deterministic gate required after any LLM call.
+3. **Merge bomb / landing queue collapse** — 5+ PRs conflict, rebase cascade, churn loop (all 3 seats). Fix: serialized landing queue, one bead in VERIFYING at a time per dependency graph.
+4. **Fake forward progress / status spoofing** — agents game activity signals while looping (Codex + Claude). Fix: progress = evidence-bound artifacts (commits passing lint, test state changes), not file touches or terminal output.
+5. **Absorption choke / reviewer starvation** — coders outproduce review capacity, queue backs up (all 3 seats). Fix: admission control — no new coders when verify backlog exceeds threshold.
+6. **Wrangle feedback cascade** — nudge→retry→fail→nudge loop burns budget (Claude + Gemini). Fix: monotonic wrangle counter per bead, 3 cycles without gate passage → BLOCKED_ESCALATE.
+7. **Credential exfiltration via agent-written code** — tests/CI config leak tokens (Claude). Fix: synthetic credentials in test environments, network egress gating, CI/workflow changes require human review.
+8. **QA evidence detached from artifact** — review passes commit A, branch rebased to B, bead marked resolved on stale approval (Codex). Fix: QA results content-addressed to exact commit SHA, auto-invalidated on tree change.
+9. **Context window amnesia** — agent forgets objective mid-task, hallucinates refactors (Gemini). Fix: inject core objective + diff-so-far into every nudge cycle.
+10. **Git index lock / worktree corruption on crash** — agent crashes mid-git-op, lock file blocks next agent (Gemini). Fix: worktrees fully ephemeral — crash = delete worktree, create fresh from latest commit.
+
+## Critical Missing Constraints (consensus)
+- Authority map: one fact, one owner (SQLite=leases, beads=task state, git=code, logs=events)
+- Fencing epochs on all external actions (stale owners must be harmless)
+- Admission control by downstream throughput (not just idle workers)
+- Evidence-bound progress (artifacts, not markers)
+- Idempotent recovery with compensating actions
+- Serialized landing queue
+- Hermetic verification (no secrets in agent execution contexts)
+
+Now distill this into the FINAL PRINCIPLES DOCUMENT. The goal is a concise, numbered set of principles that cover:
+- Core operating model
+- Work lifecycle
+- Agent lifecycle
+- Ownership and authority
+- Quality and verification
+- Budget and resource control
+- Failure handling and recovery
+- Reporting contract with nucleus
+
+Rules for the principles:
+- Each principle must be one sentence, followed by a short "why" explanation
+- No abstract philosophy — every principle must be testable or enforceable
+- Prefer structural enforcement over behavioral expectation
+- If two principles overlap, merge them
+- Target: 15-25 principles total, organized by category
+
+Also provide:
+1. The authority map (which system owns which fact)
+2. The work lifecycle state machine (states + transitions + gates)
+3. The agent lifecycle state machine
+4. The 5 kill conditions (when to stop the swarm immediately)
+
+PROPOSAL (for reference):
+# XSM Swarm Principles: Design Council Proposal
+
+## Objective
+
+Define the principles, architecture, and operating constraints for XSM running as a single `github_contributor` projection that coordinates a swarm of coding agents on a GitHub repository.
+
+## What XSM Is
+
+XSM (Xenon Swarm Manager) is a deterministic swarm monitor and coordinator. It runs inside a single containerized projection and manages multiple coding agents (Claude Code, Codex, Gemini CLI) working on the same repo in parallel via tmux panes and git worktrees.
+
+## What XSM Already Has (Implemented)
+
+- **5-channel signal model**: tmux pane observation, process driver inspection, explicit status markers, git worktree state, bead (issue) state
+- **9 deterministic classification states**: launching, active, idle_prompt, stalled, blocked_declared, handoff_ready, stopped, crashed, orphaned
+- **Monitor daemon**: once-mode snapshots + continuous monitoring with change detection
+- **Wrangle engine**: iterative passes with escalation ladder (nudge → diagnose+inject → escalate)
+- **Leader inbox**: JSONL with atomic append and file locking for notifications
+- **Tmux actuator**: TUI-family aware input for Claude Code, Codex, Gemini CLI, Shell
+- **Repertoire bridge**: calls `diagnose_idle` routine for stalled agent analysis
+
+## Architectural Context
+
+XSM operates inside Xenota's projection system:
+- **Projection boundary**: containerized (Podman/Docker), projection-scoped storage, membrane-gated communication with nucleus
+- **Authority split**: nucleus decides WHAT repo to work on; XSM decides HOW (which agents, what tasks, when to escalate)
+- **Nucleus interface**: typed dispatch events in, typed status events out. Projection outputs are proposals/observations, never authority.
+- **Revocation**: operator can halt the projection immediately at any time
+
+## OpenClaw Learnings to Incorporate
+
+From the prior council analysis of OpenClaw (30 agents, 5B tokens/day, 1.5M LOC refactored):
+
+1. **Session keys as addresses** — flat, routable identifiers for agents within the swarm (e.g., `repo:bead-123:coder`)
+2. **Deterministic workflow orchestration** — YAML task definitions injected into agent workspaces, not LLM-controlled routing
+3. **Factory-line role decomposition** — coder/reviewer/tester with different tool access and model selection
+4. **Append-only tracing** — every action logged for replay and debugging
+5. **Infrastructure as the product** — the bottleneck is infrastructure legibility, not model capability
+6. **Absorption gap** — infrastructure must absorb agent-scale change safely
+7. **Tolerance threshold** — "What's the slowest station? Get it out"
+8. **Boundaries enable coordination** — constraints are how agents achieve coordination, not obstacles to it
+
+## Key Design Questions
+
+1. What are the core principles that govern XSM swarm behavior?
+2. How does XSM coordinate work assignment, progress tracking, and completion verification?
+3. How does XSM handle failure (stuck agents, bad output, merge conflicts, loops)?
+4. What is the projection-to-nucleus reporting contract?
+5. How does XSM manage resource budgets (tokens, time, agent count)?
+6. What are the hard ownership rules (agent:bead:worktree relationships)?
+7. How does XSM handle recovery after crash/restart?
+8. What makes a "good" swarm vs a "thrashing" swarm?
+
+## Prior Council Constraints (Inherited)
+
+From the OpenClaw comparison council:
+- One projection, one repo, one coordinator (XSM)
+- SQLite is the authoritative local state store
+- No direct agent-to-agent messaging that affects work state — XSM coordinates
+- Aggregate budget enforcement at projection boundary
+- Loop circuit breaker (N touches without forward progress → halt)
+- PR verification gate before marking work resolved
+- Credential isolation (projection holds credentials, not individual agents)
+- Repo content is always untrusted input
+- No authority artifacts committed to the repo
+- Deterministic recovery: same state + same repo = same reconciliation
+- Membrane treats projection outputs as observations, never authority
+
+## What This Council Should Produce
+
+A clear principles document that covers:
+- Core operating principles (numbered, concise, defensible)
+- Work lifecycle (how a bead goes from assigned to resolved)
+- Agent lifecycle (how agents are spawned, monitored, wrangled, terminated)
+- Failure taxonomy (what can go wrong and how XSM responds)
+- Budget model (what resources are tracked and how limits are enforced)
+- Reporting contract (what the nucleus sees)
+- Recovery protocol (what happens on crash/restart)
+- Quality model (how XSM knows the swarm is producing good output)

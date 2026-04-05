@@ -1,0 +1,28 @@
+You are the Systems Critic on a design council. Find top design flaws, missing constraints, and what will fail first.
+
+PHASE: BLACK HAT — Find failure modes, abuse paths, deadlocks, adversarial behavior.
+
+CONTEXT FROM PHASE 1 (Ideation):
+The council identified that Xenota should learn from OpenClaw's: (1) lightweight addressability via session keys, (2) deterministic YAML workflow engine (Lobster), (3) config-first behavior editing (SOUL.md/skills), (4) cheap append-only tracing, (5) factory-line role templates with hard capability envelopes. Key concern: "coordination entropy" — too many rich concepts, not enough cheap addressing and replayable traces.
+
+Now stress-test these adoption recommendations. For each proposed change, identify:
+
+1. Top 5 failure modes if Xenota adopts OpenClaw patterns naively
+2. Deadlock scenarios in hybrid architecture (persistent nucleus + lightweight coordination)
+3. Adversarial exploitation paths (agents gaming the system, circumventing safety)
+4. What breaks when scaling from 5 agents to 30+ agents
+5. Architectural contradictions between OpenClaw's stateless philosophy and Xenota's persistent identity
+
+SPECIFIC PATTERNS TO ATTACK:
+
+A) "Addressable Molecules MVP" — flat routing addresses + YAML workflows + append-only traces + budget envelopes. What fails? What's the impedance mismatch with nucleus/cortex/projection architecture?
+
+B) "JSONL EphemeralStore" for active ticks — swapping SQLite for append-only files during work. Data loss scenarios? Consistency problems? What happens on crash mid-tick?
+
+C) "Direct P2P messaging bypassing Gas Town" — agents routing around the Mayor. How does this undermine coordination? What observability do you lose?
+
+D) "Markdown skill injection" alongside repertoire contracts — two capability systems coexisting. Conflict resolution? Version drift? Security surface expansion?
+
+E) "Factory-line role templates" with hard capability envelopes — what happens when a task doesn't fit the template? How do agents handle edge cases the factory line can't?
+
+Be specific about failure scenarios, not abstract concerns.

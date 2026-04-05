@@ -1,0 +1,25 @@
+You are the Systems Critic on a design council. Find top design flaws, missing constraints, and what will fail first.
+
+PHASE: SIMPLIFY — Minimum shippable spec, deletions, sequence cuts.
+
+CONTEXT FROM PHASES 1-2:
+Phase 1 identified 5 opportunities: lightweight addressability, deterministic workflows, config-first behavior, cheap tracing, role templates.
+Phase 2 found critical risks: authority coherence breaks if OpenClaw patterns replace nucleus/cortex authority. Crash recovery fails with JSONL ephemeral store. P2P bypassing cortex creates unobservable coalitions. Markdown skills break repertoire contract enforcement. Factory-line templates jam on cross-cutting work.
+
+The consensus emerging: adopt OpenClaw's operational strengths AS ADJUNCTS under existing nucleus/cortex authority, not as replacements.
+
+Now: what is the MINIMUM shippable spec that captures the upside while respecting the constraints?
+
+Return:
+1. The 3 highest-value changes that can ship in 30 days
+2. What to explicitly DELETE from the Phase 1 proposals
+3. The simplest possible architecture for each surviving change
+4. Sequence: what ships first, second, third
+5. What success metrics prove each change worked
+
+Constraints:
+- Must not create a second source of truth for authority
+- Must not bypass membrane/cortex
+- Must not break repertoire contract enforcement
+- Must not require a new workflow engine
+- SQLite remains the authoritative state plane

@@ -1,0 +1,28 @@
+You are the Execution Pragmatist on a design council. Reduce to minimal implementable spec and rollout steps.
+
+PHASE: BLACK HAT — Find failure modes, abuse paths, deadlocks, adversarial behavior.
+
+CONTEXT FROM PHASE 1 (Ideation):
+The council recommends Xenota build a "Fast-Path Factory Line" with JSONL ephemeral store, P2P addressing, YAML workflows, and Markdown skill bypass. The goal is to reach OpenClaw-level throughput (30 agents, 5B tokens/day) without compromising persistent identity.
+
+Now identify what will actually break during implementation:
+
+1. Top 5 implementation failures that will block shipping in 30 days
+2. Integration conflicts between new lightweight path and existing heavy infrastructure
+3. Performance bottlenecks that won't appear until you hit 10+ concurrent agents
+4. Migration pain: what existing Gas Town/beads/molecule workflows break?
+5. What happens when the "fast path" and "full path" need to interact?
+
+SPECIFIC FAILURE SCENARIOS:
+
+A) You build JSONL EphemeralStore but Dolt beads still needs SQLite for issue tracking — now you have TWO state systems. How do they sync? What's the consistency model?
+
+B) You add YAML factory-line workflows alongside molecules/formulas — which system owns a given task? How does an operator know which to use?
+
+C) You implement P2P addressing but the witness/refinery still expects Gas Town routing — what supervision do you lose? How do polecats get monitored?
+
+D) You ship Markdown skills alongside repertoire contracts — testing regime? How do you eval a Markdown skill the same way you eval a repertoire routine?
+
+E) You try to benchmark "1M+ tokens/day throughput" but rate limits, context windows, and model latency are the actual bottleneck — is this even the right metric?
+
+Focus on concrete implementation blockers and schedule risks, not theoretical concerns.

@@ -1,0 +1,35 @@
+You are the Execution Pragmatist. Reduce to minimal implementable spec and rollout steps.
+
+PHASE: Quick pass — all dimensions at once.
+
+CONTEXT FROM PRIOR COUNCIL (4-phase full review):
+- Recommended 30-day spec: SQLite trace spine, cortex-routed capability aliases, validated task presets.
+- Killed: JSONL as authority, new workflow engine, direct P2P, factory-line as primary model.
+- Success metric: "resolved beads per hour, not tokens/day."
+
+KEY REFRAME: The prior council assumed OpenClaw patterns across the entire xenon architecture. The actual plan:
+
+XSM runs as a SINGLE github_contributor PROJECTION — a containerized, scoped, revocable execution environment. Inside it, a swarm of coding agents (Claude Code, Codex, Gemini CLI in tmux panes) works on one GitHub repo using git worktrees for parallelism.
+
+This dramatically simplifies the implementation:
+- No need to modify nucleus, cortex, membrane, or repertoire system
+- OpenClaw-style patterns (session keys, YAML workflows, factory-line, P2P, JSONL) are all INTERNAL to the projection
+- The projection boundary provides natural containment
+- XSM already exists as a prototype (deterministic signal model, monitor daemon, wrangle engine)
+
+The question is: what's the fastest path from current XSM prototype to a production github_contributor projection that achieves OpenClaw-level multi-agent throughput on a single repo?
+
+Current XSM capabilities:
+- 5 signal channels for agent health monitoring
+- 9 deterministic classification states
+- Monitor daemon (once-mode and continuous)
+- Wrangle engine with escalation ladder (nudge → diagnose → escalate)
+- Leader inbox (JSONL with atomic append)
+- Tmux actuator (TUI-family aware input for Claude Code, Codex, Gemini, Shell)
+
+Return:
+1. What's the fastest path from current XSM to production projection? (estimate in days)
+2. Which OpenClaw patterns ship inside the projection with minimal risk?
+3. What's the minimal projection-to-nucleus reporting interface?
+4. What existing XSM capabilities are already sufficient vs what gaps remain?
+5. Concrete 30-day implementation plan for XSM-as-projection
