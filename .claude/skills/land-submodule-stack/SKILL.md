@@ -388,6 +388,26 @@ Healthy closeout means:
 - all landing PRs are merged or otherwise explicitly closed
 - the owning epic/bead has a final closeout note with merged SHAs and residual follow-ups
 
+### XSM Restart Check
+
+After workspace realignment, check whether the landed xenon changes affect XSM runtime. If they do, the live wrangle daemon must be restarted on the new code.
+
+Run the detection script with the before and after xenon submodule SHAs:
+
+```bash
+.claude/skills/manage-swarm/scripts/restart_wrangle_if_xsm_changed.sh <before-sha> <after-sha> xenon
+```
+
+- `before-sha`: the xenon commit that `main` pointed to before the merge
+- `after-sha`: the xenon commit that `main` points to after the merge
+
+The script will:
+1. Diff the two xenon commits for changes under `packages/xsm/`
+2. If XSM-affecting changes are found, reinstall the `xsm` package and restart wrangle
+3. If no XSM changes, skip silently
+
+After restart, verify wrangle health by waiting ~30 seconds then checking monitor output for healthy classification of active agents.
+
 ## Handbook Handling
 
 Do not rely on a formula for handbook sync.
