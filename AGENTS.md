@@ -33,10 +33,10 @@ bd dolt push          # Push beads data to remote
 
 ## Handbook Oversight (Mandatory)
 
-- You may make local edits under `handbook/` in order to prepare diffs for human review.
-- Never commit or push changes under `handbook/` without explicit human approval in the current session.
-- For handbook work, default to preparing proposals/diffs first, then wait for a human "approved/proceed" confirmation before committing or pushing handbook changes.
-- If handbook changes were made accidentally and you are unsure whether they should be kept, stop and ask for human direction before continuing.
+- You may edit, commit, and push changes under `handbook/` when they reflect implemented reality or approved planning content and follow normal repo review workflow.
+- Handbook sync work does not require a separate human signoff gate before opening or updating a handbook PR.
+- For handbook work, default to keeping scope tight, citing the implementation being documented, and preserving the current-reality boundary.
+- If handbook changes were made accidentally and you are unsure whether they should be kept, stop and ask for direction before continuing.
 
 ## Handbook Reality Boundary
 
@@ -69,7 +69,7 @@ This repo uses git submodules (`xenon/`, `handbook/`). Treat submodules as separ
   1. Commit and push inside `xenon/` first.
   2. Then commit the updated `xenon` pointer in top repo.
   3. Run `git pull --rebase`, `bd dolt push`, `git push` in top repo.
-- For `handbook/`, follow Handbook Oversight rules above. Do not edit or push handbook content without explicit human approval.
+- For `handbook/`, follow Handbook Oversight rules above.
 
 ### Rebase/Merge Safety for Submodules
 

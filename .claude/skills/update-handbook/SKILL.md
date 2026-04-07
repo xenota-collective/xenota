@@ -24,19 +24,13 @@ Rules:
 - Move content forward through the lifecycle when implementation lands.
 - If implementation is partial, document only the parts that are real now.
 
-## Mandatory Approval Gate
+## Approval Policy
 
-The proposal step is a hard stop.
+The handbook sync workflow is autonomous by default.
 
-- You may inspect `xenon/` and prepare handbook diffs locally.
-- You must present the exact proposed handbook edits before applying them.
-- You must not commit or push handbook changes until the human explicitly approves after seeing the proposal.
-- Earlier generic instructions like "do it" do not count as approval for handbook edits.
-
-Also follow the repo rule in `AGENTS.md`:
-
-- local handbook edits are allowed for review prep
-- committing or pushing `handbook/` changes requires explicit human approval in the current session
+- You may inspect `xenon/`, update `handbook/`, and open or refresh a handbook PR without waiting for a separate human signoff step.
+- You should still summarize the scope of the handbook change clearly, especially when moving plan content into current-reality docs.
+- Keep the repo rule in `AGENTS.md` aligned: handbook updates must stay within implemented reality and normal review workflow, but they do not require a special approval gate.
 
 ## Workflow
 
@@ -94,7 +88,7 @@ Questions to answer:
 
 ### 4. Propose Exact Edits
 
-Before editing committed history, provide a concrete proposal with:
+Before editing, produce a concrete proposal with:
 
 - the code change being documented
 - the exact handbook files to update
@@ -102,11 +96,11 @@ Before editing committed history, provide a concrete proposal with:
 - whether any plan content should move to a current-reality section
 - whether the correct result is "no handbook change needed"
 
-Stop here until the human approves.
+You may proceed immediately when the scope is straightforward and grounded in landed behavior. If the change is ambiguous or crosses current-reality boundaries, stop and ask for direction.
 
-### 5. Apply Approved Changes
+### 5. Apply Changes
 
-After approval, make only the approved `handbook/` edits.
+Make only the scoped `handbook/` edits justified by the audited implementation.
 
 Guidelines:
 
