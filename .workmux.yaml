@@ -66,13 +66,13 @@
 
 # Custom tmux pane layout (mutually exclusive with 'windows').
 # Default: Two-pane layout with shell and clear command.
-# panes:
-#   - command: pnpm install
-#     focus: true
-#   - split: horizontal
-#   - command: clear
-#     split: vertical
-#     size: 5
+panes:
+  - command: <agent>
+    focus: true
+  - split: horizontal
+  - command: clear
+    split: vertical
+    size: 5
 
 # Multiple windows per session (session mode only, mutually exclusive with 'panes').
 # Each window can have its own pane layout. Unnamed windows get tmux's
