@@ -31,3 +31,4 @@ state.json
 .logs/
 __pycache__/
 .worktrees/
+.beads/
