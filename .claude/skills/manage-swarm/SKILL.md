@@ -42,6 +42,25 @@ Do not fake a clear by telling the worker "your context is cleared." The pane mu
 
 Common operations should be run through the scripts in `scripts/`. The skill should describe policy and sequence, not embed raw shell recipes.
 
+Operator hard rules:
+- When sending text to any tmux pane manually, use exactly two tmux calls:
+  1. one literal-text `send-keys -l ...`
+  2. one separate `send-keys Enter`
+- Never rely on a combined send or assume the helper/script submitted the command unless you verified it.
+- After every manual tmux injection, immediately verify the effect before making any status claim.
+- Valid proof is one of:
+  - `pane_current_command` changed to the expected foreground process
+  - fresh pane output advanced after the command
+  - the command reproduced directly outside tmux and confirmed the failure or success mode
+- Scrollback alone is not proof that the current pane is running the desired process.
+- Treat these identities as distinct and never mix them:
+  - agent name, for example `wrangler`
+  - tmux target, for example `xc:4.1`
+  - backend worker handle / workmux id
+- If an error says `No agent found matching ...`, stop and re-check which identity type the callee expects before retrying.
+- For Python package work under `xenon/packages/*`, default to `uv run --project <package> --group dev ...` instead of bare `pytest` or ad hoc `pip` flows.
+- If the package imports sibling modules such as `nucleus`, set `PYTHONPATH` explicitly before running commands.
+
 This skill is for operational wrangling, not implementation:
 - assign epics or child beads across crew
 - keep every worker moving unless they are genuinely blocked
@@ -106,7 +125,9 @@ If you detect a worker has pushed directly to main (check with `git log --onelin
 - If the pane shows recent direct human input from the current chat session, treat that as a strong coordination signal: do not aggressively reallocate, redirect, or pile on messages just because the lane is momentarily paused.
 - When the human is present in the chat, only send a worker message if the worker is actually stuck and not working. Human-steered lanes should default to observation and minimal interference.
 - Never try to land work ad hoc. Every landing must go through the landing formula.
-- Never treat a worker handoff as merge authorization. Landing workers must still read the landing skill and wait for explicit human approval before any merge.
+- The current session operator has authority to approve or deny worker blockers, requests, and gates directly.
+- The current session operator has authority to approve landing requests directly.
+- Do not leave lanes parked on vague approval waits when you can issue the approval yourself in the current session.
 - Treat dedicated landing workers as a landing-only pool. If someone is serving as the landing owner for the swarm (for example `last`), do not reallocate them to implementation, review, or manual-test beads.
 - If a landing blocker has already been explicitly routed back to an implementation owner, the landing worker must not start branch surgery on that same branch unless ownership is explicitly reassigned. Landing coordination and implementation refresh are separate lanes.
 
@@ -209,6 +230,17 @@ Mandatory Helper Commands:
 /Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/bead_show.sh <bead>
 /Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/polecat_list.sh xenota
 ```
+
+Manual tmux verification loop:
+1. Capture or inspect the pane first
+2. Send literal text only
+3. Send a separate `Enter`
+4. Re-capture immediately
+5. Decide which of these states is true:
+   - command is now running
+   - pane is still at prompt with queued text gone
+   - pane rejected the command or returned to shell
+6. Do not report "restarted", "running", or "delivered" unless step 5 proved it
 
 Interpretation:
 - fresh prompt after a completed action = likely idle, give next action
@@ -499,8 +531,9 @@ Landing rule:
 - do not close the parent epic as landed until the formula-run landing is complete
 - if you clear a dedicated landing worker off a finished or blocked landing task, immediately route them to the next landing task, not to general implementation work
 - when handing a new landing task to a dedicated landing worker, tell them explicitly to read the landing skill / landing formula before acting on that task rather than improvising or switching back into implementation mode
-- landing workers must get explicit human approval in the current session before running any merge command or taking any action that actually lands the branch/PR
-- readiness to merge is a stop-and-escalate gate, not implicit permission to merge
+- landing workers must get explicit approval in the current session before running any merge command or taking any action that actually lands the branch/PR
+- the current session operator may grant that approval directly; do not wait for a separate human if the current session already authorized landing decisions
+- readiness to merge is a stop-and-approve gate, not implicit permission to merge
 - P0 stacks jump the landing queue. If both a P0 and a P1 stack are ready to land, the landing worker must take the P0 first. If the landing worker is mid-flight on a non-P0 landing and a P0 becomes landing-ready, finish the current landing then immediately take the P0 next.
 
 Current landing formula:
