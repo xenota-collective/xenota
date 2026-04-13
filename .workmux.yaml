@@ -62,7 +62,7 @@
 # Mode for tmux operations: window (default) or session.
 # - window: Create windows within the current tmux session
 # - session: Create new tmux sessions for each worktree (useful for session-per-project workflows)
-# mode: session
+mode: window
 
 # Custom tmux pane layout (mutually exclusive with 'windows').
 # Default: Two-pane layout with shell and clear command.
