@@ -23,6 +23,15 @@ If you need to clear the earthshot pane first, use the helper script:
 
 This helper performs the required `/clear`, separate `Enter`, wait, and re-read sequence. Do not inline this flow in the skill.
 
+When restarting the live XSM manager in `xc:0.2`, use the repo-local launcher:
+
+```bash
+/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/restart_local_xsm.sh
+```
+
+Do not start XSM with `/Users/jv/.local/bin/xsm` or any other global `uv tool` shim. The live manager must run from `xenon/packages/xsm/.venv/bin/xsm` so it uses the checked-out source tree.
+Do not run the live manager in any pane other than `xc:0.2`.
+
 For worker-lane resets, use the helper script in this skill:
 
 ```bash
@@ -60,6 +69,7 @@ Operator hard rules:
 - If an error says `No agent found matching ...`, stop and re-check which identity type the callee expects before retrying.
 - For Python package work under `xenon/packages/*`, default to `uv run --project <package> --group dev ...` instead of bare `pytest` or ad hoc `pip` flows.
 - If the package imports sibling modules such as `nucleus`, set `PYTHONPATH` explicitly before running commands.
+- For the live XSM daemon specifically, prefer the checked-out runtime at `xenon/packages/xsm/.venv/bin/xsm`. Do not assume a global `xsm` binary is current.
 
 This skill is for operational wrangling, not implementation:
 - assign epics or child beads across crew

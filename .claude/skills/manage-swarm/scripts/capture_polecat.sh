@@ -13,4 +13,4 @@ polecat="$1"
 scrollback="${2:-120}"
 target="$(resolve_polecat_target "$polecat")"
 
-exec /opt/homebrew/bin/tmux -L gt capture-pane -pt "$target" -S "-${scrollback}"
+exec "${tmux_cmd[@]}" capture-pane -pt "$target" -S "-${scrollback}"

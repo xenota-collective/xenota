@@ -40,6 +40,7 @@ export-state/
 
 # Dolt embedded database (server mode uses shared dolt at ~/gt/.dolt-data/)
 dolt/
+embeddeddolt/
 
 # Legacy SQLite files (named without .db extension)
 sqlite

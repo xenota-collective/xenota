@@ -403,7 +403,7 @@ Run the detection script with the before and after xenon submodule SHAs:
 
 The script will:
 1. Diff the two xenon commits for changes under `packages/xsm/`
-2. If XSM-affecting changes are found, reinstall the `xsm` package and restart wrangle
+2. If XSM-affecting changes are found, validate the repo-local `packages/xsm/.venv/bin/xsm` runtime and restart wrangle
 3. If no XSM changes, skip silently
 
 After restart, verify wrangle health by waiting ~30 seconds then checking monitor output for healthy classification of active agents.

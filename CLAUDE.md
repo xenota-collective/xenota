@@ -1,8 +1,7 @@
-# Xenota Crew: Starshot
+# Xenota
 
-This repository is the Xenota `crew/starshot` workspace.
+This repository is the Xenota workspace. Multiple lanes (main, workers, landing) share this tree via workmux — consult workmux to determine which lane you are before acting on identity-sensitive instructions (assignee, pane target, worker flavor).
 
 - Follow `AGENTS.md` in this repo as the source of truth for workflow and landing rules.
-- Use `bd` for issue tracking and keep handbook sync work aligned to implemented xenon behavior.
-- Handbook sync PRs do not require a separate human signoff gate; use the normal repo review and landing workflow.
-- Keep docs and code changes scoped to Xenota concerns; avoid unrelated rig-specific instructions.
+- Use `bd` for issue tracking.
+- Keep code and docs scoped to Xenota concerns.

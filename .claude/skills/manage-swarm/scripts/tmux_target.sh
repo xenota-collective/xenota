@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-tmux_cmd=(/opt/homebrew/bin/tmux -L gt)
+tmux_bin="${TMUX_BIN:-/opt/homebrew/bin/tmux}"
+tmux_cmd=("$tmux_bin")
 default_shell="${SHELL:-/bin/zsh} -l"
 
 tmux_pane_title() {

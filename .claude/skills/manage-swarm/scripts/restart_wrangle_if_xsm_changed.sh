@@ -42,14 +42,11 @@ if [[ "$xsm_affected" == "false" ]]; then
   exit 0
 fi
 
-echo "restart_wrangle_if_xsm_changed: XSM-affecting changes detected, rebuilding and restarting wrangle" >&2
+echo "restart_wrangle_if_xsm_changed: XSM-affecting changes detected, validating local runtime and restarting wrangle" >&2
 
-# Reinstall XSM package so the running daemon picks up new code
-if [[ -f "$submodule/packages/xsm/pyproject.toml" ]]; then
-  echo "restart_wrangle_if_xsm_changed: reinstalling xsm package" >&2
-  (cd "$submodule/packages/xsm" && uv tool install --force --editable . 2>&1) || {
-    echo "restart_wrangle_if_xsm_changed: WARNING — xsm reinstall failed, restart may use stale code" >&2
-  }
+if [[ ! -x "$submodule/packages/xsm/.venv/bin/xsm" ]]; then
+  echo "restart_wrangle_if_xsm_changed: WARNING — missing local xsm runtime at $submodule/packages/xsm/.venv/bin/xsm" >&2
+  echo "restart_wrangle_if_xsm_changed: run 'cd $submodule/packages/xsm && uv sync' before restarting the live manager" >&2
 fi
 
 # Restart wrangle via the existing restart script

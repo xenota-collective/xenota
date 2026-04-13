@@ -13,4 +13,4 @@ worker="$1"
 scrollback="${2:-120}"
 target="$(resolve_worker_target "$worker")"
 
-exec /opt/homebrew/bin/tmux -L gt capture-pane -pt "$target" -S "-${scrollback}"
+exec "${tmux_cmd[@]}" capture-pane -pt "$target" -S "-${scrollback}"
