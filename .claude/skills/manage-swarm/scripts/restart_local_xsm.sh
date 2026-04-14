@@ -74,7 +74,7 @@ done < <(
   '
 )
 
-launch_cmd="cd \"$repo_root\" && exec \"$xsm_bin\" wrangle --config \"$resolved_config_path\" --json"
+launch_cmd="cd \"$repo_root\" && \"$xsm_bin\" wrangle --config \"$resolved_config_path\" --json"
 tmux_send_literal_text "$resolved_target" "$launch_cmd"
 tmux_send_raw_keys "$resolved_target" Enter
 
