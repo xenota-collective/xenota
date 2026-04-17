@@ -1,0 +1,72 @@
+**1. Strongest Elements**
+
+`xc-iicr (Enforce continuous worker productivity invariant in XSM control plane)` is pointed at the right level of abstraction. It correctly frames this as a control-plane defect, not a stale-assignment cleanup bug, and that matters because the current failure is clearly structural: the system allowed a wrong resting state to persist while demand existed.
+
+The best part of the proposal is the shift from incident-specific handling to an invariant with explicit authorized exceptions. That is the right design direction. The other strong element is that it already identifies several concrete mechanism gaps instead of stopping at principles: `parked_handoff` misuse, stale assignment authority not being cleared, synthetic patrol modeling, and missing starvation signaling. Those are credible root-cause surfaces.
+
+**2. Top 5 Risks / Failure Modes**
+
+1. **“Productive” is still underspecified, so the invariant may thrash healthy workers.**  
+If productivity is inferred too narrowly, long-running but valid work will look idle and get reclaimed. If it is inferred too loosely, the current bug remains. This will fail first unless you define what counts as fresh evidence, by role and phase.
+
+2. **Recovery actions can duplicate or corrupt ownership without a canonical authority order.**  
+You mention clearing context, lease, and tracker assignment key, but not which source is authoritative when they disagree. If `bd`, persisted state, tmux, and lane self-report conflict, the system can both clear a valid worker and reassign the same work elsewhere.
+
+3. **`redispatchable` is not yet separated from “safe to recycle.”**  
+Some stranded states should be redispatched immediately; others should be quarantined, phase-advanced, or incidented. If you collapse them into one recovery bucket, you will turn data-integrity problems into throughput problems and hide real control-plane defects behind reassignment noise.
+
+4. **The starvation detector may become an alert loop instead of a control mechanism.**  
+“Backlog exists + worker capacity exists + no dispatch occurred” is not enough. If backlog is not actually role-compatible, blocked by hidden constraints, or filtered by package policy, you will emit incidents forever while taking no useful action.
+
+5. **Authorized waiting states will sprawl unless they are structurally constrained.**  
+The proposal says waits must be narrow and bounded, which is correct, but it does not yet enforce a schema. Without required fields and expiration semantics, teams will reintroduce limbo using labels like `blocked`, `handoff_ready`, or `awaiting human`.
+
+**3. Missing Fields / Constraints**
+
+1. **Definition of productivity evidence.**  
+You need a normative definition for each role: what signals count, how fresh they must be, and what signals are insufficient. “Terminal output exists” is not evidence. “Assignment changed,” “commit landed,” “test advanced,” “phase changed,” or “intervention acknowledged” probably are.
+
+2. **Definition of dispatchable backlog.**  
+Not all open work is dispatchable. You need matching rules that account for role, package policy, blockers, dependencies, phase ownership, and human-gated work.
+
+3. **Source-of-truth precedence.**  
+Specify the authority order among `bd`, persisted XSM state, lane lease, worker self-report, branch/worktree state, and tmux observations. Without this, restart recovery will oscillate.
+
+4. **Explicit lane state machine.**  
+The plan names states informally, but it still needs a closed state model with allowed transitions and prohibited transitions. In particular, `parked_handoff` must become role-scoped, not generic.
+
+5. **Bounded timing / pass thresholds.**  
+“Bounded passes” is too vague. You need exact thresholds or package-configurable bounds for startup grace, invalidation recovery, starvation detection, and quarantine.
+
+6. **Anti-thrash controls.**  
+You need rate limits such as max automatic recoveries per lane per window, cooldowns after recycle, and a forced quarantine threshold when repeated recovery does not restore productivity.
+
+7. **Incident contract.**  
+A “dispatch-starvation incident” needs required fields: observed demand, available capacity, matching result, last recovery attempt, next action, owner, and whether XSM is safe to continue autonomous dispatch.
+
+8. **Patrol lane contract.**  
+It is not enough to say patrols are synthetic. Their lifecycle, evidence model, assignment semantics, and validation path must be explicitly outside bead-based worker rules.
+
+**4. Minimal Spec Changes**
+
+1. **Add a normative lane-state table.**  
+At minimum: `active`, `authorized_wait`, `redispatchable`, `landing_handoff`, `quarantined`, `retired`. For each state, define entry conditions, allowed duration, required metadata, next automatic action, and which roles may use it.
+
+2. **Add a required schema for authorized waiting.**  
+Every wait state should require: `reason`, `owner`, `expires_at` or `max_passes`, `recheck_policy`, and `next_action`. If any field is missing, the lane is not authorized to wait and must be recovered.
+
+3. **Add a canonical authority order for assignment reconciliation.**  
+Example shape: bead store validity first, then lane lease, then package role constraints, then persisted state, then worker self-report, then tmux heuristics. Whatever order you choose, make it explicit and deterministic.
+
+4. **Split recovery outcomes into three categories.**  
+`redispatch`, `phase_advance`, and `quarantine`. Do not let invalid context default straight to redispatch if evidence suggests inconsistency or repeat failure.
+
+5. **Define concrete thresholds.**  
+Even if package-configurable, the spec should require defaults for startup grace, stale-evidence timeout, starvation-pass threshold, and repeated-recovery quarantine threshold.
+
+**5. One 30-Day Execution Change**
+
+Build a **lane-reconciliation harness** before broad refactors.  
+For the next 30 days, every control-plane change in this area should be judged against a fixed corpus of persisted-state scenarios and restart traces, including the 2026-04-12 failure. The harness should replay lane snapshots plus backlog conditions and assert the resulting lane classification, recovery action, and incident output. That gives you a stable contract for the invariant and will catch the first real failure mode here: local fixes that improve one stranded path while creating a new oscillation or duplicate-dispatch path elsewhere.
+
+The core criticism is simple: the proposal has the right diagnosis, but it still needs a tighter operational contract. Right now it says “workers must become productive.” The spec needs to say exactly who decides that, from which evidence, within what bounds, and with what safe fallback when the evidence conflicts.

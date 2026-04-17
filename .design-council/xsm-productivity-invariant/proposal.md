@@ -1,0 +1,89 @@
+Bead under review: xc-iicr (Enforce continuous worker productivity invariant in XSM control plane)
+
+Bead description:
+XSM currently allows generic worker lanes to remain non-productive for unbounded wrangle passes even when dispatchable backlog exists. This is a control-plane defect, not a one-off stale assignment bug.
+
+Observed live failure on 2026-04-12:
+- `xc:0.2` continued printing `wrangle run ... pass N: no actions` for hundreds of passes.
+- `worker-claude-1` remained tied to stale assignment `xc-t4ks.1.3`, which does not exist in `bd`.
+- `worker-claude-2` reported no active valid task and awaited dispatch.
+- persisted swarm state kept both worker lanes non-productive while open XSM backlog existed.
+- monitor/wrangle behavior allowed these lanes to sit parked instead of being recovered into active work.
+
+Why this is broader than the stale-assignment incident:
+XSM does not currently enforce a hard invariant that every non-landing worker must either be productively working or be in a narrowly justified, time-bounded waiting state with an automatic next action. Instead, several distinct failure modes can leave workers stranded:
+- invalid or missing assignment IDs
+- stale merged branch / stale worktree context
+- worker self-reporting `standing by`, `awaiting assignment`, or `no active task`
+- `handoff_ready` that is not actually landing-eligible
+- blocked states without a structured owner / next action
+- tmux/TUI recovery states that never converge back to work
+- synthetic patrol assignments being validated as if they were real beads
+- role/routing mismatches where dispatchable work exists but no dispatch action is emitted
+
+Current code path evidence:
+- `monitor._enrich_pool_assignments(...)` only assigns fresh pool work to lanes in `parked_unassigned` and skips lanes trapped in `parked_handoff`.
+- worker lanes with no valid work are currently able to land in `parked_handoff`, which behaves like a terminal landing queue instead of a redispatch state.
+- `wrangle` invalid-assignment handling can escalate once but does not reliably clear stale assignment authority and normalize the lane into immediate redispatch.
+- patrol lanes such as `xsm-main-patrol` / `xsm-wrangler-patrol` can invalidate against `bd` because they are modeled like normal beads.
+
+Comparison to XSM docs / principles:
+1. `handbook/docs/plans/technical/xsm-swarm-principles.md`
+   - violates 3.2 `Assignment invalidation is mandatory`: invalid context must become `needs_reassignment`, not generic idle or blocked state.
+   - violates 4.2 `The wrangle ladder is monotonic and structurally terminal`: workers are left in non-productive limbo rather than being driven to reassignment, recovery, or explicit terminal handling.
+   - violates 5.1 `Progress is evidence-bound`: XSM accepts endless terminal output / parked states without producing new assignment, commit, test, or phase-transition evidence.
+   - violates 8.2 `Specialized roles are safety boundaries`: generic workers are effectively converted into idle waiting rooms rather than bounded throughput lanes.
+2. `handbook/docs/technical/xsm.md`
+   - contradicts the documented role of the wrangle engine as an active swarm controller that detects parked / blocked / handoff-ready workers and executes interventions autonomously.
+   - contradicts the statement that operator-facing wrangle output is part of the control surface: repeated `no actions` during known dispatch starvation is a supervision bug.
+3. `handbook/docs/plans/technical/wrangler-principles.md`
+   - this should classify as an XSM core bug, not just strategy tuning, because the mechanism currently allows the wrong structural resting state. No strategy tune can make `parked_handoff` redispatchable if the mechanism excludes it from pool assignment.
+4. `handbook/docs/plans/technical/xsm-runtime-package.md`
+   - highlights that patrol roles / role contracts / queue policy need package-defined bounded behavior. Current patrol modeling leaks synthetic tasks into bead validation and leaves role behavior under-specified.
+
+Required design direction:
+XSM needs a first-class worker-productivity invariant:
+- if a non-landing worker lane is not producing evidence of progress,
+- and dispatchable work exists for that role,
+- and the lane is not in a narrowly authorized waiting state,
+- then XSM must recover the lane into productive work rather than do nothing.
+
+Authorized non-productive states must be explicit and bounded, for example:
+- startup / restart grace window
+- declared external blocker with owner and recheck policy
+- explicit human gate for a role/phase that is allowed to wait on humans
+- proven `idle_no_demand` state when no dispatchable work exists
+- intentional retirement / deprovisioning
+
+Everything else should trigger recovery, such as:
+- clear stale assignment authority
+- normalize the lane to a redispatchable state
+- assign fresh work from pool
+- advance to next phase if work is complete but not landing-eligible
+- restart / recycle lane if UI state is wedged
+- quarantine and incident on control-plane mismatch if demand exists but no dispatch occurs
+
+Proposed implementation slices:
+1. Add a central productivity / justified-wait evaluation for worker lanes.
+2. Reclassify `standing by`, `no assignment`, invalidated assignment, and stale non-landing handoff states as redispatchable rather than landing handoff.
+3. Expand pool assignment so stale parked lanes can be reclaimed automatically.
+4. Clear stale assignment authority (context, lease, tracker assignment key) on invalidation before any further routing.
+5. Split true landing handoff from generic worker idle / no-work states.
+6. Stop validating synthetic patrol assignments as normal beads, or represent them explicitly as non-bead patrol work.
+7. Add a dispatch-starvation detector: if backlog exists and worker capacity exists and no dispatch occurs within bounded passes, emit a dedicated control-plane incident instead of `no actions`.
+8. Add end-to-end regression coverage using persisted stale state plus live backlog to prove workers recover into active assignments after restart / invalidation.
+
+Acceptance criteria:
+1. XSM defines and enforces a worker-productivity invariant: a non-landing worker cannot remain non-productive across bounded passes while dispatchable backlog exists unless the lane is in an explicitly authorized waiting state.
+2. Invalid, missing, superseded, or stale assignment context is cleared before further intervention, and the lane becomes redispatchable rather than remaining stranded.
+3. Generic worker states such as `standing by`, `awaiting assignment`, `no active task`, stale merged-branch context, and non-landing `handoff_ready` without a valid next gate all converge to automatic redispatch or phase-advance rather than indefinite parking.
+4. Patrol / supervisor / wrangler lanes are modeled so they do not invalidate against the bead store as if they were normal worker assignments.
+5. XSM emits a dedicated dispatch-starvation / productivity incident when demand exists plus worker capacity exists but no dispatch or recovery action occurs within bounded passes.
+6. Regression coverage demonstrates recovery from persisted stale assignment state into fresh active work, and demonstrates that XSM does not loop `no actions` while dispatchable backlog and free worker lanes both exist.
+7. The implementation and any resulting handbook updates remain consistent with `handbook/docs/technical/xsm.md`, `handbook/docs/plans/technical/xsm-swarm-principles.md`, `handbook/docs/plans/technical/wrangler-principles.md`, and `handbook/docs/plans/technical/xsm-runtime-package.md`.
+
+Reference docs summary:
+- `handbook/docs/technical/xsm.md`: XSM is documented as an active swarm controller; operator-facing wrangle output is part of the control surface; tmux is primary live signal.
+- `handbook/docs/plans/technical/xsm-swarm-principles.md`: assignment invalidation is mandatory; wrangle must be structurally terminal; progress is evidence-bound; role boundaries are safety boundaries.
+- `handbook/docs/plans/technical/wrangler-principles.md`: this kind of failure should be classified as a core mechanism defect if strategy tuning alone cannot solve it.
+- `handbook/docs/plans/technical/xsm-runtime-package.md`: roles, patrols, bead policy, and queue policy need bounded package-defined behavior.

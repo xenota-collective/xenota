@@ -1,0 +1,74 @@
+---
+
+## Safety & Governance Audit: XSM Productivity Invariant (xc-iicr)
+
+---
+
+### 1. Strongest Elements
+
+- **Invariant has explicit authorized exceptions** — listing startup grace, declared blocker, human gate, and `idle_no_demand` as the only legitimate non-productive states is sound governance design. Everything else triggers recovery, not silence.
+- **Evidence-bound progress requirement** — tying "productive" to observable evidence (commit, test, phase-transition) rather than self-report eliminates the "fake busy" class of failure.
+- **Dispatch-starvation as a named incident** (Slice 7) — converting silent `no actions` into a dedicted signal is good observability hygiene; operators gain a supervision handle they currently lack.
+- **Splitting landing handoff from generic idle** (Slice 5) — correct separation of concerns; the current `parked_handoff` conflation is the root of the authority-boundary violation.
+- **Patrol lanes as non-bead work** (Slice 6) — naming this as a first-class structural distinction prevents a category error from propagating into validation logic.
+
+---
+
+### 2. Top 5 Risks / Failure Modes
+
+**Risk 1 — Assignment clearing races live work (Slices 2 + 4)**
+If "staleness" detection has false positives (e.g., a worker that is genuinely progressing but hasn't emitted a checkpoint yet), Slices 2+4 will clear a live assignment mid-execution. There is no fencing token, no idempotency guarantee, and no re-check before clearing. A worker could lose its lease while actively writing code, and the bead could be double-assigned.
+
+**Risk 2 — Productivity evaluator is an unchecked authority (Slice 1)**
+The central evaluation becomes the sole arbiter of "is this lane legitimately parked?" with no operator override path in the spec. If it misclassifies a lane, the operator cannot tell XSM to stand down without modifying code or state directly. This is a governance gap: automated enforcement without a human hold/override mechanism violates the principle that operators retain authority over their own swarm.
+
+**Risk 3 — Authorized waiting states are declaration-only with no protection**
+"Declared external blocker with owner and recheck policy" is listed as an authorized non-productive state, but there is no mechanism to declare one, no data model for it, and no guarantee the productivity evaluator will respect it once set. A legitimately blocked lane could be force-recovered on the next evaluation pass because the declared blocker has no representation in the state machine.
+
+**Risk 4 — Starvation incident feedback loop**
+If starvation detection (Slice 7) fires continuously during valid low-demand or warm-up windows, the incident stream becomes noise and operators will begin ignoring it — precisely the opposite of the intended supervision signal. There is no cooldown, deduplication, or severity floor specified.
+
+**Risk 5 — Automatic pool reclaim scope is too broad (Slice 3)**
+"Expand pool assignment so stale parked lanes can be reclaimed automatically" has no stated constraint on which lanes are eligible. An operator-parked lane (for debugging, incident investigation, or deliberate hold) has no protection from automatic reclaim if the staleness heuristic is met.
+
+---
+
+### 3. Missing Fields / Constraints
+
+| Missing | Impact |
+|---|---|
+| Fencing/idempotency on assignment clearing | Prevents double-assignment races |
+| Operator-declared hold that productivity evaluator must respect | Enables human override without code changes |
+| Concrete "bounded passes" threshold | Without a number, the invariant is untestable |
+| Audit log requirement on every automatic recovery action | No traceability for "who cleared what, when, why" |
+| `idle_no_demand` detection criteria | Underspecified — false negatives leave workers stranded legally; false positives force work onto idle lanes |
+| Startup/restart grace window duration | Unspecified; could mask real starvation during normal warm-up |
+| Recovery action idempotency on XSM restart mid-recovery | If XSM crashes between clearing a lease and issuing a new assignment, the bead is in limbo |
+| Patrol lane lifecycle during reclassification | What happens to a patrol mid-execution when the model changes? |
+
+---
+
+### 4. Minimal Spec Changes
+
+**a. Add a fencing clause to Slice 4**
+Before clearing assignment authority, XSM must verify the lane has not emitted progress evidence since the staleness timestamp. Add: *"Assignment clearing is conditional on no new progress evidence since the last evaluation tick."*
+
+**b. Define `operator_hold` as a first-class authorized state**
+Add to the authorized non-productive states list: *"`operator_hold`: lane is explicitly suspended by operator with a reason string and optional expiry. The productivity evaluator must not recover a lane in `operator_hold` without expiry elapsing or operator release."*
+
+**c. Specify `bounded_passes` as a configurable constant with a default**
+Add: *"The starvation threshold is defined as `XSM_STARVATION_PASS_THRESHOLD` (default: 10 passes). This constant must appear in the runtime package and be overridable per-swarm."*
+
+**d. Require a recovery audit event**
+Add to Acceptance Criteria 2: *"Every automatic recovery action (clearing lease, state transition, redispatch) must emit a structured audit event containing: lane ID, previous state, recovery reason, timestamp, and triggering evaluation result."*
+
+**e. Add cooldown/deduplication to starvation incident (Slice 7)**
+Add: *"A starvation incident is not re-emitted for the same lane within a cooldown window (default: 50 passes or configurable) unless the lane has re-entered a productive state and stalled again."*
+
+---
+
+### 5. One 30-Day Execution Change
+
+**Gate Slice 3 (automatic pool reclaim) as observe-only for the first 30 days.**
+
+Deploy the productivity evaluator and starvation detector live, but have Slice 3 log *"would reclaim lane X"* without executing the reclaim. This creates a 30-day window to measure false-positive rate on staleness detection against real swarm data before automated reclaim runs live. After 30 days, review the logs, tune the threshold, then enable automatic reclaim. This preserves operator trust and gives the team real evidence that the heuristic is safe before it can disrupt in-flight work.

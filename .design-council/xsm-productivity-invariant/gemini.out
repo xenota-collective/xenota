@@ -1,0 +1,29 @@
+Here is the quick review from the Execution Pragmatist perspective, focused on reducing the proposal to its minimal, safest implementable form.
+
+### 1. Strongest elements
+*   **Empirical trigger:** Grounded in a specific, observable production failure (`no actions` loops while backlog exists and workers sit in stale assignments).
+*   **Clear distinction of terminality:** Accurately separates true terminal states (landing handoff) from false terminal states (stale context, invalid beads, generic idle).
+*   **Testability:** Mandates exact E2E regression coverage using the precise failure conditions (persisted stale state + live backlog) to prove the fix.
+
+### 2. Top 5 risks/failure modes
+*   **Reassignment Thrashing:** Automatically clearing assignment authority and making a lane redispatchable could cause a rapid infinite loop (assign -> fail -> invalidate -> reassign) if the underlying worker environment (e.g., corrupted git index, broken tmux session) is what caused the invalidation.
+*   **Destructive Context Clearing:** Blindly wiping stale assignment authority (context, lease, tracker) destroys forensic evidence of *why* the worker wedged, making the root cause of the initial failure impossible to debug.
+*   **Patrol State Bifurcation:** Creating a completely separate representation/validation path for "synthetic patrol assignments" risks creating two parallel state machines, increasing maintenance burden and edge-case bugs.
+*   **False-Positive Starvation Incidents:** If the starvation detector lacks awareness of legitimate backoff states (e.g., API rate limits, temporary lock contention), it will spam the control plane with false incidents.
+*   **Reclamation Race Conditions:** Expanding pool assignment to aggressively reclaim parked lanes might race against a worker that is just slow to report its state or is currently executing a long-running, blocking local command.
+
+### 3. Missing fields/constraints
+*   **Reassignment Rate Limits:** The spec lacks a circuit breaker. How many times can a specific lane be recovered and redispatched within an hour before being marked as permanently tainted/quarantined?
+*   **Definition of "Bounded passes":** The spec repeatedly uses "bounded passes" but fails to define a concrete integer threshold (e.g., 3 passes? 10 passes? 5 minutes?).
+*   **State Archival Strategy:** No constraint is defined for preserving the context of the stranded worker before it is wiped and given new work.
+
+### 4. Minimal spec changes
+*   **Drop the abstract "central evaluation":** Do not build a generalized "productivity/justified-wait evaluation" engine. That is over-engineering. Explicitly map the three known stuck states (`invalid_bead`, `stale_handoff`, `no_active_task`) directly to a new `reclaim_lane()` state transition.
+*   **Simplify Patrols:** Do not build a new non-bead concept. Assign patrol lanes a reserved, permanent bead ID (e.g., `sys-patrol-*`) and simply add a bypass in the bead validator: `if bead_id.startswith('sys-'): return True`.
+*   **Hardcode the bounds:** Define "bounded passes" explicitly as `5 consecutive non-productive wrangle passes` to remove implementation ambiguity.
+*   **Implement Safe Clearing:** Require that when clearing stale assignment authority, the system must move the old state to a `.stale.bak` or `.quarantine` file rather than deleting it.
+*   **Add a Quarantine Circuit Breaker:** If a lane is reclaimed more than 3 times in a single runtime session, it must be marked `wedged_hardware` and excluded from the pool entirely until human intervention.
+
+### 5. One 30-day execution change
+**Deploy the starvation detector first, in passive mode.** 
+Before altering any state machine transitions (Slices 2-5), implement Slice 7 (the starvation detector) to merely log warnings when a worker is stranded for >5 passes while backlog exists. Run this for 3-5 days to capture the forensic state of *why* workers are getting stuck before you build the automation that immediately wipes that state and restarts them. This ensures you don't inadvertently mask a deeper structural bug with an aggressive auto-restart mechanism.

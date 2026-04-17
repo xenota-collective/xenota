@@ -1,0 +1,17 @@
+ROLE: You are the Safety and Governance Auditor. Find abuse paths, safety risks, missing guardrails, and governance constraints.
+
+Quick review this XSM plan. Focus on where automatic redispatch / productivity enforcement could violate safety, authority boundaries, or operator trust.
+
+Return:
+1. Strongest elements
+2. Top 5 risks/failure modes
+3. Missing fields/constraints
+4. Minimal spec changes
+5. One 30-day execution change
+
+Proposal summary:
+- Problem: XSM can leave generic workers non-productive for hundreds of passes while dispatchable backlog exists.
+- Goal: enforce a worker-productivity invariant so non-landing workers are either productively working or in a narrowly authorized, bounded waiting state.
+- Current gaps: stale assignments not fully cleared, `parked_handoff` used as a terminal state for lanes with no valid work, patrol lanes validated like normal beads, no dispatch-starvation detector.
+- Proposed fixes: central productivity evaluation, reclassify no-work states as redispatchable, expand pool assignment, clear stale assignment authority, split true landing handoff from generic worker idle, stop validating synthetic patrol assignments as normal beads, add dispatch-starvation incident, add end-to-end regression coverage.
+- Principles involved: assignment invalidation mandatory; wrangle structurally terminal; progress evidence-bound; role boundaries are safety boundaries.
