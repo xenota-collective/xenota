@@ -156,17 +156,10 @@ post_create:
 #-------------------------------------------------------------------------------
 
 # File operations when creating a worktree.
-# files:
-#   # Files to copy (useful for .env files that need to be unique).
-#   copy:
-#     - .env.local
-#
-#   # Files/directories to symlink (saves disk space, shares caches).
-#   # Default: None.
-#   # Use "<global>" to inherit from global config.
-#   symlink:
-#     - "<global>"
-#     - node_modules
+files:
+  # Files/directories to symlink (saves disk space, shares shared state).
+  symlink:
+    - .xsm-local
 
 #-------------------------------------------------------------------------------
 # Dashboard
