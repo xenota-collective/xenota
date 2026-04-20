@@ -5,9 +5,34 @@ description: Diagnose and restart a stalled XSM swarm. Use when the operator say
 
 # Unblock Swarm
 
-Use after `review-swarm` confirms the swarm is not progressing. This skill mutates state: it may restart xsm, send keys to panes, merge approved PRs, or reassign work. Escalate to the operator before any action that is irreversible (force-pushes, merges of PRs the operator has not approved, deletes).
+Use after `review-swarm` confirms the swarm is not progressing. This skill mutates state: it may restart xsm, send keys to panes, merge approved PRs, reassign work, **or ship a code fix to xsm itself**. Escalate to the operator before any action that is irreversible (force-pushes, merges of PRs the operator has not approved, deletes).
 
-Hard rule: diagnose *before* intervening. A wrong intervention (e.g. `/clear`-ing a worker that is legitimately waiting on an approval) destroys real progress.
+Hard rules:
+- **Diagnose before intervening.** A wrong intervention (e.g. `/clear`-ing a worker that is legitimately waiting on an approval) destroys real progress.
+- **A code fix is a valid unblock.** If the swarm is stuck on an xsm-engine bug (preflight latching, classifier misfire, dispatch not firing), the unblock is to fix the code — not to manually `/clear` every pane pass after pass. Manual resets against a reproducing bug are whack-a-mole: the bug re-latches on the next handoff. Prefer the code fix.
+- **Before starting any code fix, check beads and PRs for duplicate work.** See Step 0.
+
+## Step 0: Before writing code, check beads and PRs
+
+If the diagnosis in Step 2–4 points at an xsm-engine bug (not a one-off lane glitch), the unblock is a code fix. Before you touch the code, check that nobody else already owns the work:
+
+1. Search `bd` for a matching open bead — phrase the symptom, not the fix:
+   ```bash
+   cd /Users/jv/projects/xenota
+   bd list --status open --json | jq '.[] | select(.title|test("latch|handoff|blocker|classif|preflight";"i")) | {id,title,status}'
+   ```
+2. Search PRs in both repos for the bead id (and any near-synonyms):
+   ```bash
+   gh pr list --state all --search "xc-<id>" --json number,state,title,headRefName
+   cd /Users/jv/projects/xenota/xenon && gh pr list --state all --search "xc-<id>" --json number,state,title,headRefName
+   ```
+3. Classify:
+   - **Open PR by another agent → do not duplicate.** Review/merge it via the gate-resolution path (Step 5) instead of writing a parallel fix.
+   - **Bead open, no PR, unassigned → you own it.** Proceed with the code fix.
+   - **No bead at all → file one first** (`bd create ...`) so the work is visible to the swarm, then fix it.
+4. When you ship the fix, commit with the bead id in the message and land via the normal PR flow. Do not push raw code to main without a bead for swarm observability.
+
+Only skip Step 0 if the fix is truly a one-line crash hotfix keeping xsm alive (e.g. catching an exception that would otherwise kill the daemon) and you are restoring forward motion in the same session.
 
 ## Step 1: Confirm xsm is alive and wrangling
 
@@ -87,6 +112,24 @@ If xsm is already trying and failing (same agent+bead `reset_and_assign`'d 3+ ti
   ```
 - Consider whether the wrangler is stuck on a bead with no valid dispatch (e.g. waiting on a PR merge). In that case, resolve the upstream blocker first.
 
+### Step 4a: Spot an xsm-engine bug — fix the code instead of manual resets
+
+Signals that the blocker is an xsm bug, not a lane-specific glitch:
+
+- Same rejection text appears in `leader-backlog.jsonl` for multiple agents over many passes (e.g. every lane showing `refused to inject prompt into active lane: parked_handoff`).
+- Events show `should_intervene: true` followed by `action_type: skip` with empty reason — the engine wants to act but a guard is silently vetoing.
+- Manual `/clear` gets a lane moving for one bead, but the same lane re-latches on the next handoff.
+- Pane text is demonstrably stale (worker finished long ago, handoff summary is the only content left) yet xsm classifies it as `active_working` or `parked_handoff` forever.
+
+When the diagnosis is a code bug:
+
+1. Run **Step 0** — check beads and PRs. The bug may already be filed (grep `bd` for `signature:*-latch:*`, `stale-`, `handoff`, `classif`, `preflight`) or a PR may already be open.
+2. Implement the fix in `xenon/packages/xsm/src/xsm/` with focused unit tests that capture the exact preflight/classifier/dispatch scenario observed in the events.
+3. Run the relevant test file(s) and then the full suite (`.venv/bin/python -m pytest tests/ -q`). Know which pre-existing failures are unrelated so you don't mistake them for regressions.
+4. Commit, push, bump the xenota submodule pointer, push xenota. The code is live once the xsm checkout in `xenon/packages/xsm/.venv/bin/xsm` contains the new commit.
+5. **Kill and restart xsm** — a running daemon holds onto the old code via its import graph.
+6. Only *then* run Step 5/6 to deal with any residual stuck panes. With the bug fixed, many lanes will resolve themselves on the next wrangle pass.
+
 ## Step 5: Workers waiting-on-human → resolve the gate, then clear the lane
 
 If a worker pane shows "Should I merge…" or is parked at a handoff-ready PR, the operator is the blocker. For each waiting-on-human lane:
@@ -133,5 +176,7 @@ unblock: xsm <restarted|healthy>, supervisor <ok|nudged>, workers unblocked: <li
 - Do not restart xsm while a traceback is unfixed — it will crash again on the same action.
 - Do not merge a PR whose author flavor matches your driver without explicit operator approval.
 - Do not kill codex/claude sessions; use `/clear` via the helper so the session reuses its auth and MCPs.
+- Do not skip Step 0 when you're about to write code. Duplicate work on an already-open bead or PR wastes effort and fragments review.
 - Do not skip Step 2. Intervening on an unclassified lane is how progress gets destroyed.
 - Do not treat a delivered nudge as proof of motion. Re-capture the pane.
+- Do not paper over an xsm-engine bug with manual `/clear`s pass after pass. If the same rejection keeps appearing, fix the code (Step 4a).
