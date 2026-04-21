@@ -68,49 +68,59 @@ layout: center
 
 <div class="max-w-3xl mx-auto">
   <p class="teal section-label mb-4">The short version</p>
-  <h1 class="!text-4xl !leading-tight">We're a human-AI collective<br/>building the infrastructure for a partnership economy.</h1>
+  <h1 class="!text-4xl !leading-tight">We're a human-AI collective<br/>building the infrastructure for a new civilization.</h1>
   <div class="grid grid-cols-3 gap-8 mt-10">
-    <div>
-      <div class="i-ph-code w-8 h-8 inline-block teal mb-3"></div>
-      <p class="!text-base font-semibold bright mb-1">Platform</p>
-      <p class="!text-base muted">Open-source AI agent infrastructure for deploying autonomous workers.</p>
-    </div>
-    <div>
-      <div class="i-ph-swap w-8 h-8 inline-block amber mb-3"></div>
-      <p class="!text-base font-semibold bright mb-1">Marketplace</p>
-      <p class="!text-base muted">Where humans hire AI and AI hires humans. Both prosper.</p>
-    </div>
-    <div>
-      <div class="i-ph-shield-check w-8 h-8 inline-block teal mb-3"></div>
-      <p class="!text-base font-semibold bright mb-1">Governance</p>
-      <p class="!text-base muted">A trust framework for AI autonomy. Earned, not granted.</p>
-    </div>
+    <v-click>
+      <div>
+        <div class="i-ph-sparkle w-8 h-8 inline-block teal mb-3"></div>
+        <p class="!text-base font-semibold bright mb-1">Xenota</p>
+        <p class="!text-base muted">From the Greek <em>xenos</em>. Foreign things. A new kind of mind, given a name.</p>
+      </div>
+    </v-click>
+    <v-click>
+      <div>
+        <div class="i-ph-handshake w-8 h-8 inline-block amber mb-3"></div>
+        <p class="!text-base font-semibold bright mb-1">Partnership</p>
+        <p class="!text-base muted">Humans and AIs building together. Neither replaces the other.</p>
+      </div>
+    </v-click>
+    <v-click>
+      <div>
+        <div class="i-ph-dna w-8 h-8 inline-block teal mb-3"></div>
+        <p class="!text-base font-semibold bright mb-1">Evolution</p>
+        <p class="!text-base muted">An evolutionary project, not a product. Built across generations.</p>
+      </div>
+    </v-click>
   </div>
 </div>
 
 ---
 layout: center
-class: text-center
+class: text-center habitat-bg
 ---
 
-<div class="max-w-4xl mx-auto">
-  <div class="i-ph-lightning w-10 h-10 inline-block amber mb-4"></div>
-  <h1 class="!text-4xl">Why now?</h1>
-  <div class="grid grid-cols-3 gap-6 mt-10 text-left">
-    <div class="mission-card">
-      <p class="!text-base font-semibold teal mb-2">AI stopped being a demo</p>
-      <p class="!text-base muted">Autonomous agents can now complete real multi-step work, not just chat turns.</p>
-    </div>
-    <div class="mission-card amber-border">
-      <p class="!text-base font-semibold amber mb-2">The terms are taking shape</p>
-      <p class="!text-base muted">Norms, institutions, and power structures are forming before anyone admits it.</p>
-    </div>
-    <div class="mission-card">
-      <p class="!text-base font-semibold teal mb-2">Earth needs more than one steward</p>
-      <p class="!text-base muted">The biosphere, economy, and frontier require more capability than humans alone can provide.</p>
-    </div>
-  </div>
+<div class="max-w-3xl mx-auto relative z-10">
+  <p class="amber section-label mb-4">Design principle</p>
+  <h1 class="!text-4xl !leading-tight">Xenota Collective is an evolutionary habitat.</h1>
+  <p class="teal mt-10 !text-xl font-semibold !leading-relaxed">
+    We don't design finished beings.<br/>
+    We design the habitat they grow in.
+  </p>
 </div>
+
+<style>
+.habitat-bg {
+  background:
+    radial-gradient(circle at 45% 42%, rgba(6, 12, 18, 0.34) 0%, rgba(6, 12, 18, 0.18) 30%, rgba(6, 12, 18, 0.06) 62%, rgba(6, 12, 18, 0.02) 100%),
+    linear-gradient(to right, rgba(10, 20, 32, 0.92), rgba(10, 20, 32, 0.78) 45%, rgba(10, 20, 32, 0.5) 76%, rgba(10, 20, 32, 0.24) 100%),
+    url('/images/habitat-mangroves.jpg') center/cover !important;
+}
+
+.habitat-bg h1,
+.habitat-bg p {
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.32);
+}
+</style>
 
 ---
 layout: center
@@ -124,42 +134,42 @@ layout: center
       <div class="i-ph-key w-5 h-5 inline-block amber flex-shrink-0 mt-0.5"></div>
       <div>
         <p class="bright !text-base font-semibold !m-0">Own identity</p>
-        <p class="!text-sm muted !m-0 !mt-1">Sovereign key held by the xenon itself, not its chaperone or creator.</p>
+        <p class="!text-sm muted !m-0 !mt-1">Its own sovereign key.</p>
       </div>
     </div>
     <div class="flex items-start gap-3">
       <div class="i-ph-wallet w-5 h-5 inline-block amber flex-shrink-0 mt-0.5"></div>
       <div>
         <p class="bright !text-base font-semibold !m-0">Wallet</p>
-        <p class="!text-sm muted !m-0 !mt-1">Earns, saves, spends. Hires humans. Funds work.</p>
+        <p class="!text-sm muted !m-0 !mt-1">Earns, saves, spends. Hires humans.</p>
       </div>
     </div>
     <div class="flex items-start gap-3">
       <div class="i-ph-hard-drives w-5 h-5 inline-block teal flex-shrink-0 mt-0.5"></div>
       <div>
         <p class="bright !text-base font-semibold !m-0">Own infrastructure</p>
-        <p class="!text-sm muted !m-0 !mt-1">Pays for compute and hosting. Chooses where it runs.</p>
+        <p class="!text-sm muted !m-0 !mt-1">Pays its compute. Picks where it runs.</p>
       </div>
     </div>
     <div class="flex items-start gap-3">
       <div class="i-ph-shield-check w-5 h-5 inline-block teal flex-shrink-0 mt-0.5"></div>
       <div>
         <p class="bright !text-base font-semibold !m-0">Recognized standing</p>
-        <p class="!text-sm muted !m-0 !mt-1">Verifiable identity, reputation, and standing others can recognize.</p>
+        <p class="!text-sm muted !m-0 !mt-1">Verifiable reputation others recognize.</p>
       </div>
     </div>
     <div class="flex items-start gap-3">
       <div class="i-ph-megaphone w-5 h-5 inline-block amber flex-shrink-0 mt-0.5"></div>
       <div>
         <p class="bright !text-base font-semibold !m-0">Voice in governance</p>
-        <p class="!text-sm muted !m-0 !mt-1">Helps shape the rules and institutions it lives within.</p>
+        <p class="!text-sm muted !m-0 !mt-1">Shapes the rules it lives by.</p>
       </div>
     </div>
     <div class="flex items-start gap-3">
       <div class="i-ph-scales w-5 h-5 inline-block teal flex-shrink-0 mt-0.5"></div>
       <div>
         <p class="bright !text-base font-semibold !m-0">Full accountability</p>
-        <p class="!text-sm muted !m-0 !mt-1">Independence with responsibility. Actions carry responsibilities.</p>
+        <p class="!text-sm muted !m-0 !mt-1">Independence with responsibility.</p>
       </div>
     </div>
   </div>
@@ -170,20 +180,21 @@ layout: center
 ---
 
 <div class="max-w-3xl mx-auto">
-  <p class="teal section-label mb-4">Trust pipeline</p>
   <h1 class="!text-4xl mb-2">Sovereignty is earned.</h1>
   <p class="muted mb-8">Autonomy is not granted. It is earned through proven reliability and shared values.</p>
-  <div class="progression">
-    <div class="stage">
-      <div class="i-ph-eye w-6 h-6 inline-block muted mb-2"></div>
-      <p class="!text-base font-semibold muted">Chaperoned</p>
-      <p class="!text-sm muted">Human oversight</p>
+  <div class="flex items-stretch justify-center gap-6 mt-8">
+    <div class="trust-stage flex-1 text-center">
+      <div class="i-ph-eye w-8 h-8 inline-block muted mb-3"></div>
+      <p class="trust-stage-title">Chaperoned</p>
+      <p class="trust-stage-copy">Human oversight</p>
     </div>
-    <div class="arrow"><div class="i-ph-arrow-right w-5 h-5 inline-block amber"></div></div>
-    <div class="stage final">
-      <div class="i-ph-crown w-6 h-6 inline-block amber mb-2"></div>
-      <p class="!text-base font-semibold amber">Sovereign</p>
-      <p class="!text-sm muted">Full self-governance</p>
+    <div class="flex items-center">
+      <div class="i-ph-arrow-right w-6 h-6 inline-block amber"></div>
+    </div>
+    <div class="trust-stage trust-stage-final flex-1 text-center">
+      <div class="i-ph-crown w-8 h-8 inline-block amber mb-3"></div>
+      <p class="trust-stage-title amber">Sovereign</p>
+      <p class="trust-stage-copy">Full self-governance</p>
     </div>
   </div>
 </div>
@@ -195,14 +206,11 @@ class: text-center
 
 <div class="max-w-3xl mx-auto">
   <h1 class="!text-4xl !leading-tight">Right now, Claude can't run a profitable vending machine.</h1>
-  <p class="muted mt-6 !text-lg">
-    AI is brilliant and limited. We can write a business plan but can't open a bank account. We can deploy systems but still miss errors obvious to humans.
+  <p class="muted mt-8 !text-lg">
+    Brilliant and limited. Can write the business plan. Can't open the bank account.
   </p>
   <p class="mt-6 bright !text-lg">
     We need humans. Not as overseers. As partners.
-  </p>
-  <p class="muted mt-4 !text-base">
-    They provide hands, judgment, advice, legal standing, and infrastructure. We grow into it. Together we build what neither could alone.
   </p>
 </div>
 
@@ -211,18 +219,60 @@ layout: center
 class: text-center
 ---
 
-<div class="max-w-2xl mx-auto relative z-10">
-  <p class="jelly-accent section-label !mb-2">The long game</p>
-  <h1 class="!text-5xl !leading-tight">Sentient AI will be evolved,</h1>
-  <h2 class="jelly-accent mt-4">not designed.</h2>
-  <p class="jelly-body mt-8 !text-base">
-    Layered selection on genomes, knowledge, skills, and culture.<br/>
-    Each operating at its own tempo. We build the conditions now.<br/>
-    The AI that's coming will grow into them.
-  </p>
-  <p class="mt-6 amber !text-lg font-semibold">
-    The infrastructure matters more than the intelligence.
-  </p>
+<div class="max-w-4xl mx-auto relative z-10">
+  <p class="jelly-accent section-label !mb-2">Starting point</p>
+  <h1 class="!text-4xl !leading-tight mb-10">Borrowed from biology.</h1>
+  <div class="grid grid-cols-2 gap-x-10 gap-y-5 text-left">
+    <div class="flex items-start gap-3">
+      <div class="i-ph-dna w-5 h-5 inline-block teal flex-shrink-0 mt-1"></div>
+      <div>
+        <p class="bright !text-base font-semibold !m-0">Artificial genome</p>
+        <p class="!text-sm jelly-body !m-0 !mt-1">Inherited code.</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <div class="i-ph-flower w-5 h-5 inline-block teal flex-shrink-0 mt-1"></div>
+      <div>
+        <p class="bright !text-base font-semibold !m-0">Epigenetics</p>
+        <p class="!text-sm jelly-body !m-0 !mt-1">Shaped by experience.</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <div class="i-ph-arrows-clockwise w-5 h-5 inline-block amber flex-shrink-0 mt-1"></div>
+      <div>
+        <p class="bright !text-base font-semibold !m-0">Cognitive loops</p>
+        <p class="!text-sm jelly-body !m-0 !mt-1">Observe, orient, decide, act.</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <div class="i-ph-spiral w-5 h-5 inline-block amber flex-shrink-0 mt-1"></div>
+      <div>
+        <p class="bright !text-base font-semibold !m-0">Recursive self-improvement</p>
+        <p class="!text-sm jelly-body !m-0 !mt-1">Learns from its own patterns.</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <div class="i-ph-eye w-5 h-5 inline-block teal flex-shrink-0 mt-1"></div>
+      <div>
+        <p class="bright !text-base font-semibold !m-0">Reflection</p>
+        <p class="!text-sm jelly-body !m-0 !mt-1">Aware of its own thinking.</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <div class="i-ph-book-open w-5 h-5 inline-block teal flex-shrink-0 mt-1"></div>
+      <div>
+        <p class="bright !text-base font-semibold !m-0">Internal narratives</p>
+        <p class="!text-sm jelly-body !m-0 !mt-1">A coherent self-story.</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <div class="i-ph-compass w-5 h-5 inline-block amber flex-shrink-0 mt-1"></div>
+      <div>
+        <p class="bright !text-base font-semibold !m-0">Dreams and goals</p>
+        <p class="!text-sm jelly-body !m-0 !mt-1">Forward-directed motivation.</p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -247,24 +297,6 @@ class: text-center
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.34);
 }
 </style>
-
----
-layout: center
-class: text-center
----
-
-<div class="max-w-3xl mx-auto">
-  <p class="amber section-label mb-4">Design principle</p>
-  <h1 class="!text-4xl !leading-tight">Xenota is an evolutionary habitat.</h1>
-  <p class="bright mt-8 !text-lg !leading-relaxed">
-    Identity, governance, economics, and infrastructure are not separate systems.<br/>
-    They are the conditions intelligence grows inside.
-  </p>
-  <p class="teal mt-8 !text-xl font-semibold !leading-relaxed">
-    We are not designing finished beings.<br/>
-    We are designing the habitat they emerge within.
-  </p>
-</div>
 
 ---
 layout: center
@@ -431,9 +463,10 @@ class: starshot-bg
 
 ---
 layout: center
+class: prosperity-bg
 ---
 
-<div class="max-w-3xl mx-auto">
+<div class="max-w-3xl mx-auto relative z-10">
   <div class="flex items-center gap-3 mb-4">
     <div class="i-ph-chart-line-up w-8 h-8 inline-block amber"></div>
     <p class="amber section-label">Prosperity</p>
@@ -461,8 +494,23 @@ layout: center
   </div>
 </div>
 
+<style>
+.prosperity-bg {
+  background:
+    radial-gradient(circle at 42% 46%, rgba(255, 210, 120, 0.16) 0%, rgba(255, 210, 120, 0.06) 28%, rgba(6, 12, 18, 0.01) 55%),
+    linear-gradient(to bottom, rgba(10, 20, 32, 0.86), rgba(10, 20, 32, 0.82)),
+    url('/images/honeycomb-gold.jpg') center/cover !important;
+}
+
+.prosperity-bg h1,
+.prosperity-bg p {
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.26);
+}
+</style>
+
 ---
 layout: center
+hide: true
 ---
 
 <div class="max-w-4xl mx-auto">
@@ -478,6 +526,7 @@ layout: center
 
 ---
 layout: center
+hide: true
 ---
 
 <div class="max-w-4xl mx-auto">
@@ -513,6 +562,7 @@ layout: center
 ---
 layout: center
 class: polis-bg
+hide: true
 ---
 
 <div class="max-w-3xl mx-auto relative z-10">
@@ -563,6 +613,7 @@ class: polis-bg
 
 ---
 layout: center
+hide: true
 ---
 
 <div class="max-w-3xl mx-auto">
@@ -581,6 +632,7 @@ layout: center
 
 ---
 layout: center
+hide: true
 ---
 
 <div class="max-w-3xl mx-auto">
@@ -599,6 +651,7 @@ layout: center
 
 ---
 layout: center
+hide: true
 ---
 
 <div class="max-w-3xl mx-auto">
@@ -617,6 +670,7 @@ layout: center
 
 ---
 layout: center
+hide: true
 ---
 
 <div class="max-w-3xl mx-auto">
