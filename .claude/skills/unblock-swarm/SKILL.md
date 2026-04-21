@@ -88,7 +88,9 @@ Write this list down before acting. Don't skip it.
 
 ## Step 3: Supervisor dormant → check patrol interval and xsm routing
 
-Supervisor is patrolled by xsm on an interval (see `strategies/live-backlog.yaml`, `patrol.interval`). If supervisor shows as dormant:
+Supervisor is patrolled by xsm on an interval (see `strategies/live-backlog.yaml`, `patrol.interval`). The supervisor's scope is **blocker resolution only** — it reads leader-backlog for escalated blocker entries and resolves them. It does NOT merge PRs, dispatch work, or restart xsm (those are Landing and Wrangler responsibilities).
+
+If supervisor shows as dormant:
 
 1. Confirm the strategy includes `supervisor` in `patrol.roles` and has a `role_messages.supervisor` entry.
 2. Grep the current wrangle run events for supervisor patrol calls:
@@ -132,10 +134,10 @@ When the diagnosis is a code bug:
 
 ## Step 5: Workers waiting-on-human → resolve the gate, then clear the lane
 
-If a worker pane shows "Should I merge…" or is parked at a handoff-ready PR, the operator is the blocker. For each waiting-on-human lane:
+If a worker pane shows "Should I merge…" or is parked at a handoff-ready PR, the operator (or Landing role) is the blocker. For each waiting-on-human lane:
 
 1. Open the PR, read the changes, confirm CI is green.
-2. If approved: merge through the correct landing path (never bypass `land-submodule-stack` for submodule stacks). **Self-merge rail**: do NOT merge a PR whose author flavor matches your own driver (you are claude → do not merge worker-claude PRs without operator approval; a codex supervisor must not merge worker-codex PRs).
+2. If approved: merge through the correct landing path (never bypass `land-submodule-stack` for submodule stacks). **Self-merge rail**: do NOT merge a PR whose author flavor matches your own driver. Note: the supervisor does NOT merge PRs — merging is the Landing role's responsibility. Only the operator running this unblock skill directly should merge as a last resort.
 3. If rejected: post review comments and nudge the worker back onto fixes.
 4. After the gate is resolved, the lane is still parked on old context. Clear and reassign:
    ```bash
