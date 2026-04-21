@@ -81,6 +81,46 @@ If unrelated local changes exist:
 - stop and isolate them first, or move landing work to a clean worktree
 - do not let stray `.gitignore`, skill, research, or generated-file changes ride along with the landing
 
+### Sterile temporary worktree (autonomous landing lanes)
+
+When an autonomous landing lane (`last`) detects dirt in its primary workspace, do not stall and do not try to scrub the primary worktree in place. Move the landing run to a fresh temporary worktree and continue from there. The primary worktree keeps its unrelated dirt intact.
+
+Dirt detection — any of these indicate the primary workspace is non-sterile and the landing run MUST switch to a temporary worktree:
+
+- top-level `git status --porcelain` has any output other than the `.xsm-*` runtime files
+- `git -C xenon status --porcelain`, `git -C handbook status --porcelain`, or any configured submodule shows non-empty output
+- `git submodule status` reports submodule pointers that differ from `HEAD:xenon` / `HEAD:handbook` without matching submodule branch changes in the landing PR
+
+Temporary worktree procedure (run from the primary landing workspace root):
+
+```bash
+# 1. Pick a unique scratch path under the repo's worktree area
+WT=".worktrees/landing-$(date +%s)"
+
+# 2. Create a worktree pinned to the exact PR branch under review
+git worktree add "$WT" <landing-branch>
+
+# 3. Hydrate submodules to the PR-pinned commits
+git -C "$WT" submodule update --init --recursive
+
+# 4. Re-run preflight inside the sterile worktree — must be fully clean
+git -C "$WT" status --porcelain           # empty
+git -C "$WT/xenon" status --porcelain     # empty (if applicable)
+git -C "$WT/handbook" status --porcelain  # empty (if applicable)
+
+# 5. Continue landing from $WT. All landing commands now run inside $WT.
+
+# 6. After landing (merged OR aborted), tear down the worktree
+git worktree remove --force "$WT"
+```
+
+Rules for the sterile worktree path:
+
+- Never carry unrelated edits from the primary workspace into the temp worktree. If the primary has in-progress work you care about, the operator is responsible for routing it elsewhere before resuming; the landing lane only ever works with PR-pinned state.
+- The temp worktree is scratch — never push from it to branches other than the PR's head branch, and never create new feature branches inside it.
+- Always tear the temp worktree down in the same landing run, even on merge conflict or rejection, so stale scratch trees do not accumulate.
+- If worktree creation itself fails (path already exists, submodule init fails, `<landing-branch>` missing), emit `escalate_to_human` with the failing step rather than improvising.
+
 ## Landing Order
 
 ### 1. Verify Readiness
