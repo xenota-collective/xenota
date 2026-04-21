@@ -300,12 +300,48 @@ tmux_wait_for_text() {
   return 1
 }
 
+tmux_launch_claude_in_shell() {
+  local target="$1"
+  local attempts="${2:-60}"
+  local attempt
+
+  tmux_wait_for_idle_prompt "$target" 10 || return 2
+  tmux_send_literal_text "$target" "claude"
+  tmux_send_raw_keys "$target" Enter
+
+  for (( attempt = 1; attempt <= attempts; attempt += 1 )); do
+    if [[ "$(tmux_pane_family "$target")" == "claude" ]]; then
+      tmux_wait_for_ready_prompt "$target" 10 || true
+      return 0
+    fi
+    sleep 1
+  done
+
+  return 1
+}
+
+# Reset a worker pane into a clean-ready state for the next kickoff prompt.
+#
+# Exit codes:
+#   0  — pane is ready for a new kickoff instruction
+#   1  — /clear did not settle on an agent pane
+#   2  — pane was at a shell prompt and claude could not be re-launched
+#   3  — pane family is not an agent and not a shell; operator must recover
 tmux_reset_session() {
   local target="$1"
   local family clear_command
 
   family="$(tmux_pane_family "$target")"
-  clear_command="$(tmux_clear_reset_command "$family")" || return 1
+
+  if [[ "$family" == "shell" ]]; then
+    # Worker pane has exited back to a shell (e.g., after pytest or a
+    # Claude exit). No /clear semantics apply; launch a fresh claude so the
+    # kickoff prompt has a UI to land on.
+    tmux_launch_claude_in_shell "$target" || return 2
+    return 0
+  fi
+
+  clear_command="$(tmux_clear_reset_command "$family")" || return 3
 
   tmux_wait_for_idle_prompt "$target" 30 || return 1
   tmux_send_prompt_line "$target" "$clear_command"
