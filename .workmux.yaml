@@ -124,6 +124,7 @@ panes:
 # Set to empty list to disable: `post_create: []`
 post_create:
   - git submodule update --init --recursive
+  - mkdir -p .beads && printf '%s\n' "$WM_PROJECT_ROOT/.beads" > .beads/redirect
 
 # Commands to run before merging (e.g., linting, tests).
 # Aborts the merge if any command fails.
