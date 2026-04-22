@@ -2,6 +2,9 @@
 dolt/
 embeddeddolt/
 
+# Migration backup (created by bd migration tooling, local-only)
+.migration-backup/
+
 # Runtime files
 bd.sock
 bd.sock.startlock
