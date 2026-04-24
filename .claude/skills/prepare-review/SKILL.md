@@ -29,8 +29,8 @@ If conflicts arise, resolve them and re-run tests. Do not submit a PR with unres
 uv run --directory packages/<pkg> pytest
 # For nucleus:
 uv run --directory nucleus pytest
-# For chaperone-client:
-cd packages/chaperone-client && npm run build && npm test
+# For xenon-desktop:
+cd xenon-desktop && npm run build && npm test
 ```
 
 Do NOT submit a PR with failing tests. Fix them first.
