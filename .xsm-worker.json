@@ -1,0 +1,61 @@
+{
+  "assignment": "xc-dbyw.140: Add refinement fixture merge handoff digest tests",
+  "assignment_source": "pool",
+  "assignment_status": "in_progress",
+  "bead_id": "xc-dbyw.140",
+  "branch": "worker-claude-2",
+  "created_at": "1777000000000000000",
+  "driver": "claude",
+  "handle": "worker-claude-2",
+  "landing_gate": {
+    "branch": null,
+    "changed_paths": [],
+    "commit_sha": "",
+    "current_head_sha": null,
+    "eligibility_status": "blocked",
+    "eligible_for_landing": false,
+    "gates": {
+      "approvals": {
+        "details": null,
+        "status": "missing"
+      },
+      "automated_tests": {
+        "details": null,
+        "status": "missing"
+      },
+      "external_review": {
+        "details": null,
+        "status": "missing"
+      },
+      "manual_tests": {
+        "details": null,
+        "status": "missing"
+      },
+      "static_review": {
+        "details": null,
+        "status": "missing"
+      }
+    },
+    "operator_override": {
+      "actor": null,
+      "reason": null,
+      "status": "none"
+    },
+    "overall_status": "blocked",
+    "reasons": [
+      "handoff_ready worker has no QA verdict attached"
+    ],
+    "requires_human_review": false,
+    "schema_version": 1,
+    "sensitive_change_count": 0,
+    "sensitive_changes": [],
+    "stale": false
+  },
+  "managed_by_xsm": true,
+  "override_handoff_guard": true,
+  "provisioning": {},
+  "resume_assignment": "",
+  "role_installation": {},
+  "worktree_branch": "xsm/xc-dbyw.140-merge-handoff-digest-tests",
+  "worktree_path": "bead://xc-dbyw.140"
+}
