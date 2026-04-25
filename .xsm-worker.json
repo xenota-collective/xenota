@@ -1,0 +1,59 @@
+{
+  "assignment": "xc-jcmv0.5",
+  "assignment_source": "supervisor",
+  "assignment_status": "in_progress",
+  "bead_id": "xc-jcmv0.5",
+  "branch": "worker-gemini-2",
+  "created_at": "1776999088880798000",
+  "driver": "gemini",
+  "handle": "worker-gemini-2",
+  "landing_gate": {
+    "branch": null,
+    "changed_paths": [],
+    "commit_sha": "",
+    "current_head_sha": null,
+    "eligibility_status": "blocked",
+    "eligible_for_landing": false,
+    "gates": {
+      "approvals": {
+        "details": null,
+        "status": "missing"
+      },
+      "automated_tests": {
+        "details": null,
+        "status": "missing"
+      },
+      "external_review": {
+        "details": null,
+        "status": "missing"
+      },
+      "manual_tests": {
+        "details": null,
+        "status": "missing"
+      },
+      "static_review": {
+        "details": null,
+        "status": "missing"
+      }
+    },
+    "operator_override": {
+      "actor": null,
+      "reason": null,
+      "status": "none"
+    },
+    "overall_status": "blocked",
+    "reasons": [],
+    "requires_human_review": false,
+    "schema_version": 1,
+    "sensitive_change_count": 0,
+    "sensitive_changes": [],
+    "stale": false
+  },
+  "managed_by_xsm": true,
+  "override_handoff_guard": true,
+  "provisioning": {},
+  "resume_assignment": "",
+  "role_installation": {},
+  "worktree_branch": "worker-gemini-2",
+  "worktree_path": ""
+}
