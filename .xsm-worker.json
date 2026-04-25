@@ -1,0 +1,12 @@
+{
+  "assignment": "xc-dbyw.38",
+  "assignment_source": "operator",
+  "assignment_status": "in_progress",
+  "bead_id": "xc-dbyw.38",
+  "branch": "worker-gemini-1",
+  "driver": "gemini",
+  "handle": "worker-gemini-1",
+  "managed_by_xsm": true,
+  "worktree_branch": "worker-gemini-1",
+  "worktree_path": ""
+}
