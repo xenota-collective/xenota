@@ -1,0 +1,59 @@
+{
+  "assignment": "xc-dbyw.134",
+  "assignment_source": "operator",
+  "assignment_status": "in_progress",
+  "bead_id": "xc-dbyw.134",
+  "branch": "worker-claude-1",
+  "created_at": "1776999088880798000",
+  "driver": "claude",
+  "handle": "worker-claude-1",
+  "landing_gate": {
+    "branch": null,
+    "changed_paths": [],
+    "commit_sha": "",
+    "current_head_sha": null,
+    "eligibility_status": "blocked",
+    "eligible_for_landing": false,
+    "gates": {
+      "approvals": {
+        "details": null,
+        "status": "missing"
+      },
+      "automated_tests": {
+        "details": null,
+        "status": "missing"
+      },
+      "external_review": {
+        "details": null,
+        "status": "missing"
+      },
+      "manual_tests": {
+        "details": null,
+        "status": "missing"
+      },
+      "static_review": {
+        "details": null,
+        "status": "missing"
+      }
+    },
+    "operator_override": {
+      "actor": null,
+      "reason": null,
+      "status": "none"
+    },
+    "overall_status": "blocked",
+    "reasons": [],
+    "requires_human_review": false,
+    "schema_version": 1,
+    "sensitive_change_count": 0,
+    "sensitive_changes": [],
+    "stale": false
+  },
+  "managed_by_xsm": true,
+  "override_handoff_guard": true,
+  "provisioning": {},
+  "resume_assignment": "",
+  "role_installation": {},
+  "worktree_branch": "worker-claude-1",
+  "worktree_path": ""
+}
