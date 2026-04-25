@@ -1,8 +1,8 @@
 {
-  "assignment": "xc-dbyw.38",
-  "assignment_source": "operator",
-  "assignment_status": "in_progress",
-  "bead_id": "xc-dbyw.38",
+  "assignment": null,
+  "assignment_source": null,
+  "assignment_status": "idle",
+  "bead_id": null,
   "branch": "worker-gemini-1",
   "driver": "gemini",
   "handle": "worker-gemini-1",
