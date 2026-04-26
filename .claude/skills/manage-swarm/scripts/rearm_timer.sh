@@ -57,15 +57,12 @@ mv "$tmp_file" "$state_file"
 timer_target="$(resolve_earthshot_timer_target)"
 worker_target="$(resolve_earthshot_worker_target)"
 
-"${tmux_cmd[@]}" send-keys -t "$timer_target" C-c
-"${tmux_cmd[@]}" clear-history -t "$timer_target"
-"${tmux_cmd[@]}" send-keys -t "$timer_target" 'clear' Enter
-sleep 1
-
 if (( next_wrangle_count % 5 == 0 )); then
   arm_cmd="sleep ${seconds}; ${script_dir}/restart_wrangle.sh"
 else
-  arm_cmd="sleep ${seconds}; ${script_dir}/send_worker_message.sh ${worker_target} 'wrangle the swarm'"
+  printf -v quoted_worker '%q' "$worker_target"
+  arm_cmd="sleep ${seconds}; ${script_dir}/send_worker_message.sh ${quoted_worker} 'wrangle the swarm'"
 fi
 
-"${tmux_cmd[@]}" send-keys -t "$timer_target" "$arm_cmd" C-m
+"${tmux_cmd[@]}" clear-history -t "$timer_target"
+"${tmux_cmd[@]}" respawn-pane -k -t "$timer_target" "$arm_cmd"

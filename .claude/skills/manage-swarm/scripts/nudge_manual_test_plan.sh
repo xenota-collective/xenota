@@ -8,5 +8,6 @@ fi
 
 worker="$1"
 epic="$2"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-exec gt nudge "xenota/crew/${worker}" --mode immediate --message "Write a detailed manual testing plan as comments on ${epic} with setup, commands, pass/fail, and deferred integration gaps."
+exec "$script_dir/send_worker_message.sh" "$worker" "Write a detailed manual testing plan as comments on ${epic} with setup, commands, pass/fail, and deferred integration gaps."

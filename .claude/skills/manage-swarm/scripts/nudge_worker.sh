@@ -9,4 +9,5 @@ fi
 worker="$1"
 shift
 
-exec gt nudge "xenota/crew/${worker}" --mode immediate --message "$*"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$script_dir/send_worker_message.sh" "$worker" "$*"
