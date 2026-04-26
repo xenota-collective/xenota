@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-rig_dir="${1:-/Users/jv/gt/xenota/mayor/rig}"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+default_rig_dir="$(cd "$script_dir/../../../.." && pwd)"
+rig_dir="${1:-$default_rig_dir}"
 
 cd "$rig_dir"
 printf 'OPEN_P0\n'
