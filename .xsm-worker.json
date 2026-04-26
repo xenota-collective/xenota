@@ -1,59 +1,13 @@
 {
-  "assignment": "xc-25ob",
+  "assignment": "xc-7r33",
   "assignment_source": "pool",
   "assignment_status": "in_progress",
-  "bead_id": "xc-25ob",
-  "branch": "xsm/xc-25ob-bd-lock-timeouts",
-  "created_at": "1777197827868085000",
-  "driver": "codex",
-  "handle": "worker-codex-1",
-  "landing_gate": {
-    "branch": null,
-    "changed_paths": [],
-    "commit_sha": "",
-    "current_head_sha": null,
-    "eligibility_status": "blocked",
-    "eligible_for_landing": false,
-    "gates": {
-      "approvals": {
-        "details": null,
-        "status": "missing"
-      },
-      "automated_tests": {
-        "details": null,
-        "status": "missing"
-      },
-      "external_review": {
-        "details": null,
-        "status": "missing"
-      },
-      "manual_tests": {
-        "details": null,
-        "status": "missing"
-      },
-      "static_review": {
-        "details": null,
-        "status": "missing"
-      }
-    },
-    "operator_override": {
-      "actor": null,
-      "reason": null,
-      "status": "none"
-    },
-    "overall_status": "blocked",
-    "reasons": [],
-    "requires_human_review": false,
-    "schema_version": 1,
-    "sensitive_change_count": 0,
-    "sensitive_changes": [],
-    "stale": false
-  },
+  "bead_id": "xc-7r33",
+  "branch": "gemini/xc-7r33-hook-ack-parsed",
+  "created_at": "1714130400000000000",
+  "driver": "gemini",
+  "handle": "worker-gemini-2",
   "managed_by_xsm": true,
-  "override_handoff_guard": true,
-  "provisioning": {},
-  "resume_assignment": "",
-  "role_installation": {},
-  "worktree_branch": "xsm/xc-25ob-bd-lock-timeouts",
-  "worktree_path": ""
+  "worktree_branch": "gemini/xc-7r33-hook-ack-parsed",
+  "worktree_path": "/Users/jv/projects/xenota/.worktrees/worker-gemini-2"
 }
