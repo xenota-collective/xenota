@@ -1,12 +1,12 @@
 {
-  "assignment": "xc-zn5l",
-  "assignment_source": "operator",
+  "assignment": "xc-hy5r",
+  "assignment_source": "pool",
   "assignment_status": "in_progress",
-  "bead_id": "xc-zn5l",
-  "branch": "xsm/xc-zn5l-duplicate-dispatch-claim-locking",
+  "bead_id": "xc-hy5r",
+  "branch": "xsm/xc-hy5r-driver-preference-dispatch-fixtures",
   "created_at": "1776999088880798000",
   "driver": "codex",
-  "handle": "worker-codex-2",
+  "handle": "worker-codex-1",
   "landing_gate": {
     "branch": null,
     "changed_paths": [],
@@ -54,6 +54,6 @@
   "provisioning": {},
   "resume_assignment": "",
   "role_installation": {},
-  "worktree_branch": "xsm/xc-zn5l-duplicate-dispatch-claim-locking",
+  "worktree_branch": "xsm/xc-hy5r-driver-preference-dispatch-fixtures",
   "worktree_path": ""
 }
