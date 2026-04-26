@@ -1,12 +1,12 @@
 {
-  "assignment": "xc-25ob",
+  "assignment": "xc-ruvb",
   "assignment_source": "pool",
   "assignment_status": "in_progress",
-  "bead_id": "xc-25ob",
-  "branch": "xsm/xc-25ob-bd-lock-timeouts",
+  "bead_id": "xc-ruvb",
+  "branch": "gemini/xc-ruvb-require-xsm-metadata",
   "created_at": "1777197827868085000",
-  "driver": "codex",
-  "handle": "worker-codex-1",
+  "driver": "gemini",
+  "handle": "worker-gemini-1",
   "landing_gate": {
     "branch": null,
     "changed_paths": [],
@@ -54,6 +54,6 @@
   "provisioning": {},
   "resume_assignment": "",
   "role_installation": {},
-  "worktree_branch": "xsm/xc-25ob-bd-lock-timeouts",
+  "worktree_branch": "gemini/xc-ruvb-require-xsm-metadata",
   "worktree_path": ""
 }
