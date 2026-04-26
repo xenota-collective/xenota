@@ -1,10 +1,10 @@
 {
-  "assignment": "xc-i3t0",
+  "assignment": "xc-trpb.1",
   "assignment_source": "pool",
   "assignment_status": "in_progress",
-  "bead_id": "xc-i3t0",
-  "branch": "xsm/xc-i3t0-staged-bead-pipeline-strategy",
-  "created_at": "1777197827868085000",
+  "bead_id": "xc-trpb.1",
+  "branch": "xsm/xc-trpb.1-live-swarm-ipc",
+  "created_at": "1777198644864263000",
   "driver": "codex",
   "handle": "worker-codex-2",
   "landing_gate": {
@@ -54,6 +54,6 @@
   "provisioning": {},
   "resume_assignment": "",
   "role_installation": {},
-  "worktree_branch": "xsm/xc-i3t0-staged-bead-pipeline-strategy",
+  "worktree_branch": "xsm/xc-trpb.1-live-swarm-ipc",
   "worktree_path": ""
 }
