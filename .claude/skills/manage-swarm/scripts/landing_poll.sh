@@ -8,8 +8,8 @@
 #
 # Rules the loop enforces:
 #   - mergeStateStatus=CLEAN + checks_success → squash, fall back to rebase
-#   - mergeStateStatus=DIRTY → one-shot rebase merge, else file landing-dirty
-#     blocker bead and skip
+#   - mergeStateStatus=DIRTY → one-shot rebase merge, else file/dedupe a
+#     landing blocker bead and skip
 #   - any other state → skip silently
 #
 # checks_success treats statusCheckRollup as a *negative* gate: a PR passes
@@ -21,6 +21,8 @@ set -u
 
 leader_file=/Users/jv/projects/xenota/.xsm-local/leader-backlog.jsonl
 repos=("xenota-collective/xenota" "xenota-collective/xenon")
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+landing_blocker_helper="${script_dir}/landing_blocker.sh"
 
 # all((.statusCheckRollup // [])[]; ...) returns true on empty arrays — that
 # is the "no checks reported" path xc-3knt requires. Do not tighten this to
@@ -31,32 +33,42 @@ checks_success() {
 
 blocker_exists() {
   local ref="$1"
-  bd list --label landing-dirty --all --limit 0 --json \
-    | jq -e --arg ref "$ref" 'any(.[]; .external_ref == $ref and .status != "closed")' >/dev/null
+  "$landing_blocker_helper" find --external-ref "$ref" >/dev/null
 }
 
 file_dirty_blocker() {
-  local repo="$1" num="$2" branch="$3"
+  local repo="$1" num="$2" branch="$3" signal_source="$4" reason="$5"
   local short_repo="${repo##*/}"
-  local ref="gh:${repo}#${num}"
-  if blocker_exists "$ref"; then
-    echo "$(date -u +%H:%M:%S) existing non-closed landing-dirty blocker for ${repo}#${num}; skipping new bead"
-    return 0
-  fi
   local title="Resolve dirty landing PR ${short_repo}#${num}"
   local desc="Landing lane attempted: gh pr merge ${num} --repo ${repo} --rebase. GitHub reported the PR is not mergeable because the merge commit cannot be cleanly created. Resolve conflicts or refresh branch, then return PR to landing queue. PR branch: ${branch}."
-  local bead_json bead_id
-  bead_json=$(bd create "$title" --description "$desc" --type bug --priority 1 --labels landing-dirty --external-ref "$ref" --json)
-  bead_id=$(jq -r '.id' <<<"$bead_json")
-  jq -cn \
-    --arg repo "$repo" \
-    --argjson pr "$num" \
-    --arg branch "$branch" \
-    --arg bead "$bead_id" \
-    --arg created_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    '{type:"landing_dirty",agent:"landing",state:"blocked",reason:("DIRTY PR failed gh pr merge --rebase: " + $repo + "#" + ($pr|tostring) + " cannot be cleanly merged"),metadata:{repo:$repo,pr:$pr,branch:$branch,blocker_bead:$bead,label:"landing-dirty"},created_at:$created_at}' \
-    >> "$leader_file"
-  echo "$(date -u +%H:%M:%S) filed ${bead_id} for ${repo}#${num}"
+  local result action bead_id
+  if ! result=$("$landing_blocker_helper" file \
+    --repo "$repo" \
+    --pr "$num" \
+    --branch "$branch" \
+    --producer "landing_poll" \
+    --signal-source "$signal_source" \
+    --reason "$reason" \
+    --title "$title" \
+    --description "$desc"); then
+    echo "$(date -u +%H:%M:%S) landing blocker helper failed for ${repo}#${num}; continuing"
+    return 1
+  fi
+  action=$(jq -r '.action' <<<"$result")
+  bead_id=$(jq -r '.bead_id' <<<"$result")
+  if [ "$action" = "created" ]; then
+    jq -cn \
+      --arg repo "$repo" \
+      --argjson pr "$num" \
+      --arg branch "$branch" \
+      --arg bead "$bead_id" \
+      --arg created_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      '{type:"landing_dirty",agent:"landing",state:"blocked",reason:("DIRTY PR failed gh pr merge --rebase: " + $repo + "#" + ($pr|tostring) + " cannot be cleanly merged"),metadata:{repo:$repo,pr:$pr,branch:$branch,blocker_bead:$bead,label:"landing-dirty",producer:"landing_poll",signal_source:"gh_pr_merge_rebase_conflict"},created_at:$created_at}' \
+      >> "$leader_file"
+    echo "$(date -u +%H:%M:%S) filed ${bead_id} for ${repo}#${num}"
+  else
+    echo "$(date -u +%H:%M:%S) appended landing-blocker evidence to ${bead_id} for ${repo}#${num}"
+  fi
 }
 
 refresh_xenon_pointer() {
@@ -111,7 +123,9 @@ while true; do
         fi
       elif [ "$state" = "DIRTY" ]; then
         if blocker_exists "$ref"; then
-          echo "$(date -u +%H:%M:%S) DIRTY ${repo}#${num} already has non-closed landing-dirty blocker"
+          if file_dirty_blocker "$repo" "$num" "$branch" "mergeStateStatus=DIRTY" "DIRTY PR observed; non-closed landing blocker already exists"; then
+            blocker_created=1
+          fi
           continue
         fi
         echo "$(date -u +%H:%M:%S) trying one-shot rebase merge for DIRTY ${repo}#${num} (${branch})"
@@ -122,8 +136,9 @@ while true; do
         }
         echo "$merge_output"
         if grep -qiE 'not mergeable|conflict|cannot be cleanly' <<<"$merge_output"; then
-          file_dirty_blocker "$repo" "$num" "$branch"
-          blocker_created=1
+          if file_dirty_blocker "$repo" "$num" "$branch" "gh_pr_merge_rebase_conflict" "$merge_output"; then
+            blocker_created=1
+          fi
         else
           echo "$(date -u +%H:%M:%S) DIRTY ${repo}#${num} failed for non-conflict reason; continuing"
         fi
