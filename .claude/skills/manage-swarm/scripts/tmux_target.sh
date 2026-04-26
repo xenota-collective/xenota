@@ -94,9 +94,32 @@ tmux_pane_looks_like_agent_ui() {
   return 1
 }
 
+tmux_pane_is_sidebar() {
+  local target="$1"
+  local current_command width
+
+  current_command="$(tmux_pane_current_command "$target")"
+  if [[ "$current_command" == "workmux" ]]; then
+    return 0
+  fi
+
+  width="$( "${tmux_cmd[@]}" display-message -p -t "$target" '#{pane_width}' )"
+  if [[ "$width" -lt 40 ]]; then
+    # Sidebars are typically narrow
+    return 0
+  fi
+
+  return 1
+}
+
 tmux_pane_family() {
   local target="$1"
   local pane_title current_command start_command recent
+
+  if tmux_pane_is_sidebar "$target"; then
+    printf 'sidebar\n'
+    return 0
+  fi
 
   pane_title="$(tmux_pane_title "$target")"
   current_command="$(tmux_pane_current_command "$target")"
@@ -287,11 +310,17 @@ tmux_wait_for_text() {
   local target="$1"
   local needle="$2"
   local attempts="${3:-20}"
-  local attempt recent
+  local attempt recent flattened_recent flattened_needle
+
+  # Flatten needle (remove newlines and collapse spaces)
+  flattened_needle="$(echo "$needle" | tr -s '[:space:]' ' ' | sed 's/^ //;s/ $//')"
 
   for (( attempt = 1; attempt <= attempts; attempt += 1 )); do
     recent="$(tmux_recent_pane_text "$target")"
-    if grep -Fq "$needle" <<<"$recent"; then
+    # Flatten recent text for matching: collapse all whitespace into single spaces
+    flattened_recent="$(echo "$recent" | tr -s '[:space:]' ' ')"
+
+    if [[ "$flattened_recent" == *"$flattened_needle"* ]]; then
       return 0
     fi
     sleep 1
@@ -305,13 +334,20 @@ tmux_launch_claude_in_shell() {
   local attempts="${2:-60}"
   local attempt
 
-  tmux_wait_for_idle_prompt "$target" 10 || return 2
+  # Ensure shell is ready for input
+  tmux_send_raw_keys "$target" C-c
+  sleep 0.5
+  tmux_send_raw_keys "$target" C-u
+  sleep 0.5
+
+  tmux_wait_for_idle_prompt "$target" 20 || return 2
   tmux_send_literal_text "$target" "claude"
+  sleep 0.2
   tmux_send_raw_keys "$target" Enter
 
   for (( attempt = 1; attempt <= attempts; attempt += 1 )); do
     if [[ "$(tmux_pane_family "$target")" == "claude" ]]; then
-      tmux_wait_for_ready_prompt "$target" 10 || true
+      tmux_wait_for_ready_prompt "$target" 15 || true
       return 0
     fi
     sleep 1
@@ -408,34 +444,67 @@ tmux_ensure_pane_target() {
 
 resolve_named_lane_target() {
   local session="$1"
-  local desired="${2:-0.0}"
-  local target="${session}:${desired}"
+  local desired="${2:-}"
+  local target
 
-  if tmux_target_exists "$target"; then
+  if [[ -n "$desired" ]]; then
+    target="${session}:${desired}"
+    if tmux_target_exists "$target"; then
+      printf '%s\n' "$target"
+      return 0
+    fi
+  fi
+
+  if ! tmux_session_exists "$session"; then
+    target="${session}:0.0"
+    tmux_ensure_pane_target "$target"
     printf '%s\n' "$target"
     return 0
   fi
 
-  if tmux_session_exists "$session"; then
-    if [[ "$desired" == "0.0" ]]; then
-      local first_pane
-      first_pane="$(tmux_first_pane_in_session "$session")"
-      if [[ -n "$first_pane" ]]; then
-        printf '%s\n' "$first_pane"
-        return 0
-      fi
+  # Find the best pane in the session: prefer non-sidebars
+  local best_pane=""
+  local panes
+  panes="$( "${tmux_cmd[@]}" list-panes -t "$session" -F '#{window_index}.#{pane_index}' )"
+
+  for idx in $panes; do
+    target="${session}:${idx}"
+    if ! tmux_pane_is_sidebar "$target"; then
+      best_pane="$target"
+      break
     fi
+  done
+
+  if [[ -n "$best_pane" ]]; then
+    printf '%s\n' "$best_pane"
+    return 0
   fi
 
-  tmux_ensure_pane_target "$target"
+  # Fallback to 0.0 if all are sidebars or none found
+  printf '%s:0.0\n' "$session"
 }
 
 resolve_explicit_target() {
   local raw="$1"
 
   if tmux_target_exists "$raw"; then
-    printf '%s\n' "$raw"
-    return 0
+    if ! tmux_pane_is_sidebar "$raw"; then
+      printf '%s\n' "$raw"
+      return 0
+    fi
+    # If it is a sidebar, try to find a better one in the same window
+    local session window
+    session="${raw%%:*}"
+    window="${raw#*:}"
+    window="${window%%.*}"
+    local panes
+    panes="$( "${tmux_cmd[@]}" list-panes -t "${session}:${window}" -F '#{pane_index}' )"
+    for index in $panes; do
+      if ! tmux_pane_is_sidebar "${session}:${window}.${index}"; then
+        printf '%s:%s.%s\n' "$session" "$window" "$index"
+        return 0
+      fi
+    done
   fi
 
   local session="${raw%%:*}"
@@ -444,6 +513,15 @@ resolve_explicit_target() {
       tmux_ensure_pane_target "$raw"
       return 0
     fi
+    # Search for first non-sidebar pane in the session
+    local panes
+    panes="$( "${tmux_cmd[@]}" list-panes -t "$session" -F '#{window_index}.#{pane_index}' )"
+    for idx in $panes; do
+      if ! tmux_pane_is_sidebar "${session}:${idx}"; then
+        printf '%s:%s\n' "$session" "$idx"
+        return 0
+      fi
+    done
     tmux_first_pane_in_session "$session"
     return 0
   fi
@@ -455,11 +533,11 @@ resolve_worker_target() {
   local worker="$1"
   if [[ "$worker" == *:* ]]; then
     resolve_explicit_target "$worker"
-  elif tmux_target_exists "xc:${worker}.1"; then
+  elif tmux_target_exists "xc:${worker}.1" && ! tmux_pane_is_sidebar "xc:${worker}.1"; then
     printf 'xc:%s.1\n' "$worker"
     return 0
   else
-    resolve_named_lane_target "xc-crew-${worker}" "0.0"
+    resolve_named_lane_target "xc-crew-${worker}"
   fi
 }
 
@@ -468,12 +546,12 @@ resolve_polecat_target() {
   if [[ "$polecat" == *:* ]]; then
     resolve_explicit_target "$polecat"
   else
-    resolve_named_lane_target "xc-${polecat}" "0.0"
+    resolve_named_lane_target "xc-${polecat}"
   fi
 }
 
 resolve_earthshot_worker_target() {
-  resolve_named_lane_target "xc-crew-earthshot" "0.0"
+  resolve_named_lane_target "xc-crew-earthshot"
 }
 
 resolve_earthshot_timer_target() {
