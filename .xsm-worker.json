@@ -1,12 +1,12 @@
 {
-  "assignment": "xc-25ob",
+  "assignment": "xc-4fc8",
   "assignment_source": "pool",
   "assignment_status": "in_progress",
-  "bead_id": "xc-25ob",
-  "branch": "xsm/xc-25ob-bd-lock-timeouts",
+  "bead_id": "xc-4fc8",
+  "branch": "xsm/xc-4fc8-submodule-restart",
   "created_at": "1777197827868085000",
-  "driver": "codex",
-  "handle": "worker-codex-1",
+  "driver": "claude",
+  "handle": "worker-claude-1",
   "landing_gate": {
     "branch": null,
     "changed_paths": [],
@@ -54,6 +54,6 @@
   "provisioning": {},
   "resume_assignment": "",
   "role_installation": {},
-  "worktree_branch": "xsm/xc-25ob-bd-lock-timeouts",
+  "worktree_branch": "xsm/xc-4fc8-submodule-restart",
   "worktree_path": ""
 }
