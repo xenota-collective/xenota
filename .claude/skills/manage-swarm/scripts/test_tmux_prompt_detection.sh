@@ -52,14 +52,14 @@ To continue this session, run codex resume 019d0e99-c6d5-7d11-9927-4131ed65ee63
 │ >_ OpenAI Codex (v0.116.0)                   │
 │                                              │
 │ model:     gpt-5.4 medium   /model to change │
-│ directory: ~/gt/xenota/crew/earthshot        │
+│ directory: ~/projects/xenota                 │
 ╰──────────────────────────────────────────────╯
 
   Tip: New Use /fast to enable our fastest inference at 2X plan usage.
 
 › Improve documentation in @filename
 
-  gpt-5.4 medium · 91% left · ~/gt/xenota/crew/earthshot
+  gpt-5.4 medium · 91% left · ~/projects/xenota
 EOF
 )"
 
@@ -72,7 +72,7 @@ EOF
 
 shell_ready_payload="$(cat <<'EOF'
 last command output
-jv@host ~/gt/xenota/crew/earthshot %
+jv@host ~/projects/xenota %
 EOF
 )"
 
@@ -81,7 +81,7 @@ Working on it now
 
 • Working (33s • esc to interrupt)
 
-  gpt-5.4 medium · 91% left · ~/gt/xenota/crew/earthshot
+  gpt-5.4 medium · 91% left · ~/projects/xenota
 EOF
 )"
 

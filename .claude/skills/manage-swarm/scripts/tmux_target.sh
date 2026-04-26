@@ -353,6 +353,15 @@ tmux_target_exists() {
   "${tmux_cmd[@]}" list-panes -t "$1" >/dev/null 2>&1
 }
 
+tmux_refuse_legacy_earthshot_target() {
+  local target="$1"
+  if [[ "$target" == "earthshot" || "$target" == earthshot:* || "$target" == xc-crew-earthshot* || "$target" == *":xc-crew-earthshot"* ]]; then
+    echo "legacy earthshot tmux target is disabled: $target" >&2
+    return 1
+  fi
+  return 0
+}
+
 tmux_session_exists() {
   "${tmux_cmd[@]}" has-session -t "$1" >/dev/null 2>&1
 }
@@ -363,6 +372,7 @@ tmux_first_pane_in_session() {
 
 tmux_create_session() {
   local session="$1"
+  tmux_refuse_legacy_earthshot_target "$session"
   if ! tmux_session_exists "$session"; then
     "${tmux_cmd[@]}" new-session -d -s "$session" -n node "$default_shell"
   fi
@@ -372,6 +382,7 @@ tmux_ensure_pane_target() {
   local target="$1"
   local session window pane current_target attempts
 
+  tmux_refuse_legacy_earthshot_target "$target"
   session="${target%%:*}"
   current_target="${target#*:}"
   window="${current_target%%.*}"
@@ -411,6 +422,7 @@ resolve_named_lane_target() {
   local desired="${2:-0.0}"
   local target="${session}:${desired}"
 
+  tmux_refuse_legacy_earthshot_target "$target"
   if tmux_target_exists "$target"; then
     printf '%s\n' "$target"
     return 0
@@ -433,6 +445,7 @@ resolve_named_lane_target() {
 resolve_explicit_target() {
   local raw="$1"
 
+  tmux_refuse_legacy_earthshot_target "$raw"
   if tmux_target_exists "$raw"; then
     printf '%s\n' "$raw"
     return 0
@@ -453,6 +466,7 @@ resolve_explicit_target() {
 
 resolve_worker_target() {
   local worker="$1"
+  tmux_refuse_legacy_earthshot_target "$worker"
   if [[ "$worker" == *:* ]]; then
     resolve_explicit_target "$worker"
   elif tmux_target_exists "xc:${worker}.1"; then
@@ -465,6 +479,7 @@ resolve_worker_target() {
 
 resolve_polecat_target() {
   local polecat="$1"
+  tmux_refuse_legacy_earthshot_target "$polecat"
   if [[ "$polecat" == *:* ]]; then
     resolve_explicit_target "$polecat"
   else
@@ -472,10 +487,10 @@ resolve_polecat_target() {
   fi
 }
 
-resolve_earthshot_worker_target() {
-  resolve_named_lane_target "xc-crew-earthshot" "0.0"
+resolve_wrangle_worker_target() {
+  resolve_explicit_target "${WRANGLE_TARGET:-xc:supervisor.1}"
 }
 
-resolve_earthshot_timer_target() {
-  resolve_named_lane_target "xc-crew-earthshot" "0.2"
+resolve_wrangle_timer_target() {
+  resolve_explicit_target "${WRANGLE_TIMER_TARGET:-xc:supervisor.3}"
 }

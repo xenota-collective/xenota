@@ -3,6 +3,7 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$script_dir/tmux_target.sh"
+repo_root="$(cd "$script_dir/../../../.." && pwd)"
 
 if [[ $# -lt 1 || $# -gt 2 ]]; then
   echo "usage: $0 <seconds> [state-file]" >&2
@@ -10,7 +11,7 @@ if [[ $# -lt 1 || $# -gt 2 ]]; then
 fi
 
 seconds="$1"
-state_file="${2:-/Users/jv/gt/xenota/crew/earthshot/swarm-state.yaml}"
+state_file="${2:-${WRANGLE_STATE_FILE:-$repo_root/.xsm-local/swarm-state.yaml}}"
 
 if ! [[ "$seconds" =~ ^[0-9]+$ ]]; then
   echo "seconds must be an integer" >&2
@@ -18,8 +19,8 @@ if ! [[ "$seconds" =~ ^[0-9]+$ ]]; then
 fi
 
 if [[ ! -f "$state_file" ]]; then
-  echo "state file not found: $state_file" >&2
-  exit 1
+  mkdir -p "$(dirname "$state_file")"
+  printf 'wrangle_count: 0\n' > "$state_file"
 fi
 
 wrangle_count="$(
@@ -54,8 +55,8 @@ awk -v next_count="$next_wrangle_count" '
 }
 mv "$tmp_file" "$state_file"
 
-timer_target="$(resolve_earthshot_timer_target)"
-worker_target="$(resolve_earthshot_worker_target)"
+timer_target="$(resolve_wrangle_timer_target)"
+worker_target="$(resolve_wrangle_worker_target)"
 
 if (( next_wrangle_count % 5 == 0 )); then
   arm_cmd="sleep ${seconds}; ${script_dir}/restart_wrangle.sh"
