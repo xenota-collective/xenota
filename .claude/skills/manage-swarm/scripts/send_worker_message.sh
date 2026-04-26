@@ -1,8 +1,39 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+interrupt=0
+kind="instruction"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --interrupt)
+      interrupt=1
+      shift
+      ;;
+    --kind)
+      if [[ $# -lt 2 ]]; then
+        echo "send_worker_message: --kind requires a value" >&2
+        exit 2
+      fi
+      kind="$2"
+      shift 2
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "send_worker_message: unknown option $1" >&2
+      exit 2
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
 if [[ $# -lt 2 ]]; then
-  echo "usage: $0 <worker-name|tmux-target> <message>" >&2
+  echo "usage: $0 [--interrupt] [--kind <kind>] <worker-name|tmux-target> <message>" >&2
   exit 2
 fi
 
@@ -10,7 +41,9 @@ worker="$1"
 shift
 message="$*"
 
-repo_root="${XENOTA_REPO:-/Users/jv/projects/xenota}"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+default_repo_root="$(cd "$script_dir/../../../.." && pwd)"
+repo_root="${XENOTA_REPO:-$default_repo_root}"
 xsm_bin="${XSM_BIN:-$repo_root/xenon/packages/xsm/.venv/bin/xsm}"
 xsm_config="${XSM_CONFIG:-$repo_root/.xsm-local/swarm-backlog.yaml}"
 
@@ -25,12 +58,20 @@ if [[ ! -x "$xsm_bin" ]]; then
   exit 1
 fi
 
+args=(
+  message
+  --config "$xsm_config"
+  --worker "$worker_id"
+  --payload "$message"
+  --kind "$kind"
+  --json
+)
+if [[ "$interrupt" == "1" ]]; then
+  args+=(--interrupt)
+fi
+
 output="$(
-  "$xsm_bin" message \
-    --config "$xsm_config" \
-    --worker "$worker_id" \
-    --payload "$message" \
-    --json
+  "$xsm_bin" "${args[@]}"
 )"
 
 if command -v jq >/dev/null 2>&1; then

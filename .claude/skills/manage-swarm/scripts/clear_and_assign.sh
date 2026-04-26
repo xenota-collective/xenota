@@ -15,7 +15,7 @@ instruction="$*"
 
 target="$(resolve_worker_target "$worker")"
 
-if ! "$script_dir/send_worker_message.sh" "$worker" "/clear"; then
+if ! "$script_dir/send_worker_message.sh" --interrupt --kind reset "$worker" "/clear"; then
   echo "clear_and_assign: centralized /clear delivery failed for $worker" >&2
   exit 1
 fi

@@ -52,11 +52,9 @@ Common operations should be run through the scripts in `scripts/`. The skill sho
 
 Operator hard rules:
 - Raw tmux injection is emergency recovery only. Never use it for normal worker assignment, reassignment, `/clear`, or nudge messages.
-- If emergency raw tmux injection is unavoidable, use exactly two tmux calls:
-  1. one literal-text `send-keys -l ...`
-  2. one separate `send-keys C-m`
-- Never rely on a combined send or assume the helper/script submitted the command unless you verified it.
-- After every manual tmux injection, immediately verify the effect before making any status claim.
+- Do not embed raw tmux input commands in swarm assignment or nudge instructions; use `send_worker_message.sh` or `clear_and_assign.sh`.
+- Never rely on a send or assume the helper/script submitted the command unless you verified it.
+- After every emergency manual injection, immediately verify the effect before making any status claim.
 - Valid proof is one of:
   - `pane_current_command` changed to the expected foreground process
   - fresh pane output advanced after the command
