@@ -49,6 +49,18 @@ git push -u origin <branch-name> --force-with-lease
 
 Use `--force-with-lease` if you rebased. Never force-push without lease.
 
+## Recording Progress
+
+Before submitting the PR, record your completion in the XSM runtime state to unlock the next stage (e.g. manual QA or review).
+
+```bash
+xsm worker-stage-verdict \
+  --artefact implementation \
+  --status complete \
+  --tester "<your_name>" \
+  --notes "Implementation finished and unit tests passed."
+```
+
 ## Create the PR
 
 Use `gh` to create the PR. The PR must target `main`.

@@ -510,6 +510,8 @@ Manual execution should be done by a separate worker or polecat, not by the impl
 Rules:
 - execute the plan in practice; do not restate it
 - post concrete results, commands run, pass/fail, and deviations
+- **Record in runtime state**: The tester MUST run `xsm worker-qa-verdict` to unlock the next stage.
+- **Post receipt**: The tester MUST post a `manual_qa_receipt` comment on the bead.
 - clearly separate executed coverage from later integration gaps
 - verify the results are actually posted on the parent epic or designated manual-test bead before allowing landing to proceed
 

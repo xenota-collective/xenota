@@ -31,7 +31,14 @@ git status  # must be clean
 # 4. Update bead status
 bd update <BEAD> -s in_progress
 
-# 5. Start working
+# 5. Record intake receipt in runtime state (if you are the intake owner)
+xsm worker-stage-verdict \
+  --artefact intake_receipt \
+  --status complete \
+  --tester "<your_name>" \
+  --notes "Branch created and worktree ready."
+
+# 6. Start working
 ```
 
 ### Branch naming examples
