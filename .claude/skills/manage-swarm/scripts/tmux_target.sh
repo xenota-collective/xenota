@@ -455,6 +455,9 @@ resolve_worker_target() {
   local worker="$1"
   if [[ "$worker" == *:* ]]; then
     resolve_explicit_target "$worker"
+  elif tmux_target_exists "xc:${worker}.1"; then
+    printf 'xc:%s.1\n' "$worker"
+    return 0
   else
     resolve_named_lane_target "xc-crew-${worker}" "0.0"
   fi

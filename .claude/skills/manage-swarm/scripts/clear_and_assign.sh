@@ -15,10 +15,15 @@ instruction="$*"
 
 target="$(resolve_worker_target "$worker")"
 
-if ! tmux_reset_session "$target"; then
+if ! "$script_dir/send_worker_message.sh" "$worker" "/clear"; then
+  echo "clear_and_assign: centralized /clear delivery failed for $worker" >&2
+  exit 1
+fi
+
+if ! tmux_wait_for_ready_prompt "$target" 30; then
   echo "clear_and_assign: /clear did not settle cleanly on $target" >&2
   tmux_recent_pane_text "$target" >&2
   exit 1
 fi
 
-tmux_send_prompt_line "$target" "$instruction"
+"$script_dir/send_worker_message.sh" "$worker" "$instruction"

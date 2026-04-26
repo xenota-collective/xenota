@@ -38,23 +38,23 @@ For worker-lane resets, use the helper script in this skill:
 /Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <worker> '<instruction>'
 ```
 
-This script enforces the required sequence:
-1. `Escape`
-2. `Ctrl-C`
-3. send `/clear`
-4. send `Enter`
-5. wait for the clear to complete
-6. send the new instruction
-7. send `Enter`
+For ordinary worker messages or nudges, use the centralized helper:
+
+```bash
+/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/send_worker_message.sh <worker> '<message>'
+```
+
+These helpers are the only approved worker-message transport. They must route through the checked-out XSM runtime's centralized delivery API and fail closed if delivery cannot be verified. Do not hand-roll `tmux send-keys` for worker assignment, reassignment, `/clear`, or nudge messages.
 
 Do not fake a clear by telling the worker "your context is cleared." The pane must actually receive `/clear` as its own command before the new assignment text is sent.
 
 Common operations should be run through the scripts in `scripts/`. The skill should describe policy and sequence, not embed raw shell recipes.
 
 Operator hard rules:
-- When sending text to any tmux pane manually, use exactly two tmux calls:
+- Raw tmux injection is emergency recovery only. Never use it for normal worker assignment, reassignment, `/clear`, or nudge messages.
+- If emergency raw tmux injection is unavoidable, use exactly two tmux calls:
   1. one literal-text `send-keys -l ...`
-  2. one separate `send-keys Enter`
+  2. one separate `send-keys C-m`
 - Never rely on a combined send or assume the helper/script submitted the command unless you verified it.
 - After every manual tmux injection, immediately verify the effect before making any status claim.
 - Valid proof is one of:
@@ -177,7 +177,7 @@ When splitting work across crew:
   ```bash
   /Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <name> '<new assignment>'
   ```
-  This helper enforces the required `/clear`, separate `Enter`, and wait sequence.
+  This helper enforces centralized `/clear`, centralized assignment delivery, and the ready-prompt wait sequence.
 - when a crew member finishes an epic, reaches a real handoff point, or goes idle while still owning an active epic, immediately reassign them or push them onto the next slice
 - do not assume a worker will self-chain from a one-off request unless you explicitly told them to keep working through the epic
 - if a crew member is the dedicated landing worker, only reassign them onto another landing task; do not spend that lane on implementation follow-up just because they became free
@@ -186,7 +186,7 @@ Common helpers:
 
 ```bash
 /Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/assign_bead.sh <epic> <name>
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/nudge_worker.sh <name> 'Reply with exact branch name, first bead, next 2 beads, and confirm PR-based landing.'
+/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/send_worker_message.sh <name> 'Reply with exact branch name, first bead, next 2 beads, and confirm PR-based landing.'
 ```
 
 Standing-order nudge pattern:
@@ -201,7 +201,7 @@ Standing-order nudge pattern:
 Preferred wording (via helper):
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/nudge_worker.sh <name> 'Your active assignment is <bead>. Read the start-feature skill FIRST — you must work on a feature branch off origin/main, never push to main. Branch name: <crew>/<bead-id>-<slug>. Start immediately. Never stop at a passing test, summary, or completed micro-slice. After each slice, choose and execute the next concrete slice yourself. When your work is complete, read the prepare-review skill and submit a PR. Do not push to main. Do not merge anything. Only stop at a real blocker or an explicit handoff gate.'
+/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/send_worker_message.sh <name> 'Your active assignment is <bead>. Read the start-feature skill FIRST — you must work on a feature branch off origin/main, never push to main. Branch name: <crew>/<bead-id>-<slug>. Start immediately. Never stop at a passing test, summary, or completed micro-slice. After each slice, choose and execute the next concrete slice yourself. When your work is complete, read the prepare-review skill and submit a PR. Do not push to main. Do not merge anything. Only stop at a real blocker or an explicit handoff gate.'
 ```
 
 Do not use:
@@ -244,7 +244,7 @@ Mandatory Helper Commands:
 Manual tmux verification loop:
 1. Capture or inspect the pane first
 2. Send literal text only
-3. Send a separate `Enter`
+3. Send a separate `C-m`
 4. Re-capture immediately
 5. Decide which of these states is true:
    - command is now running
@@ -308,12 +308,12 @@ Weak blocker patterns that require pushback:
 
 Intervention ladder:
 1. `nudge and check`
-   - send an exact next action via `nudge_worker.sh`
+   - send an exact next action via `send_worker_message.sh`
    - re-capture the pane via `capture_pane.sh` and verify motion or an explicit blocker reply
    - if recent human input is visible in the pane and the worker is not clearly stuck, skip this step and continue observing instead of layering more instructions
 2. `reset worker`
    - if the pane is wedged, ignoring input, or stuck in bad modal/editor state
-   - use the `clear_and_assign.sh` helper script so `/clear` is submitted as its own command with its own `Enter`
+   - use the `clear_and_assign.sh` helper script so `/clear` and the next assignment go through centralized delivery
    - do this serially, one lane at a time
    - if a worker remains a repeat offender across multiple wrangle passes, use the helper reset script once, re-capture, and if the pane still sits idle classify the lane as `failed reset`
    - do NOT kill crew sessions — use `/clear` to reset context within the running session
