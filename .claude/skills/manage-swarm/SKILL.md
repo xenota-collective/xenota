@@ -95,6 +95,79 @@ During every wrangle pass:
 4. When a P0 bead reaches landing readiness, it jumps the landing queue. The dedicated landing worker should land P0 stacks before any other pending landing.
 5. P0 beads that are blocked must be escalated to the human immediately, not parked.
 
+## Worker Driver Discipline
+
+Every worker pane's running CLI MUST match the driver implied by its name. The convention:
+
+- `worker-claude-*` → must run `claude`
+- `worker-codex-*` → must run `codex`
+- `worker-gemini-*` → must run `gemini`
+
+The expected roster is **2 of each driver** — `worker-claude-1`, `worker-claude-2`, `worker-codex-1`, `worker-codex-2`, `worker-gemini-1`, `worker-gemini-2`. This matches the `driver:` field for each agent in `.xsm-local/swarm-backlog.yaml`. The agent runs in pane `.1` of each worker window.
+
+Why this matters:
+- The opposite-flavor review gate depends on knowing what each worker is. A `worker-codex-*` pane running Claude breaks review routing.
+- Performance and cost characteristics differ by driver — `worker-gemini-*` running Claude wastes Anthropic quota and skews capacity planning.
+- The wrangler's allocation decisions assume the name reflects reality.
+
+How to detect:
+1. After every restart of xsm or tmux, list `xc` windows and confirm all 6 `worker-*` windows are present and in the `xc` session (see "Worker Session Discipline" below).
+2. Capture pane `.1` of each `worker-*` window.
+3. Look at the agent banner: Claude shows `Claude Code v…` and `Opus/Sonnet/Haiku`; Codex shows `gpt-…` and `codex`; Gemini shows `Gemini …` and the gemini banner.
+4. If a pane's running CLI does not match its window name, treat it as a driver violation and fix immediately.
+
+How to fix (operator emergency recovery — raw tmux is permitted here):
+
+```bash
+# pane .1 of worker-<driver>-N is the agent pane
+WP=$(workmux path <worker-handle>)
+tmux respawn-pane -k -c "$WP" -t xc:<window>.1 "/bin/zsh -l"
+sleep 1
+tmux send-keys -t xc:<window>.1 -l '<driver>'
+tmux send-keys -t xc:<window>.1 C-m
+```
+
+Then re-capture and confirm the correct CLI banner before leaving the lane.
+
+Worktree, branch, and any uncommitted file state are preserved by `respawn-pane`. Only the in-memory CLI session is lost — that is the intended outcome when the wrong CLI was running.
+
+Driver-violation check is part of the default wrangle loop. Add it to the crew pass.
+
+## Worker Session Discipline
+
+Every worker MUST live as a window inside the `xc` tmux session. Workers are never allowed to live in their own separate tmux session.
+
+- expected layout: one `xc` session, with `workmux`, `supervisor`, the six `worker-*` windows, `landing`, `product-owner`, `retro`, `auditor`
+- `tmux list-sessions` must show only `xc` (and any user-attached sessions unrelated to the swarm) — there must be no per-worker sessions like ` worker-claude-2`
+
+The `workmux open <handle>` command can silently land a worktree in its own tmux session if that worktree's stored mode is `session` rather than `window`. This has happened in practice and is a violation. Always pass `--mode window` when opening worker worktrees, and verify the result.
+
+Detect after any open/restart:
+
+```bash
+tmux list-sessions -F '#{session_id} #{session_name}'
+```
+
+If a worker session shows up outside `xc`, fix it by moving the window into `xc` and killing the orphan session:
+
+```bash
+sid=$(tmux list-sessions -F '#{session_id} #{session_name}' | grep '<worker-handle>' | awk '{print $1}')
+wid=$(tmux list-windows -t "$sid" -F '#{window_id}' | head -1)
+tmux move-window -s "$wid" -t xc:
+tmux kill-session -t "$sid"
+tmux rename-window -t xc:<new-window-index> <worker-handle>
+```
+
+After moving, re-verify the pane layout (the standard worker layout has 4 panes: workmux/agent/zsh/zsh) and confirm the agent driver matches the worker name per the rule above.
+
+Preferred path when opening a missing worker:
+
+```bash
+workmux open --mode window <worker-handle>
+```
+
+Run this from a shell that is already inside `xc` (for example via `tmux send-keys` into `xc:0.*`) so workmux attaches the new window to `xc` rather than creating a fresh session.
+
 ## Branch and PR Discipline
 
 Workers MUST use feature branches and PRs. Direct pushes to main are a policy violation.
