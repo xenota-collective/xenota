@@ -3,7 +3,7 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$script_dir/tmux_target.sh"
-target="$(resolve_earthshot_worker_target)"
+target="$(resolve_wrangle_worker_target)"
 
 wait_for_text() {
   local needle="$1"
