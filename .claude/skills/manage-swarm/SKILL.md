@@ -296,6 +296,7 @@ If you detect a worker has pushed directly to main (check with `git log --onelin
 - Do not leave lanes parked on vague approval waits when you can issue the approval yourself in the current session.
 - Treat dedicated landing workers as a landing-only pool. If someone is serving as the landing owner for the swarm (for example `last`), do not reallocate them to implementation, review, or manual-test beads.
 - If a landing blocker has already been explicitly routed back to an implementation owner, the landing worker must not start branch surgery on that same branch unless ownership is explicitly reassigned. Landing coordination and implementation refresh are separate lanes.
+- Landing blockers must be filed through `.claude/skills/manage-swarm/scripts/landing_blocker.sh`. The helper keys on canonical PR `external_ref` values such as `gh:xenota-collective/xenota#229`; if any non-closed bead already has that ref, append producer/signal evidence to it instead of creating another bead. This applies across both historical labels, `landing-dirty` and `landing-blocker`.
 
 Serialized lane-control rule:
 - When a lane is stale, nonresponsive, or carrying poisoned context, intervene on that lane alone until it is clearly moving, rerouted, or escalated.

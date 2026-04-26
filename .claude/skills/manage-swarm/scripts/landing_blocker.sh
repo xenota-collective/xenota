@@ -1,0 +1,207 @@
+#!/usr/bin/env bash
+# Shared landing-blocker bead deduplication helper.
+#
+# Key invariant: a PR external_ref may have at most one non-closed landing
+# blocker bead. Repeated signals from any producer append evidence to the
+# existing bead instead of creating a duplicate.
+
+set -euo pipefail
+
+usage() {
+  cat >&2 <<'EOF'
+Usage:
+  landing_blocker.sh find --external-ref gh:OWNER/REPO#N
+  landing_blocker.sh file --repo OWNER/REPO --pr N --branch BRANCH \
+    --producer NAME --signal-source SOURCE --reason TEXT \
+    [--title TITLE] [--description TEXT] [--priority P1] [--labels A,B]
+
+The file command prints JSON:
+  {"action":"created"|"deduplicated","bead_id":"...","external_ref":"..."}
+EOF
+}
+
+die() {
+  echo "landing_blocker.sh: $*" >&2
+  exit 2
+}
+
+now_utc() {
+  date -u +%Y-%m-%dT%H:%M:%SZ
+}
+
+first_nonclosed_for_ref() {
+  local ref="$1"
+  bd list --all --limit 0 --json \
+    | jq -c --arg ref "$ref" '
+        [
+          .[]
+          | select(.external_ref == $ref)
+          | select(.status != "closed")
+        ]
+        | sort_by(.created_at // "")
+        | .[0] // empty
+      '
+}
+
+canonical_ref_from_repo_pr() {
+  local repo="$1" pr="$2"
+  [[ -n "$repo" ]] || die "--repo is required"
+  [[ -n "$pr" ]] || die "--pr is required"
+  printf 'gh:%s#%s\n' "$repo" "$pr"
+}
+
+add_evidence_comment() {
+  local bead_id="$1" producer="$2" signal_source="$3" external_ref="$4"
+  local repo="$5" pr="$6" branch="$7" observed_at="$8" reason="$9" action="$10"
+  local comment
+  comment=$(
+    cat <<EOF
+Landing-blocker evidence (${action}):
+- producer: ${producer}
+- signal_source: ${signal_source}
+- external_ref: ${external_ref}
+- repo: ${repo}
+- pr: ${pr}
+- branch: ${branch}
+- observed_at: ${observed_at}
+- evidence: ${reason}
+EOF
+  )
+  bd comments add "$bead_id" "$comment" >/dev/null
+}
+
+cmd_find() {
+  local external_ref=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --external-ref)
+        external_ref="${2:-}"
+        shift 2
+        ;;
+      --repo)
+        local repo="${2:-}"
+        shift 2
+        ;;
+      --pr)
+        local pr="${2:-}"
+        shift 2
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        die "unknown find argument: $1"
+        ;;
+    esac
+  done
+  if [[ -z "$external_ref" ]]; then
+    external_ref="$(canonical_ref_from_repo_pr "${repo:-}" "${pr:-}")"
+  fi
+  local existing
+  existing="$(first_nonclosed_for_ref "$external_ref")"
+  [[ -n "$existing" ]] || return 1
+  jq -c --arg ref "$external_ref" '{bead_id:.id, title:.title, status:.status, external_ref:$ref}' <<<"$existing"
+}
+
+cmd_file() {
+  local repo="" pr="" branch="" producer="" signal_source="" reason=""
+  local title="" description="" priority="1" labels="landing-dirty,landing-blocker"
+  local observed_at
+  observed_at="$(now_utc)"
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --repo) repo="${2:-}"; shift 2 ;;
+      --pr) pr="${2:-}"; shift 2 ;;
+      --branch) branch="${2:-}"; shift 2 ;;
+      --producer) producer="${2:-}"; shift 2 ;;
+      --signal-source) signal_source="${2:-}"; shift 2 ;;
+      --reason) reason="${2:-}"; shift 2 ;;
+      --title) title="${2:-}"; shift 2 ;;
+      --description) description="${2:-}"; shift 2 ;;
+      --priority) priority="${2:-}"; shift 2 ;;
+      --labels) labels="${2:-}"; shift 2 ;;
+      --observed-at) observed_at="${2:-}"; shift 2 ;;
+      -h|--help) usage; exit 0 ;;
+      *) die "unknown file argument: $1" ;;
+    esac
+  done
+
+  [[ -n "$producer" ]] || die "--producer is required"
+  [[ -n "$signal_source" ]] || die "--signal-source is required"
+  [[ -n "$reason" ]] || die "--reason is required"
+
+  local external_ref short_repo existing existing_id created_json bead_id full_description metadata
+  external_ref="$(canonical_ref_from_repo_pr "$repo" "$pr")"
+  short_repo="${repo##*/}"
+  if [[ -z "$title" ]]; then
+    title="Resolve dirty landing PR ${short_repo}#${pr}"
+  fi
+  if [[ -z "$description" ]]; then
+    description="Landing producer ${producer} observed ${external_ref}: ${reason}. Refresh or resolve the PR branch, then return it to the landing queue. PR branch: ${branch}."
+  fi
+
+  existing="$(first_nonclosed_for_ref "$external_ref")"
+  if [[ -n "$existing" ]]; then
+    existing_id="$(jq -r '.id' <<<"$existing")"
+    add_evidence_comment "$existing_id" "$producer" "$signal_source" "$external_ref" "$repo" "$pr" "$branch" "$observed_at" "$reason" "deduplicated"
+    jq -cn \
+      --arg action "deduplicated" \
+      --arg bead_id "$existing_id" \
+      --arg external_ref "$external_ref" \
+      --arg producer "$producer" \
+      --arg signal_source "$signal_source" \
+      '{action:$action, bead_id:$bead_id, external_ref:$external_ref, producer:$producer, signal_source:$signal_source}'
+    return 0
+  fi
+
+  full_description=$(
+    cat <<EOF
+${description}
+
+Landing-blocker record:
+- producer: ${producer}
+- signal_source: ${signal_source}
+- external_ref: ${external_ref}
+- label_aliases: landing-dirty, landing-blocker
+EOF
+  )
+  metadata="$(jq -cn \
+    --arg producer "$producer" \
+    --arg signal_source "$signal_source" \
+    --arg external_ref "$external_ref" \
+    '{landing_blocker:{producer:$producer, signal_source:$signal_source, external_ref:$external_ref}}')"
+
+  created_json="$(bd create "$title" \
+    --description "$full_description" \
+    --type bug \
+    --priority "$priority" \
+    --labels "$labels" \
+    --external-ref "$external_ref" \
+    --metadata "$metadata" \
+    --json)"
+  bead_id="$(jq -r '.id' <<<"$created_json")"
+  add_evidence_comment "$bead_id" "$producer" "$signal_source" "$external_ref" "$repo" "$pr" "$branch" "$observed_at" "$reason" "created"
+  jq -cn \
+    --arg action "created" \
+    --arg bead_id "$bead_id" \
+    --arg external_ref "$external_ref" \
+    --arg producer "$producer" \
+    --arg signal_source "$signal_source" \
+    '{action:$action, bead_id:$bead_id, external_ref:$external_ref, producer:$producer, signal_source:$signal_source}'
+}
+
+main() {
+  [[ $# -gt 0 ]] || { usage; exit 2; }
+  local command="$1"
+  shift
+  case "$command" in
+    find) cmd_find "$@" ;;
+    file) cmd_file "$@" ;;
+    -h|--help) usage ;;
+    *) die "unknown command: $command" ;;
+  esac
+}
+
+main "$@"
