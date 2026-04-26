@@ -20,6 +20,11 @@ tmux_pane_start_command() {
   "${tmux_cmd[@]}" display-message -p -t "$target" '#{pane_start_command}'
 }
 
+tmux_pane_dead() {
+  local target="$1"
+  "${tmux_cmd[@]}" display-message -p -t "$target" '#{pane_dead}'
+}
+
 tmux_recent_pane_text() {
   local target="$1"
   "${tmux_cmd[@]}" capture-pane -p -t "$target"
@@ -302,16 +307,28 @@ tmux_wait_for_text() {
 
 tmux_launch_claude_in_shell() {
   local target="$1"
-  local attempts="${2:-60}"
-  local attempt
+  local attempts="${2:-90}"
+  local attempt current_command recent
 
   tmux_wait_for_idle_prompt "$target" 10 || return 2
+  tmux_prepare_prompt_for_input "$target"
+  sleep 0.2
   tmux_send_literal_text "$target" "claude"
   tmux_send_raw_keys "$target" Enter
 
   for (( attempt = 1; attempt <= attempts; attempt += 1 )); do
     if [[ "$(tmux_pane_family "$target")" == "claude" ]]; then
       tmux_wait_for_ready_prompt "$target" 10 || true
+      return 0
+    fi
+    current_command="$(tmux_pane_current_command "$target")"
+    recent="$(tmux_recent_pane_text "$target")"
+    if [[ "$current_command" != "zsh" && "$current_command" != "bash" && "$current_command" != "fish" && "$current_command" != "sh" && "$current_command" != "workmux" ]]; then
+      tmux_wait_for_ready_prompt "$target" 20 || true
+      return 0
+    fi
+    if tmux_pane_looks_like_agent_ui "$recent"; then
+      tmux_wait_for_ready_prompt "$target" 20 || true
       return 0
     fi
     sleep 1
@@ -359,6 +376,71 @@ tmux_session_exists() {
 
 tmux_first_pane_in_session() {
   "${tmux_cmd[@]}" list-panes -t "$1" -F '#S:#I.#P' | head -n 1
+}
+
+tmux_list_pane_targets() {
+  local target="$1"
+  "${tmux_cmd[@]}" list-panes -t "$target" -F '#S:#I.#P'
+}
+
+tmux_window_has_panes() {
+  local target="$1"
+  tmux_list_pane_targets "$target" >/dev/null 2>&1
+}
+
+tmux_pane_is_real_shell_or_agent() {
+  local target="$1"
+  local dead current_command family
+
+  dead="$(tmux_pane_dead "$target" 2>/dev/null || printf '1')"
+  [[ "$dead" == "1" ]] && return 1
+
+  current_command="$(tmux_pane_current_command "$target" 2>/dev/null || true)"
+  [[ "$current_command" == "workmux" ]] && return 1
+
+  family="$(tmux_pane_family "$target" 2>/dev/null || true)"
+  case "$family" in
+    claude|gemini|codex|agent|shell)
+      return 0
+      ;;
+  esac
+
+  return 1
+}
+
+tmux_best_real_pane_in_window() {
+  local window_target="$1"
+  local pane family
+  local shell_candidate=""
+
+  while IFS= read -r pane; do
+    [[ -z "$pane" ]] && continue
+    tmux_pane_is_real_shell_or_agent "$pane" || continue
+    family="$(tmux_pane_family "$pane" 2>/dev/null || true)"
+    case "$family" in
+      claude|gemini|codex|agent)
+        printf '%s\n' "$pane"
+        return 0
+        ;;
+      shell)
+        if [[ -z "$shell_candidate" ]]; then
+          shell_candidate="$pane"
+        fi
+        ;;
+    esac
+  done < <(tmux_list_pane_targets "$window_target" 2>/dev/null || true)
+
+  if [[ -n "$shell_candidate" ]]; then
+    printf '%s\n' "$shell_candidate"
+    return 0
+  fi
+
+  return 1
+}
+
+tmux_create_real_pane_in_window() {
+  local window_target="$1"
+  "${tmux_cmd[@]}" split-window -d -P -F '#S:#I.#P' -t "$window_target" "$default_shell"
 }
 
 tmux_create_session() {
@@ -410,20 +492,28 @@ resolve_named_lane_target() {
   local session="$1"
   local desired="${2:-0.0}"
   local target="${session}:${desired}"
+  local window="${desired%%.*}"
+  local best_pane
 
-  if tmux_target_exists "$target"; then
+  if tmux_target_exists "$target" && tmux_pane_is_real_shell_or_agent "$target"; then
     printf '%s\n' "$target"
     return 0
   fi
 
   if tmux_session_exists "$session"; then
-    if [[ "$desired" == "0.0" ]]; then
-      local first_pane
-      first_pane="$(tmux_first_pane_in_session "$session")"
-      if [[ -n "$first_pane" ]]; then
-        printf '%s\n' "$first_pane"
+    best_pane="$(tmux_best_real_pane_in_window "${session}:${window}" || true)"
+    if [[ -n "$best_pane" ]]; then
+      printf '%s\n' "$best_pane"
+      return 0
+    fi
+
+    if tmux_window_has_panes "${session}:${window}"; then
+      best_pane="$(tmux_create_real_pane_in_window "${session}:${window}.0" || true)"
+      if [[ -n "$best_pane" ]]; then
+        printf '%s\n' "$best_pane"
         return 0
       fi
+      return 1
     fi
   fi
 

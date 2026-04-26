@@ -49,6 +49,8 @@ if [[ ! -x "$submodule/packages/xsm/.venv/bin/xsm" ]]; then
   echo "restart_wrangle_if_xsm_changed: run 'cd $submodule/packages/xsm && uv sync' before restarting the live manager" >&2
 fi
 
-# Restart wrangle via the existing restart script
+# Restart wrangle via the existing restart script, then prove the monitor sees
+# a healthy swarm instead of accepting status=ready with dead lanes.
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$script_dir/restart_wrangle.sh"
+"$script_dir/restart_wrangle.sh"
+XSM_BIN="$submodule/packages/xsm/.venv/bin/xsm" "$script_dir/verify_wrangle_health.sh"

@@ -1,12 +1,12 @@
 {
-  "assignment": "xc-25ob",
-  "assignment_source": "pool",
+  "assignment": "xc-utgg",
+  "assignment_source": "lease",
   "assignment_status": "in_progress",
-  "bead_id": "xc-25ob",
-  "branch": "xsm/xc-25ob-bd-lock-timeouts",
+  "bead_id": "xc-utgg",
+  "branch": "gemini/xc-utgg-restart-closeout-health",
   "created_at": "1777197827868085000",
-  "driver": "codex",
-  "handle": "worker-codex-1",
+  "driver": "gemini",
+  "handle": "worker-gemini-1",
   "landing_gate": {
     "branch": null,
     "changed_paths": [],
@@ -54,6 +54,6 @@
   "provisioning": {},
   "resume_assignment": "",
   "role_installation": {},
-  "worktree_branch": "xsm/xc-25ob-bd-lock-timeouts",
-  "worktree_path": ""
+  "worktree_branch": "gemini/xc-utgg-restart-closeout-health",
+  "worktree_path": "/Users/jv/projects/xenota/.worktrees/worker-gemini-1"
 }
