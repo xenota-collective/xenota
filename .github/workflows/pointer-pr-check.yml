@@ -37,6 +37,16 @@ jobs:
         with:
           submodules: false
 
+      - name: Checkout xenon submodule
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global \
+            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
+            "git@github.com:"
+          git submodule sync xenon
+          git submodule update --init xenon
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
