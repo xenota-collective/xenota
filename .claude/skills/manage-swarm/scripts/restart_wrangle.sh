@@ -73,17 +73,29 @@ if ! repo_root="$(resolve_xenota_repo_root "$script_dir")"; then
 fi
 xsm_bin="$repo_root/xenon/packages/xsm/.venv/bin/xsm"
 xsm_config="$repo_root/.xsm-local/swarm-backlog.yaml"
+monitor_timeout_bin="${XSM_MONITOR_TIMEOUT_BIN:-}"
 
 if [[ ! -x "$xsm_bin" ]]; then
   # Fallback to PATH if .venv not found or not executable
   xsm_bin="xsm"
 fi
 
+if [[ -z "$monitor_timeout_bin" ]]; then
+  if command -v timeout >/dev/null 2>&1; then
+    monitor_timeout_bin="timeout"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    monitor_timeout_bin="gtimeout"
+  else
+    echo "restart_wrangle: timeout command not found; cannot bound xsm monitor health checks" >&2
+    exit 1
+  fi
+fi
+
 # Wait up to 60s for health. Capture monitor JSON in-process per iteration so
 # concurrent restart_wrangle invocations cannot race on a shared file (xc-1xc8).
 for i in {1..12}; do
   sleep 5
-  if ! health_json="$("$xsm_bin" monitor --config "$xsm_config" --once --json 2>/dev/null)" \
+  if ! health_json="$("$monitor_timeout_bin" 8 "$xsm_bin" monitor --config "$xsm_config" --once --json 2>/dev/null)" \
       || [[ -z "$health_json" ]]; then
     echo "restart_wrangle: xsm monitor failed or timed out. Waiting..."
     continue
