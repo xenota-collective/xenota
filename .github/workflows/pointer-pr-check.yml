@@ -9,7 +9,7 @@ name: Pointer PR check
 # its CI was green, and (for security/control-plane labels) that a strong
 # review receipt was recorded.
 #
-# Auth (xc-7iw1, retriggered): the workflow needs read access to the private xenon repo
+# Auth (xc-7iw1): the workflow needs read access to the private xenon repo
 # to clone the submodule and to query xenon's compare and check-runs APIs.
 # GITHUB_TOKEN is repo-scoped and cannot read another private repo, so a
 # repo (or org) secret named XENON_READ_TOKEN must be configured with
