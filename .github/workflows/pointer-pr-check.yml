@@ -9,6 +9,18 @@ name: Pointer PR check
 # its CI was green, and (for security/control-plane labels) that a strong
 # review receipt was recorded.
 #
+# Auth (xc-7iw1): the workflow needs read access to the private xenon repo
+# to clone the submodule and to query xenon's compare and check-runs APIs.
+# GITHUB_TOKEN is repo-scoped and cannot read another private repo, so a
+# repo (or org) secret named XENON_READ_TOKEN must be configured with
+# Contents:Read on xenota-collective/xenon. Setup:
+#
+#   gh secret set XENON_READ_TOKEN --repo xenota-collective/xenota \
+#     --body "<fine-grained PAT or GitHub App token>"
+#
+# Without that secret the job fails fast with an explicit setup error
+# instead of the cryptic "Repository not found" that GITHUB_TOKEN produces.
+#
 # To enforce this end-to-end, the `pointer-check` job must be added to the
 # repo's branch-protection required checks for main. Until that branch
 # protection is wired, a failing job here still surfaces in the PR's
@@ -37,9 +49,19 @@ jobs:
         with:
           submodules: false
 
+      - name: Verify cross-repo xenon read access
+        env:
+          XENON_READ_TOKEN: ${{ secrets.XENON_READ_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${XENON_READ_TOKEN}" ]]; then
+            echo "::error::pointer-pr-check requires the XENON_READ_TOKEN repository (or org) secret with Contents:Read on xenota-collective/xenon. GITHUB_TOKEN is scoped to the current repo and cannot clone or query the private xenon repo. To set it up: create a fine-grained PAT (or GitHub App installation token) with Contents:Read on xenota-collective/xenon, then 'gh secret set XENON_READ_TOKEN --repo xenota-collective/xenota --body <token>'. Tracked in xc-7iw1."
+            exit 1
+          fi
+
       - name: Checkout xenon submodule
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.XENON_READ_TOKEN }}
         run: |
           git config --global \
             url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
@@ -62,7 +84,7 @@ jobs:
       - name: Run pointer-pr verifier
         working-directory: xenon/packages/xsm
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.XENON_READ_TOKEN }}
         run: |
           uv run xsm pointer-pr verify \
             --pr "${{ github.event.pull_request.number }}" \
