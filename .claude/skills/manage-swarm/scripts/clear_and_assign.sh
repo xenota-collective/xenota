@@ -4,8 +4,29 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$script_dir/tmux_target.sh"
 
+respawn=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --respawn)
+      respawn=1
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "clear_and_assign: unknown option $1" >&2
+      exit 2
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
 if [[ $# -lt 2 ]]; then
-  echo "usage: $0 <worker-name|tmux-target> <instruction>" >&2
+  echo "usage: $0 [--respawn] <worker-name|tmux-target> <instruction>" >&2
   exit 2
 fi
 
@@ -14,6 +35,11 @@ shift
 instruction="$*"
 
 target="$(resolve_worker_target "$worker")"
+
+if [[ "$respawn" == "1" ]]; then
+  "$script_dir/send_worker_message.sh" --respawn --interrupt --kind reset "$worker" "$instruction"
+  exit $?
+fi
 
 if ! "$script_dir/send_worker_message.sh" --interrupt --kind reset "$worker" "/clear"; then
   echo "clear_and_assign: centralized /clear delivery failed for $worker" >&2

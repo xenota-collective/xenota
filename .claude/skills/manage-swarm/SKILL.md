@@ -38,6 +38,14 @@ For worker-lane resets, use the helper script in this skill:
 /Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <worker> '<instruction>'
 ```
 
+Use the default `/clear` reset for routine context hygiene. When XSM or live
+inspection shows the worker CLI is under fd pressure
+(`worker_fd_pressure_threshold`, default 200), force a full pane recycle instead:
+
+```bash
+/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/clear_and_assign.sh --respawn <worker> '<instruction>'
+```
+
 For ordinary worker messages or nudges, use the centralized helper:
 
 ```bash
@@ -46,7 +54,7 @@ For ordinary worker messages or nudges, use the centralized helper:
 
 These helpers are the only approved worker-message transport. They must route through the checked-out XSM runtime's centralized delivery API and fail closed if delivery cannot be verified. Do not hand-roll `tmux send-keys` for worker assignment, reassignment, `/clear`, or nudge messages.
 
-Do not fake a clear by telling the worker "your context is cleared." The pane must actually receive `/clear` as its own command before the new assignment text is sent.
+Do not fake a clear by telling the worker "your context is cleared." The pane must actually receive `/clear` as its own command before the new assignment text is sent, unless fd pressure requires `--respawn`, which kills and relaunches the worker CLI before sending the assignment.
 
 Common operations should be run through the scripts in `scripts/`. The skill should describe policy and sequence, not embed raw shell recipes.
 
@@ -385,9 +393,10 @@ Intervention ladder:
 2. `reset worker`
    - if the pane is wedged, ignoring input, or stuck in bad modal/editor state
    - use the `clear_and_assign.sh` helper script so `/clear` and the next assignment go through centralized delivery
+   - if the worker CLI is over the configured fd threshold, use `clear_and_assign.sh --respawn` so the OS-level process state is reclaimed instead of only clearing context
    - do this serially, one lane at a time
    - if a worker remains a repeat offender across multiple wrangle passes, use the helper reset script once, re-capture, and if the pane still sits idle classify the lane as `failed reset`
-   - do NOT kill crew sessions — use `/clear` to reset context within the running session
+   - do NOT kill crew sessions except for fd-pressure respawns or the established emergency recovery path
 3. `reconfigure task plan and reassign`
    - if the current owner cannot productively advance the slice
    - break the work into a more concrete next bead, reroute ownership via `assign_bead.sh`, or move the worker to a better-fit slice
