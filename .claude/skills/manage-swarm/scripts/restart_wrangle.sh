@@ -52,16 +52,28 @@ echo "restart_wrangle: kickoff instruction delivered, waiting for XSM to start a
 repo_root="$(cd "$script_dir/../../../../" && pwd)"
 xsm_bin="$repo_root/xenon/packages/xsm/.venv/bin/xsm"
 xsm_config="$repo_root/.xsm-local/swarm-backlog.yaml"
+monitor_timeout_bin="${XSM_MONITOR_TIMEOUT_BIN:-}"
 
 if [[ ! -x "$xsm_bin" ]]; then
   # Fallback to PATH if .venv not found or not executable
   xsm_bin="xsm"
 fi
 
+if [[ -z "$monitor_timeout_bin" ]]; then
+  if command -v timeout >/dev/null 2>&1; then
+    monitor_timeout_bin="timeout"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    monitor_timeout_bin="gtimeout"
+  else
+    echo "restart_wrangle: timeout command not found; cannot bound xsm monitor health checks" >&2
+    exit 1
+  fi
+fi
+
 # Wait up to 60s for health
 for i in {1..12}; do
   sleep 5
-  if "$xsm_bin" monitor --config "$xsm_config" --once --json > "$repo_root/.xsm-local/log/restart_health.json" 2>/dev/null; then
+  if "$monitor_timeout_bin" 8 "$xsm_bin" monitor --config "$xsm_config" --once --json > "$repo_root/.xsm-local/log/restart_health.json" 2>/dev/null; then
     status="$(jq -r '.status' "$repo_root/.xsm-local/log/restart_health.json")"
     if [[ "$status" == "ready" ]]; then
       # Check if any workers are in bad states
