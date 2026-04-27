@@ -13,6 +13,7 @@ Use this skill when beginning work on a bead. It enforces the branch and bead hy
 2. **Always start from a fresh rebase off origin/main.** Stale bases cause merge conflicts that waste reviewer time.
 3. **One bead per branch.** Do not mix unrelated work on the same branch.
 4. **Name branches consistently.** Use the pattern `<crew>/<bead-id>-<short-slug>`.
+5. **Never open a PR from a stale or dirty branch.** PR creation is blocked until the branch has been rebased onto current `origin/main`, focused tests have been rerun after that rebase, and `git status --porcelain` is empty. Runtime state files such as `.xsm-worker.json`, `.workmux.yaml`, `.xsm-local/`, `.workmux/`, scratch transcripts, and lane state must never be staged.
 
 ## Startup Sequence
 
@@ -51,6 +52,7 @@ quay/xc-97kb-dreaming-consolidation
 
 ## Push Rules
 
+- Before the first PR push, run `git fetch origin main`, `git rebase origin/main`, rerun the focused test suite, and verify `git status --porcelain` is empty.
 - Push to your feature branch only: `git push -u origin <branch-name>`
 - NEVER `git push origin main`
 - If your branch is behind main, rebase before pushing:
@@ -61,6 +63,8 @@ git rebase origin/main
 # resolve any conflicts
 git push --force-with-lease
 ```
+
+If the rebase cannot be performed, do not create a PR. Record the blocker on the bead with the conflict paths and the next action. Skipping this rebase requires explicit operator approval with a reason, and that reason must be recorded in both the bead and PR body.
 
 ## Bead Hygiene
 

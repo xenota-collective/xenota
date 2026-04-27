@@ -178,6 +178,14 @@ Related skills that workers must follow:
 
 Every nudge assigning new work must tell the worker to read start-feature first. Every nudge about completed work must tell the worker to read prepare-review.
 
+Before directing a worker to open or refresh a PR, require the pre-PR preflight:
+- fetch and rebase onto current `origin/main`
+- rerun the focused tests after the rebase
+- confirm `git status --porcelain` is empty
+- confirm runtime state such as `.xsm-worker.json`, `.workmux.yaml`, `.xsm-local/`, `.workmux/`, scratch transcripts, and lane state is not staged
+
+If the worker cannot rebase cleanly, do not let them open the PR. Have them record the conflict paths and blocker on the bead. A skip-rebase path requires an explicit operator-approved reason that must appear in both the bead and PR body.
+
 If you detect a worker has pushed directly to main (check with `git log --oneline origin/main -5 --format='%h %an | %s'`), immediately:
 1. Flag it as a violation in the wrangle output
 2. Nudge the worker to stop and read start-feature
