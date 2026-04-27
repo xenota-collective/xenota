@@ -20,6 +20,7 @@ git rebase origin/main
 ```
 
 If conflicts arise, resolve them and re-run tests. Do not submit a PR with unresolved conflicts.
+Skipping this rebase is allowed only with explicit operator approval and a reason string. Record the reason in the bead comment and in the PR body under `Pre-PR preflight`.
 
 ### 2. All tests pass
 
@@ -39,7 +40,10 @@ Do NOT submit a PR with failing tests. Fix them first.
 
 ```bash
 git status  # must be clean
+git status --porcelain  # must print nothing
 ```
+
+Do not stage runtime state or local lane artifacts. Before creating a PR, verify none of these are staged or included: `.xsm-worker.json`, `.workmux.yaml`, `.xsm-local/`, `.workmux/`, scratch transcripts, lane state, editor swap files, or other generated worker metadata.
 
 ### 4. Push the branch
 
@@ -52,6 +56,7 @@ Use `--force-with-lease` if you rebased. Never force-push without lease.
 ## Create the PR
 
 Use `gh` to create the PR. The PR must target `main`.
+The PR body must include the preflight evidence from after the final rebase: base branch, rebase result, clean-worktree result, focused test command(s), and test result. If an operator-approved rebase override was used, include the exact override reason.
 
 ```bash
 gh pr create --title "<bead-id>: <short description>" --body "$(cat <<'EOF'
@@ -63,6 +68,13 @@ gh pr create --title "<bead-id>: <short description>" --body "$(cat <<'EOF'
 
 ## Test evidence
 <what tests were run and their results>
+
+## Pre-PR preflight
+- Base: origin/main
+- Rebase: passed
+- Worktree: clean
+- Runtime artifacts staged: none
+- Tests after rebase: <command> — passed
 
 ## Review notes
 <anything the reviewer should pay attention to, edge cases, design decisions>
@@ -104,4 +116,6 @@ bd comments add <BEAD> "PR created: xenon#<number> - ready for review"
 - Do not close the bead — that happens after landing
 - Do not squash commits before review
 - Do not create a PR without a bead reference in the title
+- Do not create a PR from a branch that has not been rebased onto current `origin/main`
+- Do not create a PR if `git status --porcelain` is non-empty or runtime artifacts are staged
 - Do not push directly to main instead of creating a PR
