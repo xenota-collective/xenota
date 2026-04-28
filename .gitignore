@@ -1,5 +1,6 @@
 # Swarm runtime state
 swarm-state.yaml
+.xsm-worker.json
 
 # Design council scratch (xsm-code-review kept for audit record)
 .xsm-local/

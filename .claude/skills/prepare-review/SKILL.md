@@ -41,6 +41,20 @@ Do NOT submit a PR with failing tests. Fix them first.
 git status  # must be clean
 ```
 
+For xenota top-level pointer PRs, also verify local XSM worker state is not
+tracked or staged:
+
+```bash
+scripts/check-xsm-worker-state.sh
+```
+
+Pointer PRs should carry only stable review/provenance metadata in the PR body:
+bead ID/title, branch names, submodule PR links, test evidence, CI status,
+review path, and landing dependency. Keep dynamic `.xsm-worker.json` fields
+such as worker handle, assignment source/status, session-local branch state,
+landing-gate scratch state, worktree paths, and resume/provisioning state
+local/ignored.
+
 ### 4. Push the branch
 
 ```bash

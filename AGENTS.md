@@ -94,6 +94,13 @@ This repo uses git submodules (`xenon/`, `handbook/`). Treat submodules as separ
   - Submodule `git status` clean
   - `git submodule status` has no leading `+`
 
+## XSM Worker-State Metadata in Pointer PRs
+
+- Do not track `.xsm-worker.json` in xenota pointer branches. It is local runtime state and is ignored.
+- Pointer PRs may include stable review metadata only in the PR body or bead comments: bead ID/title, branch names, submodule PR links, test evidence, CI status, review path, and provenance.
+- Dynamic worker-state fields such as worker handle, assignment source/status, session-local branch state, landing-gate scratch state, worktree paths, and resume/provisioning state must stay local.
+- Before creating a top-level pointer PR, run `scripts/check-xsm-worker-state.sh`; it fails if `.xsm-worker.json` is tracked or staged.
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
