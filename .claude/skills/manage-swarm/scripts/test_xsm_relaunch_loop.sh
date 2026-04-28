@@ -129,5 +129,21 @@ assert_eq "cap-1-loop-rc" 0 "$final_rc"
 assert_eq "cap-1-loop-iterations" 2 "$final_count"
 assert_contains "cap-1-loop-cap-message" "restart cap reached" "$output"
 
+# Case 5: EX_TEMPFAIL (rc=75) treated as graceful
+counter_file5="$tmpdir/case5_count"
+echo 0 >"$counter_file5"
+fake_tempfail=$(make_fake_xsm "tempfail" "
+count=\$(cat \"$counter_file5\")
+count=\$((count + 1))
+echo \"\$count\" >\"$counter_file5\"
+exit 75
+")
+output=$(xsm_relaunch_loop "$fake_tempfail" "$config" 0 1 2>&1)
+final_rc=$?
+final_count=$(cat "$counter_file5")
+assert_eq "tempfail-loop-rc" 0 "$final_rc"
+assert_eq "tempfail-loop-iterations" 2 "$final_count"
+assert_contains "tempfail-loop-graceful-relaunch" "rc=75 (graceful)" "$output"
+
 echo
 echo "All xsm_relaunch_loop tests passed."
