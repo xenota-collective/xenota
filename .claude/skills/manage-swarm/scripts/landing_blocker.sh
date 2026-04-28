@@ -53,7 +53,7 @@ canonical_ref_from_repo_pr() {
 
 add_evidence_comment() {
   local bead_id="$1" producer="$2" signal_source="$3" external_ref="$4"
-  local repo="$5" pr="$6" branch="$7" observed_at="$8" reason="$9" action="$10"
+  local repo="$5" pr="$6" branch="$7" observed_at="$8" reason="$9" action="${10}"
   local comment
   comment=$(
     cat <<EOF

@@ -220,6 +220,11 @@ class LandingBlockerHelperTest(unittest.TestCase):
         comments = "\n".join(c["text"] for c in records[0]["comments"])
         self.assertIn("producer: landing_poll", comments)
         self.assertIn("producer: landing_patrol", comments)
+        # Audit-trail labels must reflect helper action; regression for
+        # bash positional-argument parsing where action="$10" becomes
+        # ${1}0 instead of the 10th positional arg.
+        self.assertIn("Landing-blocker evidence (created):", comments)
+        self.assertIn("Landing-blocker evidence (deduplicated):", comments)
 
     def test_delayed_second_producer_appends_evidence(self):
         first = self.file_blocker(producer="producer-a", observed_at="2026-04-27T01:00:00Z")
