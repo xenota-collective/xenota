@@ -547,6 +547,10 @@ class LandingBlockerHelperTest(unittest.TestCase):
         result = json.loads(completed.stdout)
 
         self.assertEqual(result["bead_id"], "xc-old-winner")
+        # Reconciled count is the contract that lets callers (e.g. landing_poll
+        # blocker_exists) detect that find did local bd writes and trigger a
+        # bd dolt push. Without this signal, the loser-close stays unpushed.
+        self.assertEqual(result["reconciled"], 1)
         records = self.records()
         winner = next(r for r in records if r["id"] == "xc-old-winner")
         loser = next(r for r in records if r["id"] == "xc-stale-loser")
@@ -554,6 +558,37 @@ class LandingBlockerHelperTest(unittest.TestCase):
         self.assertEqual(loser["status"], "closed")
         self.assertIn("duplicate of xc-old-winner", loser.get("close_reason", ""))
         self.assertIn("stale open blocker reconcile", loser.get("close_reason", ""))
+
+    def test_find_reports_zero_reconciled_when_already_canonical(self):
+        # The reconciled signal must be present and 0 when no cleanup was
+        # needed. Otherwise a caller that conditions on .reconciled > 0
+        # could spuriously trigger pushes whenever the field is missing,
+        # or treat presence-of-key as "writes happened".
+        self.seed(
+            [
+                {
+                    "id": "xc-only",
+                    "title": "Resolve dirty landing PR xenota#229",
+                    "status": "open",
+                    "created_at": "2026-04-26T10:00:00Z",
+                    "external_ref": "gh:xenota-collective/xenota#229",
+                    "labels": ["landing-dirty"],
+                    "comments": [],
+                }
+            ]
+        )
+
+        completed = subprocess.run(
+            [str(HELPER), "find", "--external-ref", "gh:xenota-collective/xenota#229"],
+            env=self.env,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        result = json.loads(completed.stdout)
+
+        self.assertEqual(result["bead_id"], "xc-only")
+        self.assertEqual(result["reconciled"], 0)
 
 
 if __name__ == "__main__":

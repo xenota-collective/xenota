@@ -53,22 +53,25 @@ first_nonclosed_for_ref() {
 
 # Closes every non-winning open blocker for ref as a duplicate of the
 # deterministic winner. Idempotent: a no-op when 0 or 1 open blockers exist.
-# Prints the winner JSON (or empty when none).
+# Prints the winner JSON augmented with .reconciled (count of losers closed),
+# or empty when no candidates exist.
 reconcile_blockers_for_ref() {
   local ref="$1"
   local all count winner_id loser_id
   all="$(list_open_blockers_for_ref "$ref")"
   count="$(jq 'length' <<<"$all")"
   if [[ "$count" -le 1 ]]; then
-    jq -c '.[0] // empty' <<<"$all"
+    jq -c '.[0] // empty | if . == null then empty else . + {reconciled:0} end' <<<"$all"
     return 0
   fi
   winner_id="$(jq -r '.[0].id' <<<"$all")"
+  local reconciled=0
   while IFS= read -r loser_id; do
     [[ -n "$loser_id" ]] || continue
     bd close "$loser_id" --reason "duplicate of ${winner_id} (stale open blocker reconcile)" >/dev/null
+    reconciled=$((reconciled + 1))
   done < <(jq -r '.[1:][].id' <<<"$all")
-  jq -c '.[0]' <<<"$all"
+  jq -c --argjson n "$reconciled" '.[0] + {reconciled:$n}' <<<"$all"
 }
 
 canonical_ref_from_repo_pr() {
@@ -129,10 +132,12 @@ cmd_find() {
   # Reconcile so a `find` from any caller (e.g. the landing poll loop's
   # blocker_exists pre-check) repairs stale open duplicates left by a prior
   # failed loser-close, instead of silently returning one of N open blockers.
+  # The output includes .reconciled so callers (which treated `find` as a
+  # pure read) can detect that local bd writes happened and push them.
   local existing
   existing="$(reconcile_blockers_for_ref "$external_ref")"
   [[ -n "$existing" ]] || return 1
-  jq -c --arg ref "$external_ref" '{bead_id:.id, title:.title, status:.status, external_ref:$ref}' <<<"$existing"
+  jq -c --arg ref "$external_ref" '{bead_id:.id, title:.title, status:.status, external_ref:$ref, reconciled:(.reconciled // 0)}' <<<"$existing"
 }
 
 cmd_file() {

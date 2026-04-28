@@ -31,9 +31,19 @@ checks_success() {
   jq -e 'all((.statusCheckRollup // [])[]; .status == "COMPLETED" and .conclusion == "SUCCESS")' >/dev/null
 }
 
+# Sets blocker_reconciled=1 when find closed stale duplicate blockers — the
+# helper does that as a side effect to keep the "at most one open blocker"
+# invariant durable, but those bd close calls are local until we push.
 blocker_exists() {
   local ref="$1"
-  "$landing_blocker_helper" find --external-ref "$ref" >/dev/null
+  local out
+  if ! out="$("$landing_blocker_helper" find --external-ref "$ref")"; then
+    return 1
+  fi
+  if [ -n "$out" ] && jq -e '(.reconciled // 0) > 0' <<<"$out" >/dev/null 2>&1; then
+    blocker_reconciled=1
+  fi
+  return 0
 }
 
 file_dirty_blocker() {
@@ -98,6 +108,7 @@ while true; do
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) landing poll start"
   merged_xenon=0
   blocker_created=0
+  blocker_reconciled=0
   for repo in "${repos[@]}"; do
     pr_json=$(gh pr list --repo "$repo" --state open --json number,mergeStateStatus,headRefName,statusCheckRollup 2>&1) || {
       echo "$(date -u +%H:%M:%S) gh pr list failed for $repo: $pr_json"
@@ -152,7 +163,7 @@ while true; do
   if [ "$merged_xenon" = "1" ]; then
     refresh_xenon_pointer
   fi
-  if [ "$blocker_created" = "1" ]; then
+  if [ "$blocker_created" = "1" ] || [ "$blocker_reconciled" = "1" ]; then
     bd dolt push || echo "$(date -u +%H:%M:%S) bd dolt push failed; continuing poll loop"
   fi
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) landing poll complete; sleeping 60s"
