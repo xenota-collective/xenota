@@ -371,11 +371,16 @@ tmux_launch_claude_in_shell() {
   local attempts="${2:-60}"
   local attempt
 
-  # Ensure shell is ready for input
-  tmux_send_raw_keys "$target" C-c
-  sleep 0.5
-  tmux_send_raw_keys "$target" C-u
-  sleep 0.5
+  # Skip the C-c/C-u reset when the pane is already at an idle prompt
+  # (xc-uhxy). Unconditional C-c kills foreground processes if pane
+  # resolution targeted the wrong pane or the operator left a long-
+  # running command at this shell.
+  if ! tmux_wait_for_idle_prompt "$target" 3; then
+    tmux_send_raw_keys "$target" C-c
+    sleep 0.5
+    tmux_send_raw_keys "$target" C-u
+    sleep 0.5
+  fi
 
   tmux_wait_for_idle_prompt "$target" 20 || return 2
   tmux_send_literal_text "$target" "claude"
