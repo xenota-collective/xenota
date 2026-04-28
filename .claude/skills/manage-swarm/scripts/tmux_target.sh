@@ -533,12 +533,75 @@ resolve_worker_target() {
   local worker="$1"
   if [[ "$worker" == *:* ]]; then
     resolve_explicit_target "$worker"
-  elif tmux_target_exists "xc:${worker}.1" && ! tmux_pane_is_sidebar "xc:${worker}.1"; then
-    printf 'xc:%s.1\n' "$worker"
-    return 0
-  else
-    resolve_named_lane_target "xc-crew-${worker}"
+    return
   fi
+
+  local window="xc:${worker}"
+  if tmux_target_exists "$window"; then
+    # xc-lvy8t: the live xc layout puts the agent TUI at pane .0 when
+    # workmux is not occupying it, so the legacy assumption that the
+    # agent always lives at .1 hits a zsh side pane (or a workmux
+    # sidebar) and silently misroutes /clear and Enter approvals.
+    # Resolve by walking every pane in the worker window and picking
+    # the one whose ``pane_current_command`` (cheap) — or, failing
+    # that, ``tmux_pane_family`` (heavier, classifies by capture text)
+    # — identifies as an agent. Avoid sidebars throughout. Fall back
+    # to .1 only when nothing else matches, to keep older layouts
+    # working while the new layout is the common case.
+    local panes
+    panes="$( "${tmux_cmd[@]}" list-panes -t "$window" \
+      -F '#{pane_index} #{pane_current_command}' 2>/dev/null || true )"
+
+    # First pass: exact agent command match. claude-code shows up as
+    # 'node' on macOS because Claude Code is a Node.js binary — match
+    # it explicitly, but require the family check below for sanity so
+    # an unrelated 'node' process doesn't get picked.
+    while IFS=' ' read -r idx cmd; do
+      [[ -z "$idx" ]] && continue
+      case "$cmd" in
+        claude|codex|gemini)
+          local target="${window}.${idx}"
+          if ! tmux_pane_is_sidebar "$target"; then
+            printf '%s\n' "$target"
+            return 0
+          fi
+          ;;
+      esac
+    done <<<"$panes"
+
+    # Second pass: family-based classification (handles 'node' for
+    # Claude Code and any pane whose UI matches an agent fingerprint).
+    while IFS=' ' read -r idx cmd; do
+      [[ -z "$idx" ]] && continue
+      local target="${window}.${idx}"
+      if tmux_pane_is_sidebar "$target"; then
+        continue
+      fi
+      local family
+      family="$(tmux_pane_family "$target" 2>/dev/null || echo shell)"
+      case "$family" in
+        claude|codex|gemini|agent)
+          printf '%s\n' "$target"
+          return 0
+          ;;
+      esac
+    done <<<"$panes"
+
+    # Legacy fallback: the original .1 hardcode, only when no agent
+    # was discovered above. Operators with the old layout still get a
+    # working target; the bug fix is that we no longer return .1 when
+    # an agent is actually running at .0.
+    if tmux_target_exists "${window}.1" && ! tmux_pane_is_sidebar "${window}.1"; then
+      printf '%s\n' "${window}.1"
+      return 0
+    fi
+    if tmux_target_exists "${window}.0" && ! tmux_pane_is_sidebar "${window}.0"; then
+      printf '%s\n' "${window}.0"
+      return 0
+    fi
+  fi
+
+  resolve_named_lane_target "xc-crew-${worker}"
 }
 
 resolve_polecat_target() {
