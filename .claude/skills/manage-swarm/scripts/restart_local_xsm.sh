@@ -26,6 +26,27 @@ if [[ ! -f "$config_path" ]]; then
   exit 1
 fi
 
+default_ca_cert=""
+for candidate in /etc/ssl/cert.pem /etc/ssl/certs/ca-certificates.crt; do
+  if [[ -f "$candidate" ]]; then
+    default_ca_cert="$candidate"
+    break
+  fi
+done
+
+if [[ -n "$default_ca_cert" ]]; then
+  if [[ -z "${SSL_CERT_FILE:-}" ]]; then
+    SSL_CERT_FILE="$default_ca_cert"
+  fi
+  if [[ -z "${NODE_EXTRA_CA_CERTS:-}" ]]; then
+    NODE_EXTRA_CA_CERTS="$SSL_CERT_FILE"
+  fi
+fi
+
+shell_quote() {
+  printf "%q" "$1"
+}
+
 resolved_target="$(resolve_explicit_target "$target")"
 pane_dead="$("${tmux_cmd[@]}" display-message -p -t "$resolved_target" '#{pane_dead}')"
 current_command="$(tmux_pane_current_command "$resolved_target")"
@@ -74,7 +95,19 @@ done < <(
   '
 )
 
-launch_cmd="cd \"$repo_root\" && \"$xsm_bin\" wrangle --config \"$resolved_config_path\" --json"
+env_exports=""
+if [[ -n "${SSL_CERT_FILE:-}" ]]; then
+  env_exports+=" SSL_CERT_FILE=$(shell_quote "$SSL_CERT_FILE")"
+fi
+if [[ -n "${NODE_EXTRA_CA_CERTS:-}" ]]; then
+  env_exports+=" NODE_EXTRA_CA_CERTS=$(shell_quote "$NODE_EXTRA_CA_CERTS")"
+fi
+
+launch_cmd="cd \"$repo_root\" && "
+if [[ -n "$env_exports" ]]; then
+  launch_cmd+="export$env_exports && "
+fi
+launch_cmd+="\"$xsm_bin\" wrangle --config \"$resolved_config_path\" --json"
 tmux_send_literal_text "$resolved_target" "$launch_cmd"
 tmux_send_raw_keys "$resolved_target" Enter
 
