@@ -94,4 +94,28 @@ if ! grep -q "could not locate live xenota repo root" <<<"$err"; then
   exit 1
 fi
 
+# Case 6: restart helpers must source the resolver and call
+# resolve_xenota_repo_root rather than re-deriving repo_root with the fragile
+# ``cd "$script_dir/../../../.."`` traversal. xc-fqskk: that traversal silently
+# resolves to the worktree (e.g. .worktrees/landing) when the helper is invoked
+# from a worktree-local skill copy, which lacks .xsm-local/log and breaks
+# health checks.
+restart_helpers=(
+  restart_wrangle.sh
+  restart_local_xsm.sh
+  start_supervisor_and_landing.sh
+  p0_scan.sh
+)
+for helper in "${restart_helpers[@]}"; do
+  helper_path="$script_dir/$helper"
+  if grep -Fq 'script_dir/../../../..' "$helper_path"; then
+    echo "$helper still derives repo_root via brittle ../../../.. traversal" >&2
+    exit 1
+  fi
+  if ! grep -Fq 'resolve_xenota_repo_root' "$helper_path"; then
+    echo "$helper does not call resolve_xenota_repo_root" >&2
+    exit 1
+  fi
+done
+
 echo "test_resolve_repo_root: OK"

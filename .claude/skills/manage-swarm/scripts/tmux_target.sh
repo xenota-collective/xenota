@@ -57,6 +57,14 @@ tmux_pane_ready_for_input() {
     return 0
   fi
 
+  # oh-my-zsh robbyrussell-style prompts (e.g. '➜  supervisor git:(branch) ✗ ')
+  # are common on operator boxes; the ➜ glyph is always the first visible
+  # character on the prompt line. xc-fqskk: restart helpers stalled because
+  # tmux_wait_for_idle_prompt did not recognize this layout.
+  if grep -q '^➜' <<<"$bottom"; then
+    return 0
+  fi
+
   if grep -Fq 'Type your message' <<<"$bottom"; then
     return 0
   fi

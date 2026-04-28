@@ -76,6 +76,26 @@ jv@host ~/gt/xenota/crew/earthshot %
 EOF
 )"
 
+# oh-my-zsh robbyrussell prompt — the bare "%" trailing-char regex does not
+# match this style and the only stable marker is the leading ➜ glyph. xc-fqskk:
+# restart helpers stalled because tmux_wait_for_idle_prompt did not recognize
+# this layout and refused to advance.
+zsh_arrow_ready_payload="$(cat <<'EOF'
+last command output
+➜  worktrees git:(claude/xc-fqskk-restart-helpers) ✗
+EOF
+)"
+
+# Same prompt style after a worktree closeout where the supervisor lane lands
+# in a clean-but-named git working tree. The supervisor pane reported by the
+# bead lives inside <repo>/.worktrees/supervisor and shows this exact form.
+zsh_arrow_supervisor_payload="$(cat <<'EOF'
+[detached HEAD a1b2c3d] xc-2q593: refresh xenon pointer after merge
+
+➜  supervisor git:(main)
+EOF
+)"
+
 busy_payload="$(cat <<'EOF'
 Working on it now
 
@@ -109,6 +129,8 @@ assert_ready "codex ui prompt" "$codex_ready_payload"
 assert_ready "claude prompt" "$claude_ready_payload"
 assert_ready "shell prompt" "$shell_ready_payload"
 assert_ready "gemini prompt" "$gemini_ready_payload"
+assert_ready "zsh arrow prompt with branch and dirty marker" "$zsh_arrow_ready_payload"
+assert_ready "zsh arrow prompt after worktree closeout" "$zsh_arrow_supervisor_payload"
 assert_not_ready "busy codex footer without prompt" "$busy_payload"
 assert_not_ready "rejected clear message" "$rejected_clear_payload"
 assert_agent_ui "codex ui history" "$codex_ready_payload"

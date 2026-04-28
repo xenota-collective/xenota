@@ -14,7 +14,11 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$script_dir/tmux_target.sh"
-repo_root="$(cd "$script_dir/../../../.." && pwd)"
+source "$script_dir/resolve_repo_root.sh"
+if ! repo_root="$(resolve_xenota_repo_root "$script_dir")"; then
+  echo "start_supervisor_and_landing: could not locate live xenota repo root with .xsm-local/swarm-backlog.yaml from $script_dir; set XENOTA_REPO to override" >&2
+  exit 1
+fi
 
 session="${1:-xc}"
 
