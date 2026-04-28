@@ -1,0 +1,45 @@
+name: submodule pointers
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'xenon'
+      - 'handbook'
+      - '.gitmodules'
+      - 'scripts/check-submodule-pointers.sh'
+      - '.github/workflows/submodule-pointers.yml'
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check-pointers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rewrite SSH submodule URLs to HTTPS for CI
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Fetch submodule main branches
+        run: |
+          set -euo pipefail
+          while IFS= read -r path; do
+            if [[ -d "$path/.git" || -f "$path/.git" ]]; then
+              echo "Fetching origin/main inside $path"
+              git -C "$path" fetch --depth=200 origin main
+            fi
+          done < <(git config --file .gitmodules --get-regexp '^submodule\..*\.path$' | awk '{print $2}')
+
+      - name: Verify submodule pointers
+        env:
+          SUBMODULE_POINTER_SKIP_FETCH: '1'
+        run: bash scripts/check-submodule-pointers.sh
