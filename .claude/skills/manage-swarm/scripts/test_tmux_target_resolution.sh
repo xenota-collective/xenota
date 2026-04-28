@@ -9,9 +9,11 @@ tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
 fake_tmux="$tmpdir/tmux"
+fake_workmux="$tmpdir/workmux"
 call_log="$tmpdir/calls.log"
 sessions_file="$tmpdir/sessions"
 targets_file="$tmpdir/targets"
+workmux_data_file="$tmpdir/workmux_data"
 
 cat >"$fake_tmux" <<'FAKE'
 #!/usr/bin/env bash
@@ -49,15 +51,19 @@ case "${1:-}" in
           ;;
       esac
     done
-    if [[ "$target" == *:*.* ]]; then
-      has_line "${FAKE_TMUX_TARGETS_FILE:?}" "$target"
-      exit $?
+    if [[ "$target" == @* || "$target" == %* || "$target" == *:*.* ]]; then
+      if has_line "${FAKE_TMUX_TARGETS_FILE:?}" "$target" || grep -q "^$target " "${FAKE_TMUX_TARGETS_FILE:?}"; then
+        exit 0
+      fi
+      exit 1
     fi
     session="${target%%:*}"
     if ! has_line "${FAKE_TMUX_SESSIONS_FILE:?}" "$session"; then
       exit 1
     fi
-    if [[ "$format" == "#S:#I.#P" ]]; then
+    if [[ "$format" == "#{pane_id}" ]]; then
+      printf '%%0\n'
+    elif [[ "$format" == "#S:#I.#P" ]]; then
       printf '%s:0.0\n' "$session"
     else
       printf '0.0\n'
@@ -83,6 +89,18 @@ case "${1:-}" in
       esac
     done
     case "$format" in
+      '#{pane_id}')
+        grep "^$target " "${FAKE_TMUX_TARGETS_FILE:?}" | cut -d' ' -f2 || echo "%0"
+        ;;
+      '#{window_id}')
+        grep "^$target " "${FAKE_TMUX_TARGETS_FILE:?}" | cut -d' ' -f3 || echo "@0"
+        ;;
+      '#S')
+        grep "^$target " "${FAKE_TMUX_TARGETS_FILE:?}" | cut -d' ' -f4 || echo "xc"
+        ;;
+      '#I')
+        grep "^$target " "${FAKE_TMUX_TARGETS_FILE:?}" | cut -d' ' -f5 || echo "0"
+        ;;
       '#{pane_current_command}') printf 'node\n' ;;
       '#{pane_start_command}') printf 'node\n' ;;
       '#{pane_title}') printf 'node\n' ;;
@@ -100,12 +118,24 @@ esac
 FAKE
 chmod +x "$fake_tmux"
 
+cat >"$fake_workmux" <<'FAKE'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "status" ]]; then
+  handle="$2"
+  grep "^$handle " "${FAKE_WORKMUX_DATA_FILE:?}" | cut -d' ' -f2-
+fi
+FAKE
+chmod +x "$fake_workmux"
+
 export TMUX_BIN="$fake_tmux"
+export PATH="$tmpdir:$PATH"
 export FAKE_TMUX_CALL_LOG="$call_log"
 export FAKE_TMUX_SESSIONS_FILE="$sessions_file"
 export FAKE_TMUX_TARGETS_FILE="$targets_file"
+export FAKE_WORKMUX_DATA_FILE="$workmux_data_file"
 
-touch "$call_log" "$sessions_file" "$targets_file"
+touch "$call_log" "$sessions_file" "$targets_file" "$workmux_data_file"
 
 source "$script_dir/tmux_target.sh"
 
@@ -113,6 +143,7 @@ reset_fake() {
   : >"$call_log"
   : >"$sessions_file"
   : >"$targets_file"
+  : >"$workmux_data_file"
 }
 
 assert_eq() {
@@ -163,14 +194,35 @@ assert_no_create_calls "double-prefixed worker handle"
 reset_fake
 printf 'xc-crew-last\n' >"$sessions_file"
 target="$(resolve_worker_target "last")"
-assert_eq "legacy lane target" "xc-crew-last:0.0" "$target"
+assert_eq "legacy lane target" "%0" "$target"
 assert_no_create_calls "legacy lane target"
 
 reset_fake
-printf 'xc\n' >"$sessions_file"
-printf 'xc:worker-claude-1.1\n' >"$targets_file"
+printf 'xc:worker-claude-1.1\n' >"$sessions_file"
+printf '%s %s\n' "xc:worker-claude-1.1" "%123" >"$targets_file"
 target="$(resolve_worker_target "worker-claude-1")"
-assert_eq "current worker target" "xc:worker-claude-1.1" "$target"
-assert_no_create_calls "current worker target"
+assert_eq "current worker target resolved to ID" "%123" "$target"
+assert_no_create_calls "current worker target resolved to ID"
+
+reset_fake
+echo 'worker-1 [{"pane_id": "%99"}]' >"$workmux_data_file"
+printf '%s\n' "%99" >"$targets_file"
+target="$(resolve_worker_target "worker-1")"
+assert_eq "resolve via workmux handle" "%99" "$target"
+assert_no_create_calls "resolve via workmux handle"
+
+reset_fake
+echo 'worker-2 [{"window_id": "@5"}]' >"$workmux_data_file"
+printf '%s.0\n' "@5" >"$targets_file"
+target="$(resolve_worker_target "worker-2")"
+assert_eq "resolve via workmux handle fallback to window_id" "@5.0" "$target"
+assert_no_create_calls "resolve via workmux handle fallback to window_id"
+
+reset_fake
+printf '%s %s\n' "@42" "%4242" >"$targets_file"
+target="$(resolve_worker_target "@42")"
+assert_eq "resolve via window ID resolved to pane ID" "%4242" "$target"
+assert_no_create_calls "resolve via window ID resolved to pane ID"
+
 
 echo "test_tmux_target_resolution: OK"

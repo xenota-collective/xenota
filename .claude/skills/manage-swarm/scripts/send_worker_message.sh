@@ -47,16 +47,14 @@ shift
 message="$*"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$script_dir/tmux_target.sh"
+
+target="$(resolve_worker_target "$worker" 2>/dev/null || echo "$worker")"
+
 default_repo_root="$(cd "$script_dir/../../../.." && pwd)"
 repo_root="${XENOTA_REPO:-$default_repo_root}"
 xsm_bin="${XSM_BIN:-$repo_root/xenon/packages/xsm/.venv/bin/xsm}"
 xsm_config="${XSM_CONFIG:-$repo_root/.xsm-local/swarm-backlog.yaml}"
-
-worker_id="$worker"
-if [[ "$worker_id" == *:* ]]; then
-  worker_id="${worker_id#*:}"
-  worker_id="${worker_id%.*}"
-fi
 
 if [[ ! -x "$xsm_bin" ]]; then
   echo "send_worker_message: missing checked-out xsm runtime: $xsm_bin" >&2
@@ -66,7 +64,7 @@ fi
 args=(
   message
   --config "$xsm_config"
-  --worker "$worker_id"
+  --worker "$target"
   --payload "$message"
   --kind "$kind"
   --json

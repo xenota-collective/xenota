@@ -405,7 +405,7 @@ tmux_session_exists() {
 }
 
 tmux_first_pane_in_session() {
-  "${tmux_cmd[@]}" list-panes -t "$1" -F '#S:#I.#P' | head -n 1
+  "${tmux_cmd[@]}" list-panes -t "$1" -F '#{pane_id}' | head -n 1
 }
 
 tmux_handle_is_legacy_crew_lane() {
@@ -440,7 +440,7 @@ tmux_ensure_pane_target() {
   tmux_create_session "$session"
 
   if tmux_target_exists "$target"; then
-    printf '%s\n' "$target"
+    "${tmux_cmd[@]}" display-message -p -t "$target" '#{pane_id}' 2>/dev/null || printf '%s\n' "$target"
     return 0
   fi
 
@@ -452,14 +452,14 @@ tmux_ensure_pane_target() {
 
   for attempts in {1..6}; do
     if tmux_target_exists "$target"; then
-      printf '%s\n' "$target"
+      "${tmux_cmd[@]}" display-message -p -t "$target" '#{pane_id}' 2>/dev/null || printf '%s\n' "$target"
       return 0
     fi
     "${tmux_cmd[@]}" split-window -d -t "${session}:${window}.0" -v "$default_shell"
   done
 
   if tmux_target_exists "$target"; then
-    printf '%s\n' "$target"
+    "${tmux_cmd[@]}" display-message -p -t "$target" '#{pane_id}' 2>/dev/null || printf '%s\n' "$target"
     return 0
   fi
 
@@ -474,7 +474,8 @@ resolve_named_lane_target() {
   if [[ -n "$desired" ]]; then
     target="${session}:${desired}"
     if tmux_target_exists "$target"; then
-      printf '%s\n' "$target"
+      # Resolve to stable pane_id if possible
+      "${tmux_cmd[@]}" display-message -p -t "$target" '#{pane_id}' 2>/dev/null || printf '%s\n' "$target"
       return 0
     fi
     echo "tmux_target: target does not exist: $target" >&2
@@ -489,12 +490,11 @@ resolve_named_lane_target() {
   # Find the best pane in the session: prefer non-sidebars
   local best_pane=""
   local panes
-  panes="$( "${tmux_cmd[@]}" list-panes -t "$session" -F '#{window_index}.#{pane_index}' )"
+  panes="$( "${tmux_cmd[@]}" list-panes -t "$session" -F '#{pane_id}' )"
 
-  for idx in $panes; do
-    target="${session}:${idx}"
-    if ! tmux_pane_is_sidebar "$target"; then
-      best_pane="$target"
+  for id in $panes; do
+    if ! tmux_pane_is_sidebar "$id"; then
+      best_pane="$id"
       break
     fi
   done
@@ -509,25 +509,44 @@ resolve_named_lane_target() {
 
 resolve_explicit_target() {
   local raw="$1"
+  local resolved
+
+  # 1. Try workmux handle (canonical stable identifier)
+  if resolved="$(tmux_resolve_by_workmux "$raw")"; then
+    if tmux_target_exists "$resolved"; then
+      if ! tmux_pane_is_sidebar "$resolved"; then
+        printf '%s\n' "$resolved"
+        return 0
+      fi
+    fi
+  fi
 
   if tmux_target_exists "$raw"; then
-    if ! tmux_pane_is_sidebar "$raw"; then
-      printf '%s\n' "$raw"
+    # Resolve to stable pane_id if possible
+    resolved="$( "${tmux_cmd[@]}" display-message -p -t "$raw" '#{pane_id}' 2>/dev/null || echo "$raw" )"
+    if ! tmux_pane_is_sidebar "$resolved"; then
+      printf '%s\n' "$resolved"
       return 0
     fi
     # If it is a sidebar, try to find a better one in the same window
     local session window
-    session="${raw%%:*}"
-    window="${raw#*:}"
+    session="$( "${tmux_cmd[@]}" display-message -p -t "$raw" '#S' 2>/dev/null || echo "${raw%%:*}" )"
+    window="$( "${tmux_cmd[@]}" display-message -p -t "$raw" '#I' 2>/dev/null || echo "${raw#*:}" )"
     window="${window%%.*}"
     local panes
-    panes="$( "${tmux_cmd[@]}" list-panes -t "${session}:${window}" -F '#{pane_index}' )"
-    for index in $panes; do
-      if ! tmux_pane_is_sidebar "${session}:${window}.${index}"; then
-        printf '%s:%s.%s\n' "$session" "$window" "$index"
+    panes="$( "${tmux_cmd[@]}" list-panes -t "${session}:${window}" -F '#{pane_id}' )"
+    for id in $panes; do
+      if ! tmux_pane_is_sidebar "$id"; then
+        printf '%s\n' "$id"
         return 0
       fi
     done
+  fi
+
+  # If it looks like a workmux handle or window/pane ID and we couldn't find it,
+  # do not attempt to ensure it via name-based creation.
+  if [[ "$raw" != *:* ]]; then
+    return 1
   fi
 
   local session="${raw%%:*}"
@@ -538,10 +557,10 @@ resolve_explicit_target() {
     fi
     # Search for first non-sidebar pane in the session
     local panes
-    panes="$( "${tmux_cmd[@]}" list-panes -t "$session" -F '#{window_index}.#{pane_index}' )"
-    for idx in $panes; do
-      if ! tmux_pane_is_sidebar "${session}:${idx}"; then
-        printf '%s:%s\n' "$session" "$idx"
+    panes="$( "${tmux_cmd[@]}" list-panes -t "$session" -F '#{pane_id}' )"
+    for id in $panes; do
+      if ! tmux_pane_is_sidebar "$id"; then
+        printf '%s\n' "$id"
         return 0
       fi
     done
@@ -552,15 +571,47 @@ resolve_explicit_target() {
   tmux_ensure_pane_target "$raw"
 }
 
+tmux_resolve_by_workmux() {
+  local handle="$1"
+  local status_json pane_id window_id
+  if command -v workmux >/dev/null 2>&1; then
+    # workmux status <handle> --json returns [{"pane_id": "%33", "window_id": "@5", ...}]
+    status_json="$(workmux status "$handle" --json 2>/dev/null || true)"
+    if [[ -n "$status_json" && "$status_json" != "[]" ]]; then
+      # Extract pane_id
+      pane_id="$(grep -o '"pane_id":[[:space:]]*"[^"]*"' <<<"$status_json" | head -n 1 | cut -d'"' -f4 || true)"
+      if [[ -n "$pane_id" && "$pane_id" != "null" ]]; then
+        printf '%s\n' "$pane_id"
+        return 0
+      fi
+      # Fallback to window_id (as @ID.0 for the first pane)
+      window_id="$(grep -o '"window_id":[[:space:]]*"[^"]*"' <<<"$status_json" | head -n 1 | cut -d'"' -f4 || true)"
+      if [[ -n "$window_id" && "$window_id" != "null" ]]; then
+        printf '%s.0\n' "$window_id"
+        return 0
+      fi
+    fi
+  fi
+  return 1
+}
+
 resolve_worker_target() {
   local worker="$1"
-  if [[ "$worker" == *:* ]]; then
-    resolve_explicit_target "$worker"
-  elif [[ "$worker" == xc-crew-* ]]; then
+  local resolved
+
+  # 1. Try resolving as a stable identifier (handle, ID, or session:window.pane)
+  if resolved="$(resolve_explicit_target "$worker" 2>/dev/null)"; then
+    printf '%s\n' "$resolved"
+    return 0
+  fi
+
+  # 2. Fallback to legacy/named worker lookup
+  if [[ "$worker" == xc-crew-* ]]; then
     echo "tmux_target: worker name must be a handle, not an xc-crew session: $worker" >&2
     return 1
-  elif tmux_target_exists "xc:${worker}.1" && ! tmux_pane_is_sidebar "xc:${worker}.1"; then
-    printf 'xc:%s.1\n' "$worker"
+  elif tmux_target_exists "xc:${worker}.1"; then
+    resolved="$(resolve_explicit_target "xc:${worker}.1" 2>/dev/null)"
+    printf '%s\n' "$resolved"
     return 0
   elif tmux_handle_is_legacy_crew_lane "$worker"; then
     resolve_named_lane_target "xc-crew-${worker}"
@@ -572,6 +623,14 @@ resolve_worker_target() {
 
 resolve_polecat_target() {
   local polecat="$1"
+  local resolved
+
+  # 1. Try resolving as a stable identifier (handle, ID, or session:window.pane)
+  if resolved="$(resolve_explicit_target "$polecat" 2>/dev/null)"; then
+    printf '%s\n' "$resolved"
+    return 0
+  fi
+
   if [[ "$polecat" == *:* ]]; then
     resolve_explicit_target "$polecat"
   else
