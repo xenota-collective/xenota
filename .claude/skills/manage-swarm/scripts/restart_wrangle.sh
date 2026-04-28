@@ -1,6 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+restart_wrangle_health_status() {
+  local health_json="$1"
+  jq -er '.status // empty' "$health_json"
+}
+
+restart_wrangle_bad_worker_count() {
+  local health_json="$1"
+  jq -er '
+    (.state_counts | objects) as $counts
+    | (($counts.stopped // 0) + ($counts.respawn_needed // 0))
+  ' "$health_json"
+}
+
+if [[ "${RESTART_WRANGLE_TEST_HELPERS_ONLY:-0}" == "1" ]]; then
+  return 0 2>/dev/null || exit 0
+fi
+
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$script_dir/tmux_target.sh"
 target="$(resolve_earthshot_worker_target)"
@@ -61,11 +78,18 @@ fi
 # Wait up to 60s for health
 for i in {1..12}; do
   sleep 5
-  if "$xsm_bin" monitor --config "$xsm_config" --once --json > "$repo_root/.xsm-local/log/restart_health.json" 2>/dev/null; then
-    status="$(jq -r '.status' "$repo_root/.xsm-local/log/restart_health.json")"
+  health_json="$repo_root/.xsm-local/log/restart_health.json"
+  if "$xsm_bin" monitor --config "$xsm_config" --once --json > "$health_json" 2>/dev/null; then
+    if ! status="$(restart_wrangle_health_status "$health_json" 2>/dev/null)"; then
+      echo "restart_wrangle: XSM health JSON missing or malformed status. Waiting..."
+      continue
+    fi
     if [[ "$status" == "ready" ]]; then
       # Check if any workers are in bad states
-      bad_workers="$(jq -r '.state_counts | to_entries[] | select(.key == "stopped" or .key == "respawn_needed") | .value' "$repo_root/.xsm-local/log/restart_health.json" | awk '{sum+=$1} END {print sum}')"
+      if ! bad_workers="$(restart_wrangle_bad_worker_count "$health_json" 2>/dev/null)"; then
+        echo "restart_wrangle: XSM health JSON missing or malformed state_counts. Waiting..."
+        continue
+      fi
       if [[ "${bad_workers:-0}" -eq 0 ]]; then
         echo "restart_wrangle: XSM is healthy and all workers are active."
         exit 0
