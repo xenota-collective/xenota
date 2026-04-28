@@ -3,6 +3,7 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$script_dir/tmux_target.sh"
+source "$script_dir/resolve_repo_root.sh"
 target="$(resolve_earthshot_worker_target)"
 
 wait_for_text() {
@@ -49,7 +50,10 @@ fi
 
 echo "restart_wrangle: kickoff instruction delivered, waiting for XSM to start and stabilize..."
 
-repo_root="$(cd "$script_dir/../../../../" && pwd)"
+if ! repo_root="$(resolve_xenota_repo_root "$script_dir")"; then
+  echo "restart_wrangle: could not locate live xenota repo root with .xsm-local/swarm-backlog.yaml from $script_dir; set XENOTA_REPO to override" >&2
+  exit 1
+fi
 xsm_bin="$repo_root/xenon/packages/xsm/.venv/bin/xsm"
 xsm_config="$repo_root/.xsm-local/swarm-backlog.yaml"
 

@@ -3,10 +3,12 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$script_dir/tmux_target.sh"
+source "$script_dir/resolve_repo_root.sh"
 
-repo_root="$(
-  cd "$script_dir/../../../.." && pwd
-)"
+if ! repo_root="$(resolve_xenota_repo_root "$script_dir")"; then
+  echo "restart_local_xsm: could not locate live xenota repo root with .xsm-local/swarm-backlog.yaml from $script_dir; set XENOTA_REPO to override" >&2
+  exit 1
+fi
 target_input="${1:-xc:0.2}"
 config_path="${2:-$repo_root/.xsm-local/swarm-backlog.yaml}"
 xsm_bin="${3:-$repo_root/xenon/packages/xsm/.venv/bin/xsm}"
@@ -121,12 +123,35 @@ fi
 # helper is unit-tested under test_xsm_relaunch_loop.sh.
 relaunch_loop_script="$script_dir/xsm_relaunch_loop.sh"
 launch_cmd="cd \"$repo_root\" && ${env_prefix}\"$relaunch_loop_script\" \"$xsm_bin\" \"$resolved_config_path\""
+
+# Wait until the shell is at an idle prompt before typing the launch command.
+# Without this, the kill loop or pane-clear keystrokes above can leave the pane
+# in a transient state where Enter is dropped — the operator-reported failure
+# was the launch command sitting at the prompt with no auto-Enter.
+if ! tmux_wait_for_idle_prompt "$resolved_target" 20; then
+  echo "restart_local_xsm: shell did not return to idle prompt before launch on $resolved_target" >&2
+  tmux_recent_pane_text "$resolved_target" >&2
+  exit 1
+fi
+
 tmux_send_literal_text "$resolved_target" "$launch_cmd"
 tmux_send_raw_keys "$resolved_target" Enter
 
+# Confirm the relaunch loop actually invoked xsm. The previous heuristic of
+# checking pane_current_command != shell is unreliable: the relaunch wrapper
+# runs in bash and during its sleep/restart phases the pane current command
+# stays bash. Look for the live xsm process bound to this config instead.
+expected_proc="xsm wrangle --config $resolved_config_path"
 for _ in {1..20}; do
-  current_command="$(tmux_pane_current_command "$resolved_target")"
-  if [[ "$current_command" != "zsh" && "$current_command" != "bash" && "$current_command" != "sh" && "$current_command" != "fish" ]]; then
+  if ps -axo pid=,command= \
+    | awk -v needle="$expected_proc" -v me="$$" '
+        index($0, needle) > 0 {
+          gsub(/^ +/, "", $0)
+          split($0, parts, /[[:space:]]+/)
+          if (parts[1] != me) { found = 1 }
+        }
+        END { exit found ? 0 : 1 }
+      '; then
     # xc-6tdu2: Tag the running pane so future restarts can find it via
     # @xsm_role=runtime rather than the fragile xc:0.2 index hint.
     tag_xsm_runtime_pane "$resolved_target" || true
