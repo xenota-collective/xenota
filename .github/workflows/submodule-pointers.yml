@@ -1,5 +1,17 @@
 name: submodule pointers
 
+# Pre-merge gate that rejects xenota PRs whose recorded submodule SHA is not
+# reachable from that submodule's `origin/main` (e.g. a PR-head SHA that will
+# be a different commit after the submodule PR squash-merges, or an unmerged
+# branch tip).
+#
+# Auth: cloning + fetching xenon and handbook from a xenota workflow run
+# requires a cross-repo read token. The default `GITHUB_TOKEN` is scoped to
+# the workflow's own repo and the submodule clone fails with "Repository not
+# found". Add a `SUBMODULE_READ_TOKEN` repository secret holding a fine-
+# grained PAT (or GitHub App installation token) with `Contents: read` on
+# xenota-collective/xenon and xenota-collective/handbook to enable the gate.
+
 on:
   pull_request:
     branches: [main]
@@ -28,6 +40,7 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
+          token: ${{ secrets.SUBMODULE_READ_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Fetch submodule main branches
         run: |
