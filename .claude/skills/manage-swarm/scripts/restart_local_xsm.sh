@@ -30,6 +30,7 @@ resolved_target="$(resolve_explicit_target "$target")"
 pane_dead="$("${tmux_cmd[@]}" display-message -p -t "$resolved_target" '#{pane_dead}')"
 current_command="$(tmux_pane_current_command "$resolved_target")"
 resolved_config_path="$(cd "$(dirname "$config_path")" && pwd)/$(basename "$config_path")"
+relaunch_loop_script="$script_dir/xsm_relaunch_loop.sh"
 
 respawn_shell() {
   "${tmux_cmd[@]}" respawn-pane -k -t "$resolved_target" "$default_shell"
@@ -63,8 +64,10 @@ while IFS= read -r pid; do
   [[ -z "$pid" || "$pid" == "$current_pid" ]] && continue
   kill "$pid" 2>/dev/null || true
 done < <(
-  ps -axo pid=,command= | awk -v cfg="$resolved_config_path" -v me="$current_pid" '
-    index($0, "xsm monitor --config " cfg) > 0 || index($0, "xsm wrangle --config " cfg) > 0 {
+  ps -axo pid=,command= | awk -v cfg="$resolved_config_path" -v bin="$xsm_bin" -v loop="$relaunch_loop_script" -v me="$current_pid" '
+    index($0, bin " monitor --config " cfg) > 0 ||
+    index($0, bin " wrangle --config " cfg) > 0 ||
+    (index($0, loop) > 0 && index($0, cfg) > 0) {
       gsub(/^ +/, "", $0)
       split($0, parts, /[[:space:]]+/)
       if (parts[1] != me) {
@@ -96,13 +99,16 @@ fi
 # helper so graceful exits trigger automatic relaunch within ~3s instead
 # of leaving the pane idle until the supervisor or operator notices. The
 # helper is unit-tested under test_xsm_relaunch_loop.sh.
-relaunch_loop_script="$script_dir/xsm_relaunch_loop.sh"
 launch_cmd="cd \"$repo_root\" && ${env_prefix}\"$relaunch_loop_script\" \"$xsm_bin\" \"$resolved_config_path\""
 tmux_send_literal_text "$resolved_target" "$launch_cmd"
 tmux_send_raw_keys "$resolved_target" Enter
 
 for _ in {1..20}; do
   current_command="$(tmux_pane_current_command "$resolved_target")"
+  if ps -axo command= | grep -F -- "$xsm_bin wrangle --config $resolved_config_path --json" | grep -v grep >/dev/null; then
+    echo "restart_local_xsm: started on $resolved_target via $xsm_bin"
+    exit 0
+  fi
   if [[ "$current_command" != "zsh" && "$current_command" != "bash" && "$current_command" != "sh" && "$current_command" != "fish" ]]; then
     echo "restart_local_xsm: started on $resolved_target via $xsm_bin"
     exit 0
