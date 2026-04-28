@@ -4,8 +4,6 @@ set -euo pipefail
 # Unit tests for restart_wrangle.sh health JSON parsing (xc-844w).
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-tmpdir="$(mktemp -d)"
-trap 'rm -rf "$tmpdir"' EXIT
 
 export RESTART_WRANGLE_TEST_HELPERS_ONLY=1
 # shellcheck source=./restart_wrangle.sh
@@ -37,18 +35,10 @@ assert_fails() {
   echo "PASS: $label"
 }
 
-write_json() {
-  local name="$1"
-  local body="$2"
-  local path="$tmpdir/$name.json"
-  printf '%s\n' "$body" >"$path"
-  printf '%s' "$path"
-}
-
-healthy="$(write_json healthy '{"status":"ready","state_counts":{"active_working":4}}')"
-bad_workers="$(write_json bad_workers '{"status":"ready","state_counts":{"stopped":2,"respawn_needed":1}}')"
-missing_counts="$(write_json missing_counts '{"status":"ready"}')"
-malformed="$(write_json malformed '{"status":"ready",')"
+healthy='{"status":"ready","state_counts":{"active_working":4}}'
+bad_workers='{"status":"ready","state_counts":{"stopped":2,"respawn_needed":1}}'
+missing_counts='{"status":"ready"}'
+malformed='{"status":"ready",'
 
 assert_eq "status-ready" "ready" "$(restart_wrangle_health_status "$healthy")"
 assert_eq "healthy-bad-worker-count" "0" "$(restart_wrangle_bad_worker_count "$healthy")"
