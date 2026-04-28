@@ -29,8 +29,11 @@ now_utc() {
   date -u +%Y-%m-%dT%H:%M:%SZ
 }
 
-first_nonclosed_for_ref() {
+list_open_blockers_for_ref() {
   local ref="$1"
+  # Sort key includes .id as a tie-breaker: when two beads share .created_at
+  # (or it is missing) the winner must still be deterministic, otherwise
+  # concurrent producers can disagree on which bead is the canonical one.
   bd list --all --limit 0 --json \
     | jq -c --arg ref "$ref" '
         [
@@ -39,9 +42,33 @@ first_nonclosed_for_ref() {
           | select(.status != "closed")
           | select(((.labels // []) | any(. == "landing-dirty" or . == "landing-blocker")))
         ]
-        | sort_by(.created_at // "")
-        | .[0] // empty
+        | sort_by([(.created_at // ""), (.id // "")])
       '
+}
+
+first_nonclosed_for_ref() {
+  local ref="$1"
+  list_open_blockers_for_ref "$ref" | jq -c '.[0] // empty'
+}
+
+# Closes every non-winning open blocker for ref as a duplicate of the
+# deterministic winner. Idempotent: a no-op when 0 or 1 open blockers exist.
+# Prints the winner JSON (or empty when none).
+reconcile_blockers_for_ref() {
+  local ref="$1"
+  local all count winner_id loser_id
+  all="$(list_open_blockers_for_ref "$ref")"
+  count="$(jq 'length' <<<"$all")"
+  if [[ "$count" -le 1 ]]; then
+    jq -c '.[0] // empty' <<<"$all"
+    return 0
+  fi
+  winner_id="$(jq -r '.[0].id' <<<"$all")"
+  while IFS= read -r loser_id; do
+    [[ -n "$loser_id" ]] || continue
+    bd close "$loser_id" --reason "duplicate of ${winner_id} (stale open blocker reconcile)" >/dev/null
+  done < <(jq -r '.[1:][].id' <<<"$all")
+  jq -c '.[0]' <<<"$all"
 }
 
 canonical_ref_from_repo_pr() {
@@ -143,7 +170,10 @@ cmd_file() {
     description="Landing producer ${producer} observed ${external_ref}: ${reason}. Refresh or resolve the PR branch, then return it to the landing queue. PR branch: ${branch}."
   fi
 
-  existing="$(first_nonclosed_for_ref "$external_ref")"
+  # Reconcile any stale duplicates left by a prior failed close (e.g. a race
+  # where bd create succeeded but the loser-close failed, leaving multiple
+  # open blockers). After this call, at most one open blocker remains.
+  existing="$(reconcile_blockers_for_ref "$external_ref")"
   if [[ -n "$existing" ]]; then
     existing_id="$(jq -r '.id' <<<"$existing")"
     add_evidence_comment "$existing_id" "$producer" "$signal_source" "$external_ref" "$repo" "$pr" "$branch" "$observed_at" "$reason" "deduplicated"
@@ -185,14 +215,13 @@ EOF
   bead_id="$(jq -r '.id' <<<"$created_json")"
 
   # Race-recheck: a concurrent producer may have created a competing blocker
-  # between first_nonclosed_for_ref above and bd create. first_nonclosed_for_ref
-  # is deterministic (sorts by created_at), so all racers converge on the same
-  # winner and the loser closes itself as duplicate.
+  # between the initial reconcile above and bd create. reconcile_blockers_for_ref
+  # picks a deterministic winner (created_at, then id) and closes every
+  # non-winner — including the bead we just created when an older bead exists.
   local winner winner_id
-  winner="$(first_nonclosed_for_ref "$external_ref")"
+  winner="$(reconcile_blockers_for_ref "$external_ref")"
   winner_id="$(jq -r '.id // empty' <<<"$winner")"
   if [[ -n "$winner_id" && "$winner_id" != "$bead_id" ]]; then
-    bd close "$bead_id" --reason "duplicate of ${winner_id} (race with concurrent producer)" >/dev/null
     add_evidence_comment "$winner_id" "$producer" "$signal_source" "$external_ref" "$repo" "$pr" "$branch" "$observed_at" "$reason" "deduplicated"
     jq -cn \
       --arg action "deduplicated" \

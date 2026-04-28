@@ -425,5 +425,89 @@ class LandingBlockerHelperTest(unittest.TestCase):
         self.assertIn("duplicate of " + injected_id, losers[0].get("close_reason", ""))
 
 
+    def test_same_created_at_winner_is_deterministic_by_id(self):
+        # Regression for race-ordering: when two open blockers share the same
+        # created_at the winner must be deterministic on ID, not on bd list
+        # input order. Seeded in reverse-id order — sort_by(created_at, id)
+        # must still pick xc-aaaa as winner.
+        same_ts = "2026-04-26T10:00:00Z"
+        self.seed(
+            [
+                {
+                    "id": "xc-zzzz",
+                    "title": "Resolve dirty landing PR xenota#229",
+                    "status": "open",
+                    "created_at": same_ts,
+                    "external_ref": "gh:xenota-collective/xenota#229",
+                    "labels": ["landing-dirty"],
+                    "comments": [],
+                },
+                {
+                    "id": "xc-aaaa",
+                    "title": "Landing blocker: xenota PR #229",
+                    "status": "open",
+                    "created_at": same_ts,
+                    "external_ref": "gh:xenota-collective/xenota#229",
+                    "labels": ["landing-blocker"],
+                    "comments": [],
+                },
+            ]
+        )
+
+        result = self.file_blocker(producer="producer-c")
+
+        self.assertEqual(result["action"], "deduplicated")
+        self.assertEqual(result["bead_id"], "xc-aaaa")
+        records = self.records()
+        winner = next(r for r in records if r["id"] == "xc-aaaa")
+        loser = next(r for r in records if r["id"] == "xc-zzzz")
+        self.assertEqual(winner["status"], "open")
+        self.assertEqual(loser["status"], "closed")
+        self.assertIn("duplicate of xc-aaaa", loser.get("close_reason", ""))
+
+    def test_stale_open_duplicates_get_reconciled_on_next_file(self):
+        # Regression for missing post-create cleanup: a prior race left two
+        # open blockers (e.g. bd close failed after bd create succeeded). The
+        # next helper invocation must reconcile — close the non-winner — so
+        # the invariant "at most one open blocker per ref" is restored.
+        self.seed(
+            [
+                {
+                    "id": "xc-old-winner",
+                    "title": "Resolve dirty landing PR xenota#229",
+                    "status": "open",
+                    "created_at": "2026-04-26T10:00:00Z",
+                    "external_ref": "gh:xenota-collective/xenota#229",
+                    "labels": ["landing-dirty"],
+                    "comments": [],
+                },
+                {
+                    "id": "xc-stale-loser",
+                    "title": "Landing blocker: xenota PR #229",
+                    "status": "open",
+                    "created_at": "2026-04-26T11:00:00Z",
+                    "external_ref": "gh:xenota-collective/xenota#229",
+                    "labels": ["landing-blocker"],
+                    "comments": [],
+                },
+            ]
+        )
+
+        result = self.file_blocker(producer="producer-late")
+
+        self.assertEqual(result["action"], "deduplicated")
+        self.assertEqual(result["bead_id"], "xc-old-winner")
+        records = self.records()
+        winner = next(r for r in records if r["id"] == "xc-old-winner")
+        loser = next(r for r in records if r["id"] == "xc-stale-loser")
+        self.assertEqual(winner["status"], "open")
+        self.assertEqual(loser["status"], "closed")
+        self.assertIn("duplicate of xc-old-winner", loser.get("close_reason", ""))
+        self.assertIn("stale open blocker reconcile", loser.get("close_reason", ""))
+        # Evidence comment was appended to the surviving winner only.
+        self.assertEqual(len(winner["comments"]), 1)
+        self.assertIn("producer: producer-late", winner["comments"][0]["text"])
+
+
 if __name__ == "__main__":
     unittest.main()
