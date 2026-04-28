@@ -126,8 +126,11 @@ cmd_find() {
   if [[ -z "$external_ref" ]]; then
     external_ref="$(canonical_ref_from_repo_pr "${repo:-}" "${pr:-}")"
   fi
+  # Reconcile so a `find` from any caller (e.g. the landing poll loop's
+  # blocker_exists pre-check) repairs stale open duplicates left by a prior
+  # failed loser-close, instead of silently returning one of N open blockers.
   local existing
-  existing="$(first_nonclosed_for_ref "$external_ref")"
+  existing="$(reconcile_blockers_for_ref "$external_ref")"
   [[ -n "$existing" ]] || return 1
   jq -c --arg ref "$external_ref" '{bead_id:.id, title:.title, status:.status, external_ref:$ref}' <<<"$existing"
 }

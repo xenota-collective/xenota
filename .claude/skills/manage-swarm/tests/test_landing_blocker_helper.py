@@ -509,5 +509,52 @@ class LandingBlockerHelperTest(unittest.TestCase):
         self.assertIn("producer: producer-late", winner["comments"][0]["text"])
 
 
+    def test_find_reconciles_stale_open_duplicates(self):
+        # Regression: cmd_find is the pre-check used by landing_poll.sh
+        # (`blocker_exists`). If a prior race left two open blockers, the
+        # poll loop's `find` must repair the duplicate state — not return
+        # one bead and leave the other open forever.
+        self.seed(
+            [
+                {
+                    "id": "xc-old-winner",
+                    "title": "Resolve dirty landing PR xenota#229",
+                    "status": "open",
+                    "created_at": "2026-04-26T10:00:00Z",
+                    "external_ref": "gh:xenota-collective/xenota#229",
+                    "labels": ["landing-dirty"],
+                    "comments": [],
+                },
+                {
+                    "id": "xc-stale-loser",
+                    "title": "Landing blocker: xenota PR #229",
+                    "status": "open",
+                    "created_at": "2026-04-26T11:00:00Z",
+                    "external_ref": "gh:xenota-collective/xenota#229",
+                    "labels": ["landing-blocker"],
+                    "comments": [],
+                },
+            ]
+        )
+
+        completed = subprocess.run(
+            [str(HELPER), "find", "--external-ref", "gh:xenota-collective/xenota#229"],
+            env=self.env,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        result = json.loads(completed.stdout)
+
+        self.assertEqual(result["bead_id"], "xc-old-winner")
+        records = self.records()
+        winner = next(r for r in records if r["id"] == "xc-old-winner")
+        loser = next(r for r in records if r["id"] == "xc-stale-loser")
+        self.assertEqual(winner["status"], "open")
+        self.assertEqual(loser["status"], "closed")
+        self.assertIn("duplicate of xc-old-winner", loser.get("close_reason", ""))
+        self.assertIn("stale open blocker reconcile", loser.get("close_reason", ""))
+
+
 if __name__ == "__main__":
     unittest.main()
