@@ -74,7 +74,13 @@ done < <(
   '
 )
 
-launch_cmd="cd \"$repo_root\" && \"$xsm_bin\" wrangle --config \"$resolved_config_path\" --json"
+# xc-twaa6: xsm gracefully self-exits (rc=0) when its source files change so a
+# fresh interpreter can pick up new code. Delegate to the relaunch-loop helper
+# so graceful exits trigger automatic relaunch within ~3s instead of leaving
+# the pane idle until the supervisor or operator notices. The helper is
+# unit-tested under test_xsm_relaunch_loop.sh.
+relaunch_loop_script="$script_dir/xsm_relaunch_loop.sh"
+launch_cmd="cd \"$repo_root\" && \"$relaunch_loop_script\" \"$xsm_bin\" \"$resolved_config_path\""
 tmux_send_literal_text "$resolved_target" "$launch_cmd"
 tmux_send_raw_keys "$resolved_target" Enter
 
