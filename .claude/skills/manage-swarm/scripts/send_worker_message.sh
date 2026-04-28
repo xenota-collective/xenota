@@ -47,8 +47,12 @@ shift
 message="$*"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-default_repo_root="$(cd "$script_dir/../../../.." && pwd)"
-repo_root="${XENOTA_REPO:-$default_repo_root}"
+source "$script_dir/resolve_repo_root.sh"
+
+if ! repo_root="$(resolve_xenota_repo_root "$script_dir")"; then
+  echo "send_worker_message: could not locate live xenota repo root with .xsm-local/swarm-backlog.yaml from $script_dir; set XENOTA_REPO to override" >&2
+  exit 1
+fi
 xsm_bin="${XSM_BIN:-$repo_root/xenon/packages/xsm/.venv/bin/xsm}"
 xsm_config="${XSM_CONFIG:-$repo_root/.xsm-local/swarm-backlog.yaml}"
 
