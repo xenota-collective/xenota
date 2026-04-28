@@ -3,6 +3,7 @@ set -euo pipefail
 
 tmux_bin="${TMUX_BIN:-/opt/homebrew/bin/tmux}"
 tmux_cmd=("$tmux_bin")
+workmux_bin="${WORKMUX_BIN:-workmux}"
 default_shell="${SHELL:-/bin/zsh} -l"
 legacy_crew_handles=(
   earthshot
@@ -39,6 +40,10 @@ tmux_recent_pane_text() {
 tmux_pane_ready_for_input() {
   local recent="$1"
   local bottom last_line
+
+  if grep -Fq 'Shell awaiting input (Tab to focus)' <<<"$recent"; then
+    return 1
+  fi
 
   if grep -Fq 'What should Claude do instead?' <<<"$recent"; then
     return 1
@@ -83,6 +88,10 @@ tmux_pane_has_live_activity() {
   bottom="$(
     awk 'NF { print }' <<<"$recent" | tail -n 20
   )"
+
+  if grep -Fq 'Shell awaiting input (Tab to focus)' <<<"$bottom"; then
+    return 0
+  fi
 
   if grep -Eq 'Working \(|Generating|Zesting|Sautéing|Thinking|Running…|Waiting…|Spinning…|esc to interrupt|Press up to edit queued messages|Interrupted · What should Claude do instead\?|Close dialogs and suggestions|[✳✻✶⏺] ' <<<"$bottom"; then
     return 0
@@ -452,6 +461,25 @@ tmux_handle_is_legacy_crew_lane() {
   return 1
 }
 
+workmux_live_pane_for_worker() {
+  local worker="$1"
+
+  if ! command -v "$workmux_bin" >/dev/null 2>&1; then
+    return 1
+  fi
+  if ! command -v jq >/dev/null 2>&1; then
+    return 1
+  fi
+
+  "$workmux_bin" status --json 2>/dev/null \
+    | jq -r --arg worker "$worker" '
+        .[]
+        | select((.worktree // .handle // "") == $worker)
+        | .pane_id // empty
+      ' \
+    | awk 'NF { print; exit }'
+}
+
 tmux_create_session() {
   local session="$1"
   if ! tmux_session_exists "$session"; then
@@ -618,11 +646,18 @@ resolve_explicit_target() {
 
 resolve_worker_target() {
   local worker="$1"
+  local workmux_pane
   if [[ "$worker" == *:* ]]; then
     resolve_explicit_target "$worker"
   elif [[ "$worker" == xc-crew-* ]]; then
     echo "tmux_target: worker name must be a handle, not an xc-crew session: $worker" >&2
     return 1
+  elif workmux_pane="$(workmux_live_pane_for_worker "$worker")" \
+    && [[ -n "$workmux_pane" ]] \
+    && tmux_target_exists "$workmux_pane" \
+    && ! tmux_pane_is_sidebar "$workmux_pane"; then
+    printf '%s\n' "$workmux_pane"
+    return 0
   elif tmux_target_exists "xc:${worker}.1" && ! tmux_pane_is_sidebar "xc:${worker}.1"; then
     printf 'xc:%s.1\n' "$worker"
     return 0

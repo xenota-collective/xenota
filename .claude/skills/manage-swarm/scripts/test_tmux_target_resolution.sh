@@ -12,6 +12,7 @@ fake_tmux="$tmpdir/tmux"
 call_log="$tmpdir/calls.log"
 sessions_file="$tmpdir/sessions"
 targets_file="$tmpdir/targets"
+workmux_status_file="$tmpdir/workmux-status.json"
 
 cat >"$fake_tmux" <<'FAKE'
 #!/usr/bin/env bash
@@ -49,7 +50,7 @@ case "${1:-}" in
           ;;
       esac
     done
-    if [[ "$target" == *:*.* ]]; then
+    if [[ "$target" == %* || "$target" == *:*.* ]]; then
       has_line "${FAKE_TMUX_TARGETS_FILE:?}" "$target"
       exit $?
     fi
@@ -100,12 +101,29 @@ esac
 FAKE
 chmod +x "$fake_tmux"
 
+fake_workmux="$tmpdir/workmux"
+cat >"$fake_workmux" <<'FAKE'
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${1:-}" == "status" && "${2:-}" == "--json" ]]; then
+  cat "${FAKE_WORKMUX_STATUS_FILE:?}"
+  exit 0
+fi
+
+exit 2
+FAKE
+chmod +x "$fake_workmux"
+
 export TMUX_BIN="$fake_tmux"
+export WORKMUX_BIN="$fake_workmux"
 export FAKE_TMUX_CALL_LOG="$call_log"
 export FAKE_TMUX_SESSIONS_FILE="$sessions_file"
 export FAKE_TMUX_TARGETS_FILE="$targets_file"
+export FAKE_WORKMUX_STATUS_FILE="$workmux_status_file"
 
 touch "$call_log" "$sessions_file" "$targets_file"
+printf '[]\n' >"$workmux_status_file"
 
 source "$script_dir/tmux_target.sh"
 
@@ -113,6 +131,7 @@ reset_fake() {
   : >"$call_log"
   : >"$sessions_file"
   : >"$targets_file"
+  printf '[]\n' >"$workmux_status_file"
 }
 
 assert_eq() {
@@ -172,5 +191,21 @@ printf 'xc:worker-claude-1.1\n' >"$targets_file"
 target="$(resolve_worker_target "worker-claude-1")"
 assert_eq "current worker target" "xc:worker-claude-1.1" "$target"
 assert_no_create_calls "current worker target"
+
+reset_fake
+printf 'xc\n' >"$sessions_file"
+printf 'xc:worker-gemini-2.1\n%%84\n' >"$targets_file"
+cat >"$workmux_status_file" <<'JSON'
+[
+  {
+    "worktree": "worker-gemini-2",
+    "status": "running",
+    "pane_id": "%84"
+  }
+]
+JSON
+target="$(resolve_worker_target "worker-gemini-2")"
+assert_eq "workmux live pane beats stale canonical target" "%84" "$target"
+assert_no_create_calls "workmux live pane beats stale canonical target"
 
 echo "test_tmux_target_resolution: OK"
