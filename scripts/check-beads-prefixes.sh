@@ -21,6 +21,10 @@ violations="$(
         | select((.id | startswith($prefix + "-")) | not)
         # mol-* templates are proto/formula definitions and are intentionally shared.
         | select((((.is_template // false) == true) and (.id | startswith("mol-"))) | not)
+        # xsm-* persistent control beads (labeled xsm-control) are shared operator
+        # beads referenced by name from xenon code and handbook docs, e.g.
+        # xsm-main-patrol and xsm-landing-queue.
+        | select((((.labels // []) | index("xsm-control")) and (.id | startswith("xsm-"))) | not)
         | [.id, .status, .issue_type, .title] | @tsv
     '
 )"
