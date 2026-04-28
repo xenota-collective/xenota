@@ -104,6 +104,12 @@ refresh_xenon_pointer() {
   fi
 }
 
+# bd_push_pending persists across cycles. We only clear it on a successful
+# push, so a transient `bd dolt push` failure does not strand local-only bd
+# writes (e.g. a stale-duplicate close performed by `find`) — the next cycle
+# retries the push even if no new write happened.
+bd_push_pending=0
+
 while true; do
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) landing poll start"
   merged_xenon=0
@@ -164,7 +170,14 @@ while true; do
     refresh_xenon_pointer
   fi
   if [ "$blocker_created" = "1" ] || [ "$blocker_reconciled" = "1" ]; then
-    bd dolt push || echo "$(date -u +%H:%M:%S) bd dolt push failed; continuing poll loop"
+    bd_push_pending=1
+  fi
+  if [ "$bd_push_pending" = "1" ]; then
+    if bd dolt push; then
+      bd_push_pending=0
+    else
+      echo "$(date -u +%H:%M:%S) bd dolt push failed; will retry next cycle"
+    fi
   fi
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) landing poll complete; sleeping 60s"
   sleep 60
