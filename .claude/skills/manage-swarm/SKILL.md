@@ -23,14 +23,19 @@ If you need to clear the earthshot pane first, use the helper script:
 
 This helper performs the required `/clear`, separate `Enter`, wait, and re-read sequence. Do not inline this flow in the skill.
 
-When restarting the live XSM manager in `xc:0.2`, use the repo-local launcher:
+When restarting the live XSM manager, use the repo-local launcher:
 
 ```bash
 /Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/restart_local_xsm.sh
 ```
 
 Do not start XSM with `/Users/jv/.local/bin/xsm` or any other global `uv tool` shim. The live manager must run from `xenon/packages/xsm/.venv/bin/xsm` so it uses the checked-out source tree.
-Do not run the live manager in any pane other than `xc:0.2`.
+
+Do not run the live manager in any pane other than the one tagged `@xsm_role=runtime` (xc-6tdu2). The launcher resolves the runtime pane by that tmux user option and stamps it on every successful launch, so the runtime survives workmux sidebar visibility toggles that would otherwise shift pane indices. The legacy `xc:0.2` index is kept as a starting hint for first-time runs only; once a pane is tagged, the launcher always finds the same physical pane regardless of layout. Verify the active runtime with:
+
+```bash
+tmux list-panes -s -t xc -F '#{pane_id} #{@xsm_role}' | awk '$2=="runtime"{print $1}'
+```
 
 For worker-lane resets, use the helper script in this skill:
 

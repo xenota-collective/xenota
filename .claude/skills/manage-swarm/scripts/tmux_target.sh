@@ -507,6 +507,39 @@ resolve_named_lane_target() {
   tmux_first_pane_in_session "$session"
 }
 
+resolve_xsm_runtime_pane() {
+  # xc-6tdu2: Look up the xsm runtime pane by ``@xsm_role=runtime`` tag
+  # instead of a hard-coded ``xc:0.2`` index. Pane indices in the xc
+  # window shift when the workmux sidebar is toggled, so an index-based
+  # default can address the wrong pane after a layout change. Tags are
+  # attached to the underlying ``%pane_id`` and survive layout changes.
+  #
+  # Returns the matching ``%pane_id`` on stdout, or empty when no pane is
+  # tagged. When more than one pane is tagged, prints all matching ids
+  # separated by newlines so the caller can detect and reject the
+  # ambiguity.
+  local session="${1:-xc}"
+  if ! tmux_session_exists "$session"; then
+    return 0
+  fi
+  "${tmux_cmd[@]}" list-panes -s -t "$session" \
+    -F '#{pane_id} #{@xsm_role}' 2>/dev/null \
+    | awk '$2 == "runtime" {print $1}'
+}
+
+
+tag_xsm_runtime_pane() {
+  # xc-6tdu2: Mark a pane as the xsm runtime owner so future restarts
+  # can find it without relying on a fragile pane index. Idempotent —
+  # calling it on an already-tagged pane is a no-op.
+  local pane="$1"
+  if [[ -z "$pane" ]]; then
+    return 1
+  fi
+  "${tmux_cmd[@]}" set-option -p -t "$pane" "@xsm_role" runtime >/dev/null 2>&1
+}
+
+
 resolve_explicit_target() {
   local raw="$1"
 

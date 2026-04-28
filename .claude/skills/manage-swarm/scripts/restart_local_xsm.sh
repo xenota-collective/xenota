@@ -7,12 +7,35 @@ source "$script_dir/tmux_target.sh"
 repo_root="$(
   cd "$script_dir/../../../.." && pwd
 )"
-target="${1:-xc:0.2}"
+target_input="${1:-xc:0.2}"
 config_path="${2:-$repo_root/.xsm-local/swarm-backlog.yaml}"
 xsm_bin="${3:-$repo_root/xenon/packages/xsm/.venv/bin/xsm}"
 
-if [[ "$target" != "xc:0.2" ]]; then
-  echo "restart_local_xsm: XSM may only run in xc:0.2 (got $target)" >&2
+# xc-6tdu2: Resolve the xsm runtime pane via the ``@xsm_role=runtime``
+# tmux user option instead of relying on the literal ``xc:0.2`` index.
+# Pane indices shift when the workmux sidebar is toggled, so a
+# legacy-index default can collide with the wrong pane after a layout
+# change. The tag is set on the runtime pane after every successful
+# launch (see tag_xsm_runtime_pane below) so subsequent restarts find
+# the same physical pane even if the operator hides/shows the sidebar.
+runtime_panes=()
+while IFS= read -r runtime_pane_line; do
+  [[ -n "$runtime_pane_line" ]] || continue
+  runtime_panes+=("$runtime_pane_line")
+done < <(resolve_xsm_runtime_pane xc 2>/dev/null || true)
+
+if (( ${#runtime_panes[@]} > 1 )); then
+  echo "restart_local_xsm: multiple panes are tagged @xsm_role=runtime: ${runtime_panes[*]}" >&2
+  echo "restart_local_xsm: clear extras with: tmux set-option -p -t <pane> -u @xsm_role" >&2
+  exit 2
+fi
+
+if (( ${#runtime_panes[@]} == 1 )); then
+  target="${runtime_panes[0]}"
+elif [[ "$target_input" == xc:* ]]; then
+  target="$target_input"
+else
+  echo "restart_local_xsm: target must be a pane in the xc session (got $target_input)" >&2
   exit 2
 fi
 
@@ -104,6 +127,9 @@ tmux_send_raw_keys "$resolved_target" Enter
 for _ in {1..20}; do
   current_command="$(tmux_pane_current_command "$resolved_target")"
   if [[ "$current_command" != "zsh" && "$current_command" != "bash" && "$current_command" != "sh" && "$current_command" != "fish" ]]; then
+    # xc-6tdu2: Tag the running pane so future restarts can find it via
+    # @xsm_role=runtime rather than the fragile xc:0.2 index hint.
+    tag_xsm_runtime_pane "$resolved_target" || true
     echo "restart_local_xsm: started on $resolved_target via $xsm_bin"
     exit 0
   fi
