@@ -89,6 +89,78 @@ Prime imperative:
 - An active task that is not being progressed is intolerable.
 - If an active task is sitting still, you must intervene until it is moving, explicitly rerouted, or escalated with a concrete decision request.
 
+## Prime directive: you ARE the operator
+
+There is no human-operator role separate from xsm and the supervisor. xsm IS the operator. The supervisor IS the operator. The wrangler (this skill, when run by an in-chat agent) IS the operator. Any worker pane sitting on an operator-input gate (Claude permission dialog, custom-options menu, merge-confirmation prompt, "Type something" Y/N) MUST be resolved in-band by xsm or the supervisor without escalation to a separate human.
+
+A gate sitting unanswered for >1 wrangle pass is **catastrophic system failure**, not "waiting on human." The wrangler's job in that state is twofold: (a) tactically answer the gate so the worker resumes immediately, (b) rebuild the supervisor's prompt with stricter wording, file a system bead, and change the code so the failure cannot recur.
+
+Operator gate resolution policy (xsm/supervisor must apply this in-band):
+
+- **Claude permission dialog** ("Do you want to make this edit to <file>? 1.Yes 2.Yes-and-allow-edit-own-settings 3.No"):
+  - If file is on a feature branch and not under `.claude/`: send `1` (Yes).
+  - If file is under `.claude/`: send `2` (Yes-and-allow for session) — `--dangerously-skip-permissions` does NOT cover settings edits, and option `2` grants per-session persistence so the same prompt stops recurring.
+  - If unclear and reversible: send `1`.
+- **Claude/codex custom-options menu about a PR merge** ("1. Approve merge 2. Hold 3. Type something 4. Chat about this"):
+  - If `mergeStateStatus=CLEAN` AND CI green AND diff visible AND non-destructive: send `1` (Approve).
+  - Otherwise read the visible context and answer based on evidence.
+- **Gemini "1. Rewind conversation / 2. Do nothing (esc)" modal**: send Escape twice.
+- **Any other gate**: capture the pane scrollback, infer the answer, send the keystroke, verify clear by recapturing.
+- **If the gate genuinely requires information not visible in the pane**: file a bd bead with the captured snippet AND assign a different bead to the same worker so they keep moving. Do NOT leave the worker parked.
+
+## Escalation tier philosophy
+
+Keeping workers moving is owned strictly in this order. Each tier is the safety net for the previous one. Don't nudge across tiers — fix the layer where the failure originated.
+
+1. **xsm** owns the autonomous loop. xsm should detect idle lanes and dispatch them. If a lane is `parked_unassigned` with workable beads in `bd ready`, xsm should be assigning, not waiting. A worker that just released a lease via PR handoff is idle, not "in transition" — xsm must reassign.
+
+2. **Supervisor** is the safety net when xsm misses something. The supervisor walks every worker pane (capture-based, not bd-based), reassigns from bd ready, drains leader_inbox, enforces review/manual-test/landing gates. Supervisor is not a passive reporter — if it sees idle workers and unblocked backlog, it MUST dispatch.
+
+3. **Wrangler** (operator chat agent) is the safety net when xsm AND supervisor both fail. The wrangler's first move at this tier is NOT to nudge the supervisor again. It is to find the root cause and change the system at the layer where the failure originated:
+   - xsm classifying releases as something other than idle? Patch xsm's classifier.
+   - Supervisor's repertoire missing a "walk parked_unassigned" pass? Patch the repertoire.
+   - bd ready returning beads the dispatcher rejects on a hidden filter? Patch the filter.
+
+Tactical reassignment is acceptable to unstick the immediate state, but a bead capturing the system-level gap is mandatory in the same wrangle pass.
+
+Two consecutive cycles of nudging at any tier without root-cause work = system failure. Stop nudging, switch into diagnosis mode, file the bead, change the code.
+
+PR-handoff is not idle-rest:
+- The moment a worker opens a PR and posts the handoff comment, the lane is `parked_unassigned`.
+- xsm owns reassigning that lane (tier 1). The supervisor is the safety net (tier 2).
+- The classification "completed via PR handoff; lane returned to pool" is the signal to assign next, not to wait.
+- "Leader inbox is drained, gates are clear" is NOT a stop condition while parked_unassigned lanes exist. Walk the lanes.
+
+The only legitimate reasons for a worker to be idle:
+1. **Out of work** — bd ready is genuinely empty for that lane's driver/skills.
+2. **Token usage limit hit** — the agent's API quota is exhausted (claude usage bar at 100%, codex rate-limited, gemini quota gone).
+3. **System failure** — *unrecoverable*: CLI process actually dead, network down, host fd-exhausted. NOT "pane is in a state we don't auto-handle" — that's an xsm classifier gap, not a system failure.
+
+Anything else is a swarm coordination failure. Specifically:
+- "PR submitted, awaiting review" is NOT idle. Assign the next bead.
+- "Lane parked_unassigned" is NOT idle. Assign the next bead.
+- "Supervisor reported no work needed" while parked_unassigned lanes exist is NOT idle. Supervisor was wrong; the wrangler must dispatch.
+- "Bead is blocked on operator/admin action" is NOT idle for the *worker*. Pick a different bead. The blocker stays on the bead.
+- "Pane is at a TUI modal we don't auto-handle" (gemini "Rewind / Do nothing", claude permission dialog, codex placeholder text) is NOT system failure. It's an xsm classifier gap — see xc-r8bsr. Don't reach for respawn; teach xsm the state and the right response.
+
+TUI modal/gate states fall into three categories that xsm and the supervisor must distinguish:
+
+**Auto-dismiss** (xsm presses the safe key, worker resumes):
+- Gemini "● 1. Rewind conversation / 2. Do nothing (esc)" — press Escape.
+- Other recoverable transient prompts whose safe answer is unambiguous.
+
+**Operator gate** (xsm escalates to leader_inbox with structured options):
+- Claude permission dialog "Do you want to make this edit to <file>? 1.Yes 2.Yes-and-allow 3.No" — operator picks.
+- Claude/codex custom-options menus that ask "what should I do next" with non-obvious choices — operator picks.
+- Auth prompts, sudo prompts, MFA — operator only.
+
+**Empty-prompt placeholder** (xsm classifies as parked_unassigned eligible for dispatch):
+- Codex placeholders: "Summarize recent commits", "Improve documentation in @filename", "Write tests for @filename", "Use /skills to list available skills", "Find and fix a bug in @filename", "Implement {feature}", "Explain this codebase", etc.
+
+If you find a lane in a state that doesn't fit one of these three categories, do NOT classify it as system failure. File a bead targeting xsm's classifier with a captured fixture of the new state, then handle it tactically (auto-dismiss with Escape if safe, or escalate to operator).
+
+Don't reach for respawn or kill as the first remediation. Respawn loses session state and hides the underlying classifier gap. Use respawn only when the CLI process is actually dead.
+
 ## P0 Priority Rule
 
 P0 beads take absolute priority over all other work.

@@ -74,13 +74,30 @@ done < <(
   '
 )
 
-# xc-twaa6: xsm gracefully self-exits (rc=0) when its source files change so a
-# fresh interpreter can pick up new code. Delegate to the relaunch-loop helper
-# so graceful exits trigger automatic relaunch within ~3s instead of leaving
-# the pane idle until the supervisor or operator notices. The helper is
-# unit-tested under test_xsm_relaunch_loop.sh.
+# xc-3c4d: codex/rustls subprocesses (invoked via xr) need a CA bundle.
+# macOS keychain-native-roots fails for codex when run as a subprocess from
+# xsm's process tree; supplying SSL_CERT_FILE / NODE_EXTRA_CA_CERTS as a
+# fallback prevents the classifier from crashing and taking xsm with it.
+ca_bundle=""
+for candidate in /etc/ssl/cert.pem /opt/homebrew/etc/ca-certificates/cert.pem /etc/ssl/certs/ca-certificates.crt; do
+  if [[ -r "$candidate" ]]; then
+    ca_bundle="$candidate"
+    break
+  fi
+done
+env_prefix=""
+if [[ -n "$ca_bundle" ]]; then
+  env_prefix="SSL_CERT_FILE=\"$ca_bundle\" NODE_EXTRA_CA_CERTS=\"$ca_bundle\" "
+fi
+
+# xc-twaa6: xsm gracefully self-exits (rc=0 or rc=75 EX_TEMPFAIL — see
+# xsm/main.py raise SystemExit(75)) when its source files change so a
+# fresh interpreter can pick up new code. Delegate to the relaunch-loop
+# helper so graceful exits trigger automatic relaunch within ~3s instead
+# of leaving the pane idle until the supervisor or operator notices. The
+# helper is unit-tested under test_xsm_relaunch_loop.sh.
 relaunch_loop_script="$script_dir/xsm_relaunch_loop.sh"
-launch_cmd="cd \"$repo_root\" && \"$relaunch_loop_script\" \"$xsm_bin\" \"$resolved_config_path\""
+launch_cmd="cd \"$repo_root\" && ${env_prefix}\"$relaunch_loop_script\" \"$xsm_bin\" \"$resolved_config_path\""
 tmux_send_literal_text "$resolved_target" "$launch_cmd"
 tmux_send_raw_keys "$resolved_target" Enter
 
