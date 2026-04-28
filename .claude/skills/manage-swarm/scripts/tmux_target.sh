@@ -314,7 +314,12 @@ tmux_send_prompt_line() {
   sleep 0.2
   tmux_send_literal_text "$target" "$text"
   sleep 0.2
-  tmux_send_raw_keys "$target" Enter
+
+  local submit_key="Enter"
+  if [[ "$(tmux_pane_family "$target")" == "gemini" ]]; then
+    submit_key="C-m"
+  fi
+  tmux_send_raw_keys "$target" "$submit_key"
 }
 
 tmux_wait_for_text() {
