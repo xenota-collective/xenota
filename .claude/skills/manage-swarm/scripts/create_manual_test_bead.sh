@@ -10,4 +10,6 @@ epic="$1"
 priority="${2:-P1}"
 
 cd /Users/jv/gt/xenota/mayor/rig
-exec bd create --silent --parent "$epic" -t task -p "$priority" "Execute manual testing plan for ${epic}"
+exec bd create --silent --parent "$epic" -t task -p "$priority" \
+  --metadata '{"driver_preference": "strong", "risk_class": "tester"}' \
+  "Execute manual testing plan for ${epic}"

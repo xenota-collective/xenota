@@ -74,6 +74,22 @@ done < <(
   '
 )
 
+# 3Pre-flight auth check: before launching xsm, ensure codex is available and auth
+# is fresh. Stale auth causes "stream disconnected" errors mid-wrangle.
+if command -v codex >/dev/null 2>&1; then
+  if ! codex --version >/dev/null 2>&1; then
+    echo "restart_local_xsm: codex CLI is installed but failing (check --version)" >&2
+  fi
+  if ! codex login status >/dev/null 2>&1; then
+    echo "--------------------------------------------------------------------------------" >&2
+    echo "WARNING: codex auth appears stale or missing." >&2
+    echo "Run 'codex login' in a fresh shell to refresh your keychain-stored token." >&2
+    echo "--------------------------------------------------------------------------------" >&2
+    # We do NOT exit here because it might be a false positive or the operator
+    # might be using a different driver, but we surface it loudly.
+  fi
+fi
+
 # xc-3c4d: codex/rustls subprocesses (invoked via xr) need a CA bundle.
 # macOS keychain-native-roots fails for codex when run as a subprocess from
 # xsm's process tree; supplying SSL_CERT_FILE / NODE_EXTRA_CA_CERTS as a

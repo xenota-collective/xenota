@@ -11,4 +11,6 @@ agent="$2"
 priority="${3:-P1}"
 
 cd /Users/jv/gt/xenota/mayor/rig
-exec bd create --silent --parent "$epic" -t task -p "$priority" "Run full ${agent} polecat code review for ${epic}"
+exec bd create --silent --parent "$epic" -t task -p "$priority" \
+  --metadata '{"driver_preference": "strong", "risk_class": "reviewer"}' \
+  "Run full ${agent} polecat code review for ${epic}"

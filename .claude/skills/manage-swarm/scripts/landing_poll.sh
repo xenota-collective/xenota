@@ -46,7 +46,8 @@ file_dirty_blocker() {
   local title="Resolve dirty landing PR ${short_repo}#${num}"
   local desc="Landing lane attempted: gh pr merge ${num} --repo ${repo} --rebase. GitHub reported the PR is not mergeable because the merge commit cannot be cleanly created. Resolve conflicts or refresh branch, then return PR to landing queue. PR branch: ${branch}."
   local bead_json bead_id
-  bead_json=$(bd create "$title" --description "$desc" --type bug --priority 1 --labels landing-dirty --external-ref "$ref" --json)
+  bead_json=$(bd create "$title" --description "$desc" --type bug --priority 1 --labels landing-dirty --external-ref "$ref" \
+    --metadata '{"driver_preference": "strong", "risk_class": "landing-control"}' --json)
   bead_id=$(jq -r '.id' <<<"$bead_json")
   jq -cn \
     --arg repo "$repo" \
