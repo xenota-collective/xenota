@@ -123,9 +123,11 @@ while true; do
         fi
       elif [ "$state" = "DIRTY" ]; then
         if blocker_exists "$ref"; then
-          if file_dirty_blocker "$repo" "$num" "$branch" "mergeStateStatus=DIRTY" "DIRTY PR observed; non-closed landing blocker already exists"; then
-            blocker_created=1
-          fi
+          # Existing landing-blocker bead is enough — do not append another evidence
+          # comment every poll cycle, that just spams bd. The bead already records
+          # the producer; new producers / new conflict reasons are picked up the next
+          # time the existing blocker is closed.
+          echo "$(date -u +%H:%M:%S) ${repo}#${num} DIRTY; landing-blocker bead already open, skipping"
           continue
         fi
         echo "$(date -u +%H:%M:%S) trying one-shot rebase merge for DIRTY ${repo}#${num} (${branch})"

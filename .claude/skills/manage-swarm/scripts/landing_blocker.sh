@@ -37,6 +37,7 @@ first_nonclosed_for_ref() {
           .[]
           | select(.external_ref == $ref)
           | select(.status != "closed")
+          | select(((.labels // []) | any(. == "landing-dirty" or . == "landing-blocker")))
         ]
         | sort_by(.created_at // "")
         | .[0] // empty
@@ -182,6 +183,27 @@ EOF
     --metadata "$metadata" \
     --json)"
   bead_id="$(jq -r '.id' <<<"$created_json")"
+
+  # Race-recheck: a concurrent producer may have created a competing blocker
+  # between first_nonclosed_for_ref above and bd create. first_nonclosed_for_ref
+  # is deterministic (sorts by created_at), so all racers converge on the same
+  # winner and the loser closes itself as duplicate.
+  local winner winner_id
+  winner="$(first_nonclosed_for_ref "$external_ref")"
+  winner_id="$(jq -r '.id // empty' <<<"$winner")"
+  if [[ -n "$winner_id" && "$winner_id" != "$bead_id" ]]; then
+    bd close "$bead_id" --reason "duplicate of ${winner_id} (race with concurrent producer)" >/dev/null
+    add_evidence_comment "$winner_id" "$producer" "$signal_source" "$external_ref" "$repo" "$pr" "$branch" "$observed_at" "$reason" "deduplicated"
+    jq -cn \
+      --arg action "deduplicated" \
+      --arg bead_id "$winner_id" \
+      --arg external_ref "$external_ref" \
+      --arg producer "$producer" \
+      --arg signal_source "$signal_source" \
+      '{action:$action, bead_id:$bead_id, external_ref:$external_ref, producer:$producer, signal_source:$signal_source}'
+    return 0
+  fi
+
   add_evidence_comment "$bead_id" "$producer" "$signal_source" "$external_ref" "$repo" "$pr" "$branch" "$observed_at" "$reason" "created"
   jq -cn \
     --arg action "created" \

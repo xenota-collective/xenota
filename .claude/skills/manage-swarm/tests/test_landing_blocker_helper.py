@@ -11,12 +11,23 @@ HELPER = ROOT / ".claude" / "skills" / "manage-swarm" / "scripts" / "landing_blo
 
 
 FAKE_BD = r"""#!/usr/bin/env python3
+import fcntl
 import json
 import os
 import sys
 from pathlib import Path
 
 store_path = Path(os.environ["FAKE_BD_STORE"])
+lock_path = store_path.with_suffix(store_path.suffix + ".lock")
+
+
+# Each fake-bd invocation holds an exclusive lock on the store for its
+# lifetime. Two concurrent invocations therefore serialize on this lock —
+# i.e. each `bd list`/`bd create`/`bd close` is atomic. This mirrors the
+# real bd backend, which serializes individual operations but not the
+# lookup→create window the helper guards against with race-recheck.
+lock_fh = open(lock_path, "a+")
+fcntl.flock(lock_fh, fcntl.LOCK_EX)
 
 
 def load():
@@ -32,8 +43,22 @@ def save(items):
 args = sys.argv[1:]
 items = load()
 
+def maybe_inject_after_list():
+    inject_path = os.environ.get("FAKE_BD_INJECT_AFTER_LIST")
+    if not inject_path:
+        return
+    p = Path(inject_path)
+    if not p.exists():
+        return
+    extra = json.loads(p.read_text())
+    fresh = load() + extra
+    save(fresh)
+    p.unlink()
+
+
 if args[:1] == ["list"]:
     print(json.dumps(items))
+    maybe_inject_after_list()
     raise SystemExit(0)
 
 if args[:1] == ["create"]:
@@ -92,6 +117,30 @@ if args[:2] == ["comments", "add"]:
             raise SystemExit(0)
     print(f"unknown bead {bead_id}", file=sys.stderr)
     raise SystemExit(1)
+
+if args[:1] == ["close"]:
+    rest = args[1:]
+    bead_ids = []
+    reason = None
+    i = 0
+    while i < len(rest):
+        if rest[i] in ("-r", "--reason"):
+            reason = rest[i + 1]
+            i += 2
+        elif rest[i].startswith("--"):
+            i += 2
+        else:
+            bead_ids.append(rest[i])
+            i += 1
+    for bead_id in bead_ids:
+        for item in items:
+            if item["id"] == bead_id:
+                item["status"] = "closed"
+                if reason:
+                    item.setdefault("close_reason", reason)
+    save(items)
+    print("ok")
+    raise SystemExit(0)
 
 print(f"unexpected bd args: {args}", file=sys.stderr)
 raise SystemExit(1)
@@ -239,6 +288,136 @@ class LandingBlockerHelperTest(unittest.TestCase):
         self.assertEqual(len(records), 2)
         self.assertEqual(len(records[0]["comments"]), 1)
         self.assertIn("producer: landing-blocker-producer", records[0]["comments"][0]["text"])
+
+    def test_non_blocker_bead_with_same_external_ref_is_ignored(self):
+        # Non-blocker beads (feature beads, audit beads, etc.) often carry the
+        # PR external_ref. They MUST NOT be treated as existing landing
+        # blockers — otherwise filing a real blocker silently mutates an
+        # unrelated bead and the dirty PR has no canonical blocker record.
+        self.seed(
+            [
+                {
+                    "id": "xc-feature",
+                    "title": "Constrain tracked worker-state metadata in xenota pointer PRs",
+                    "status": "in_progress",
+                    "created_at": "2026-04-25T00:00:00Z",
+                    "external_ref": "gh:xenota-collective/xenota#216",
+                    "labels": ["landing", "pointer-pr", "retro", "worker-state"],
+                    "comments": [],
+                }
+            ]
+        )
+
+        result = self.file_blocker(repo="xenota-collective/xenota", pr="216")
+
+        self.assertEqual(result["action"], "created")
+        self.assertNotEqual(result["bead_id"], "xc-feature")
+        records = self.records()
+        # The original feature bead is untouched; a fresh blocker bead exists.
+        feature = next(r for r in records if r["id"] == "xc-feature")
+        self.assertEqual(feature["comments"], [])
+        self.assertEqual(feature["status"], "in_progress")
+        new = next(r for r in records if r["id"] != "xc-feature")
+        self.assertIn("landing-dirty", new["labels"])
+
+    def test_concurrent_producers_converge_on_one_open_blocker(self):
+        # Two helper invocations launched concurrently. Whether or not the
+        # lookup→create window actually races on this run, only one open
+        # blocker bead must remain afterwards and both helpers must report
+        # the same final winner.
+        cmds = [
+            (
+                str(HELPER),
+                "file",
+                "--repo",
+                "xenota-collective/xenota",
+                "--pr",
+                "229",
+                "--branch",
+                "feature-branch",
+                "--producer",
+                f"producer-{i}",
+                "--signal-source",
+                f"source-{i}",
+                "--reason",
+                "concurrent",
+                "--observed-at",
+                f"2026-04-27T01:00:0{i}Z",
+            )
+            for i in range(2)
+        ]
+        procs = [
+            subprocess.Popen(cmd, env=self.env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            for cmd in cmds
+        ]
+        outputs = []
+        for p in procs:
+            stdout, stderr = p.communicate(timeout=20)
+            self.assertEqual(p.returncode, 0, msg=f"helper failed: {stderr}")
+            outputs.append(json.loads(stdout))
+
+        winner_ids = {o["bead_id"] for o in outputs}
+        self.assertEqual(len(winner_ids), 1, msg=f"helpers disagreed on winner: {outputs}")
+        records = self.records()
+        open_records = [r for r in records if r.get("status") != "closed"]
+        self.assertEqual(len(open_records), 1, msg=f"expected one open bead, got: {records}")
+        self.assertEqual(open_records[0]["id"], next(iter(winner_ids)))
+
+    def test_race_recheck_closes_loser_when_competing_bead_appears(self):
+        # Inject a competing landing-blocker bead between the helper's
+        # initial lookup and bd create. The helper's race-recheck must find
+        # that competing bead as winner (older created_at wins) and close
+        # the bead it just created as a duplicate.
+        injected_id = "xc-race-winner"
+        inject_path = self.tmp_path / "inject.json"
+        inject_path.write_text(
+            json.dumps(
+                [
+                    {
+                        "id": injected_id,
+                        "title": "Resolve dirty landing PR xenota#229",
+                        "status": "open",
+                        "created_at": "2026-04-26T00:00:00Z",
+                        "external_ref": "gh:xenota-collective/xenota#229",
+                        "labels": ["landing-dirty"],
+                        "comments": [],
+                    }
+                ]
+            )
+        )
+        env = {**self.env, "FAKE_BD_INJECT_AFTER_LIST": str(inject_path)}
+        cmd = [
+            str(HELPER),
+            "file",
+            "--repo",
+            "xenota-collective/xenota",
+            "--pr",
+            "229",
+            "--branch",
+            "feature-branch",
+            "--producer",
+            "loser-producer",
+            "--signal-source",
+            "loser-signal",
+            "--reason",
+            "race",
+            "--observed-at",
+            "2026-04-27T01:00:00Z",
+        ]
+        completed = subprocess.run(cmd, env=env, text=True, capture_output=True, check=True)
+        result = json.loads(completed.stdout)
+
+        self.assertEqual(result["action"], "deduplicated")
+        self.assertEqual(result["bead_id"], injected_id)
+        records = self.records()
+        open_records = [r for r in records if r["status"] != "closed"]
+        self.assertEqual(len(open_records), 1)
+        self.assertEqual(open_records[0]["id"], injected_id)
+        # The loser bead was closed with a duplicate-of-winner reason.
+        losers = [r for r in records if r["id"] != injected_id]
+        self.assertEqual(len(losers), 1)
+        self.assertEqual(losers[0]["status"], "closed")
+        self.assertIn("duplicate of " + injected_id, losers[0].get("close_reason", ""))
 
 
 if __name__ == "__main__":
