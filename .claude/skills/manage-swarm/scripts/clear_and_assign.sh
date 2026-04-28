@@ -35,8 +35,15 @@ shift
 instruction="$*"
 
 target="$(resolve_worker_target "$worker")"
+family="$(tmux_pane_family "$target")"
 
 if [[ "$respawn" == "1" ]]; then
+  "$script_dir/send_worker_message.sh" --respawn --interrupt --kind reset "$worker" "$instruction"
+  exit $?
+fi
+
+if [[ "$family" == "gemini" || "$worker" == worker-gemini-* ]]; then
+  echo "clear_and_assign: using respawn reset for Gemini worker $worker; Gemini /rewind is not a delivery interrupt and /clear is not a clean centralized reset" >&2
   "$script_dir/send_worker_message.sh" --respawn --interrupt --kind reset "$worker" "$instruction"
   exit $?
 fi

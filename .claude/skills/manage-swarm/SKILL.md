@@ -38,9 +38,12 @@ For worker-lane resets, use the helper script in this skill:
 /Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <worker> '<instruction>'
 ```
 
-Use the default `/clear` reset for routine context hygiene. When XSM or live
-inspection shows the worker CLI is under fd pressure
-(`worker_fd_pressure_threshold`, default 200), force a full pane recycle instead:
+Use the default `/clear` reset for routine context hygiene. Gemini workers are
+the exception: `clear_and_assign.sh` automatically uses the respawn delivery
+mode because Gemini's `/rewind` opens a destructive confirmation modal and is
+not an interrupt or clean context-clear primitive. When XSM or live inspection
+shows the worker CLI is under fd pressure (`worker_fd_pressure_threshold`,
+default 200), force a full pane recycle instead:
 
 ```bash
 /Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/clear_and_assign.sh --respawn <worker> '<instruction>'
@@ -54,7 +57,7 @@ For ordinary worker messages or nudges, use the centralized helper:
 
 These helpers are the only approved worker-message transport. They must route through the checked-out XSM runtime's centralized delivery API and fail closed if delivery cannot be verified. Do not hand-roll `tmux send-keys` for worker assignment, reassignment, `/clear`, or nudge messages.
 
-Do not fake a clear by telling the worker "your context is cleared." The pane must actually receive `/clear` as its own command before the new assignment text is sent, unless fd pressure requires `--respawn`, which kills and relaunches the worker CLI before sending the assignment.
+Do not fake a clear by telling the worker "your context is cleared." The pane must actually receive `/clear` as its own command before the new assignment text is sent, unless the target is Gemini or fd pressure requires `--respawn`, which kills and relaunches the worker CLI before sending the assignment.
 
 Common operations should be run through the scripts in `scripts/`. The skill should describe policy and sequence, not embed raw shell recipes.
 
