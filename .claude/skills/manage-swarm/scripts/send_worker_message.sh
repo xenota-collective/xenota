@@ -2,12 +2,17 @@
 set -euo pipefail
 
 interrupt=0
+respawn=0
 kind="instruction"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --interrupt)
       interrupt=1
+      shift
+      ;;
+    --respawn)
+      respawn=1
       shift
       ;;
     --kind)
@@ -33,7 +38,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ $# -lt 2 ]]; then
-  echo "usage: $0 [--interrupt] [--kind <kind>] <worker-name|tmux-target> <message>" >&2
+  echo "usage: $0 [--interrupt] [--respawn] [--kind <kind>] <worker-name|tmux-target> <message>" >&2
   exit 2
 fi
 
@@ -68,6 +73,9 @@ args=(
 )
 if [[ "$interrupt" == "1" ]]; then
   args+=(--interrupt)
+fi
+if [[ "$respawn" == "1" ]]; then
+  args+=(--respawn)
 fi
 
 output="$(
