@@ -234,4 +234,20 @@ assert_not_contains "restart-mode-no-send-worker" "send_worker_message.sh" "$log
 assert_not_contains "numeric-no-legacy-session" "xc-crew-earthshot" "$log"
 assert_no_create_calls "numeric current xc utility"
 
+# Single-rig: if xc-crew-earthshot is missing and xc is available, use xc:0.2
+repo4="$tmpdir/repo4"
+make_repo "$repo4" "missing:supervisor"
+reset_fake
+printf 'xc\n' >"$sessions_file"
+printf 'xc:0.0\nxc:0.2\n' >"$targets_file"
+printf 'xc:0.0 node\nxc:0.2 zsh\n' >"$commands_file"
+# Note: resolve_rearm_timer_target fallbacks to resolve_earthshot_timer_target
+# which now should use xc:0.2 if xc-crew-earthshot is missing.
+
+XENOTA_REPO="$repo4" "$script_dir/rearm_timer.sh" 30 "$repo4/swarm-state.yaml"
+log="$(cat "$call_log")"
+assert_contains "single-rig-timer" "clear-history -t xc:0.2" "$log"
+assert_contains "single-rig-worker" "send_worker_message.sh main" "$log"
+assert_no_create_calls "single rig fallback"
+
 echo "test_rearm_timer: OK"
