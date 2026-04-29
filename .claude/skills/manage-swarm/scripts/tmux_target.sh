@@ -41,7 +41,7 @@ tmux_pane_ready_for_input() {
   local recent="$1"
   local bottom last_line
 
-  if grep -Fq 'Shell awaiting input (Tab to focus)' <<<"$recent"; then
+  if grep -Fqi 'Shell awaiting input (Tab to focus)' <<<"$recent"; then
     return 1
   fi
 
@@ -89,7 +89,7 @@ tmux_pane_has_live_activity() {
     awk 'NF { print }' <<<"$recent" | tail -n 20
   )"
 
-  if grep -Fq 'Shell awaiting input (Tab to focus)' <<<"$bottom"; then
+  if grep -Fqi 'Shell awaiting input (Tab to focus)' <<<"$bottom"; then
     return 0
   fi
 
@@ -476,8 +476,8 @@ workmux_live_pane_for_worker() {
         .[]
         | select((.worktree // .handle // "") == $worker)
         | .pane_id // empty
-      ' \
-    | awk 'NF { print; exit }'
+	      ' \
+    | awk 'NF && /^%[0-9]+$/ { print; exit }'
 }
 
 tmux_create_session() {

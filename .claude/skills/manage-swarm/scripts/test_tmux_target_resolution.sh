@@ -208,4 +208,20 @@ target="$(resolve_worker_target "worker-gemini-2")"
 assert_eq "workmux live pane beats stale canonical target" "%84" "$target"
 assert_no_create_calls "workmux live pane beats stale canonical target"
 
+reset_fake
+printf 'xc\n' >"$sessions_file"
+printf 'xc:worker-gemini-2.1\nxc:0.2\n' >"$targets_file"
+cat >"$workmux_status_file" <<'JSON'
+[
+  {
+    "worktree": "worker-gemini-2",
+    "status": "running",
+    "pane_id": "xc:0.2"
+  }
+]
+JSON
+target="$(resolve_worker_target "worker-gemini-2")"
+assert_eq "invalid workmux pane id is ignored" "xc:worker-gemini-2.1" "$target"
+assert_no_create_calls "invalid workmux pane id is ignored"
+
 echo "test_tmux_target_resolution: OK"

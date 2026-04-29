@@ -138,6 +138,19 @@ gemini_shell_mode_payload="$(cat <<'EOF'
 EOF
 )"
 
+gemini_shell_mode_case_variant_payload="$(cat <<'EOF'
+  ▝▜▄     Gemini CLI v0.34.0
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ YOLO Ctrl+Y
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ ! Shell Awaiting Input (Tab To Focus) ? for shortcuts
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ >   Type your message or @path/to/file
+ workspace (/directory)                                       branch
+ ~/gt/xenota/crew/horizon                                     horizon/xc-st1n.3-dynamic-tool-registration
+EOF
+)"
+
 assert_ready "codex ui prompt" "$codex_ready_payload"
 assert_ready "claude prompt" "$claude_ready_payload"
 assert_ready "shell prompt" "$shell_ready_payload"
@@ -147,12 +160,18 @@ assert_ready "zsh arrow prompt after worktree closeout" "$zsh_arrow_supervisor_p
 assert_not_ready "busy codex footer without prompt" "$busy_payload"
 assert_not_ready "rejected clear message" "$rejected_clear_payload"
 assert_not_ready "gemini shell awaiting input" "$gemini_shell_mode_payload"
+assert_not_ready "gemini shell awaiting input case variant" "$gemini_shell_mode_case_variant_payload"
 assert_agent_ui "codex ui history" "$codex_ready_payload"
 assert_agent_ui "gemini ui history" "$gemini_ready_payload"
 assert_not_agent_ui "shell history" "$shell_ready_payload"
 
 if ! tmux_pane_has_live_activity "$gemini_shell_mode_payload"; then
   echo "expected shell-awaiting-input to count as live activity" >&2
+  exit 1
+fi
+
+if ! tmux_pane_has_live_activity "$gemini_shell_mode_case_variant_payload"; then
+  echo "expected shell-awaiting-input case variant to count as live activity" >&2
   exit 1
 fi
 
