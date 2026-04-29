@@ -8,8 +8,8 @@
 #
 # Rules the loop enforces:
 #   - mergeStateStatus=CLEAN + checks_success → squash, fall back to rebase
-#   - mergeStateStatus=DIRTY → one-shot rebase merge, else file landing-dirty
-#     blocker bead and skip
+#   - mergeStateStatus=DIRTY → one-shot rebase merge, else file/dedupe a
+#     landing blocker bead and skip
 #   - any other state → skip silently
 #
 # checks_success treats statusCheckRollup as a *negative* gate: a PR passes
@@ -21,6 +21,8 @@ set -u
 
 leader_file=/Users/jv/projects/xenota/.xsm-local/leader-backlog.jsonl
 repos=("xenota-collective/xenota" "xenota-collective/xenon")
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+landing_blocker_helper="${script_dir}/landing_blocker.sh"
 
 # all((.statusCheckRollup // [])[]; ...) returns true on empty arrays — that
 # is the "no checks reported" path xc-3knt requires. Do not tighten this to
@@ -29,34 +31,54 @@ checks_success() {
   jq -e 'all((.statusCheckRollup // [])[]; .status == "COMPLETED" and .conclusion == "SUCCESS")' >/dev/null
 }
 
+# Sets blocker_reconciled=1 when find closed stale duplicate blockers — the
+# helper does that as a side effect to keep the "at most one open blocker"
+# invariant durable, but those bd close calls are local until we push.
 blocker_exists() {
   local ref="$1"
-  bd list --label landing-dirty --all --limit 0 --json \
-    | jq -e --arg ref "$ref" 'any(.[]; .external_ref == $ref and .status != "closed")' >/dev/null
+  local out
+  if ! out="$("$landing_blocker_helper" find --external-ref "$ref")"; then
+    return 1
+  fi
+  if [ -n "$out" ] && jq -e '(.reconciled // 0) > 0' <<<"$out" >/dev/null 2>&1; then
+    blocker_reconciled=1
+  fi
+  return 0
 }
 
 file_dirty_blocker() {
-  local repo="$1" num="$2" branch="$3"
+  local repo="$1" num="$2" branch="$3" signal_source="$4" reason="$5"
   local short_repo="${repo##*/}"
-  local ref="gh:${repo}#${num}"
-  if blocker_exists "$ref"; then
-    echo "$(date -u +%H:%M:%S) existing non-closed landing-dirty blocker for ${repo}#${num}; skipping new bead"
-    return 0
-  fi
   local title="Resolve dirty landing PR ${short_repo}#${num}"
   local desc="Landing lane attempted: gh pr merge ${num} --repo ${repo} --rebase. GitHub reported the PR is not mergeable because the merge commit cannot be cleanly created. Resolve conflicts or refresh branch, then return PR to landing queue. PR branch: ${branch}."
-  local bead_json bead_id
-  bead_json=$(bd create "$title" --description "$desc" --type bug --priority 1 --labels landing-dirty --external-ref "$ref" --json)
-  bead_id=$(jq -r '.id' <<<"$bead_json")
-  jq -cn \
-    --arg repo "$repo" \
-    --argjson pr "$num" \
-    --arg branch "$branch" \
-    --arg bead "$bead_id" \
-    --arg created_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    '{type:"landing_dirty",agent:"landing",state:"blocked",reason:("DIRTY PR failed gh pr merge --rebase: " + $repo + "#" + ($pr|tostring) + " cannot be cleanly merged"),metadata:{repo:$repo,pr:$pr,branch:$branch,blocker_bead:$bead,label:"landing-dirty"},created_at:$created_at}' \
-    >> "$leader_file"
-  echo "$(date -u +%H:%M:%S) filed ${bead_id} for ${repo}#${num}"
+  local result action bead_id
+  if ! result=$("$landing_blocker_helper" file \
+    --repo "$repo" \
+    --pr "$num" \
+    --branch "$branch" \
+    --producer "landing_poll" \
+    --signal-source "$signal_source" \
+    --reason "$reason" \
+    --title "$title" \
+    --description "$desc"); then
+    echo "$(date -u +%H:%M:%S) landing blocker helper failed for ${repo}#${num}; continuing"
+    return 1
+  fi
+  action=$(jq -r '.action' <<<"$result")
+  bead_id=$(jq -r '.bead_id' <<<"$result")
+  if [ "$action" = "created" ]; then
+    jq -cn \
+      --arg repo "$repo" \
+      --argjson pr "$num" \
+      --arg branch "$branch" \
+      --arg bead "$bead_id" \
+      --arg created_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      '{type:"landing_dirty",agent:"landing",state:"blocked",reason:("DIRTY PR failed gh pr merge --rebase: " + $repo + "#" + ($pr|tostring) + " cannot be cleanly merged"),metadata:{repo:$repo,pr:$pr,branch:$branch,blocker_bead:$bead,label:"landing-dirty",producer:"landing_poll",signal_source:"gh_pr_merge_rebase_conflict"},created_at:$created_at}' \
+      >> "$leader_file"
+    echo "$(date -u +%H:%M:%S) filed ${bead_id} for ${repo}#${num}"
+  else
+    echo "$(date -u +%H:%M:%S) appended landing-blocker evidence to ${bead_id} for ${repo}#${num}"
+  fi
 }
 
 refresh_xenon_pointer() {
@@ -82,10 +104,17 @@ refresh_xenon_pointer() {
   fi
 }
 
+# bd_push_pending persists across cycles. We only clear it on a successful
+# push, so a transient `bd dolt push` failure does not strand local-only bd
+# writes (e.g. a stale-duplicate close performed by `find`) — the next cycle
+# retries the push even if no new write happened.
+bd_push_pending=0
+
 while true; do
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) landing poll start"
   merged_xenon=0
   blocker_created=0
+  blocker_reconciled=0
   for repo in "${repos[@]}"; do
     pr_json=$(gh pr list --repo "$repo" --state open --json number,mergeStateStatus,headRefName,statusCheckRollup 2>&1) || {
       echo "$(date -u +%H:%M:%S) gh pr list failed for $repo: $pr_json"
@@ -111,7 +140,11 @@ while true; do
         fi
       elif [ "$state" = "DIRTY" ]; then
         if blocker_exists "$ref"; then
-          echo "$(date -u +%H:%M:%S) DIRTY ${repo}#${num} already has non-closed landing-dirty blocker"
+          # Existing landing-blocker bead is enough — do not append another evidence
+          # comment every poll cycle, that just spams bd. The bead already records
+          # the producer; new producers / new conflict reasons are picked up the next
+          # time the existing blocker is closed.
+          echo "$(date -u +%H:%M:%S) ${repo}#${num} DIRTY; landing-blocker bead already open, skipping"
           continue
         fi
         echo "$(date -u +%H:%M:%S) trying one-shot rebase merge for DIRTY ${repo}#${num} (${branch})"
@@ -122,8 +155,9 @@ while true; do
         }
         echo "$merge_output"
         if grep -qiE 'not mergeable|conflict|cannot be cleanly' <<<"$merge_output"; then
-          file_dirty_blocker "$repo" "$num" "$branch"
-          blocker_created=1
+          if file_dirty_blocker "$repo" "$num" "$branch" "gh_pr_merge_rebase_conflict" "$merge_output"; then
+            blocker_created=1
+          fi
         else
           echo "$(date -u +%H:%M:%S) DIRTY ${repo}#${num} failed for non-conflict reason; continuing"
         fi
@@ -135,8 +169,15 @@ while true; do
   if [ "$merged_xenon" = "1" ]; then
     refresh_xenon_pointer
   fi
-  if [ "$blocker_created" = "1" ]; then
-    bd dolt push || echo "$(date -u +%H:%M:%S) bd dolt push failed; continuing poll loop"
+  if [ "$blocker_created" = "1" ] || [ "$blocker_reconciled" = "1" ]; then
+    bd_push_pending=1
+  fi
+  if [ "$bd_push_pending" = "1" ]; then
+    if bd dolt push; then
+      bd_push_pending=0
+    else
+      echo "$(date -u +%H:%M:%S) bd dolt push failed; will retry next cycle"
+    fi
   fi
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) landing poll complete; sleeping 60s"
   sleep 60
