@@ -55,7 +55,21 @@ such as worker handle, assignment source/status, session-local branch state,
 landing-gate scratch state, worktree paths, and resume/provisioning state
 local/ignored.
 
-### 4. Push the branch
+### 4. Record QA verdict artifact
+
+XSM requires a machine-readable QA verdict artifact in `_ai/` before a branch
+can be landed. For xenon/xenota projects, use the `manual-test` skill or
+`scripts/record-qa-verdict.sh` (if available) to generate one.
+
+The verdict MUST include:
+- `bead_id`
+- `commit_sha` (matching the head of the PR)
+- `overall_status`: `pass` or `fail`
+- `gates`: status of individual checks
+
+If no automated tool is available, manually create `_ai/verdict-<bead-id>.json`.
+
+### 5. Push the branch
 
 ```bash
 git push -u origin <branch-name> --force-with-lease
