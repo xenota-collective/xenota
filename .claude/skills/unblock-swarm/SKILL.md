@@ -1,6 +1,6 @@
 ---
 name: unblock-swarm
-description: Diagnose and restart a stalled XSM swarm. Use when the operator says the swarm is blocked, a mix of workers are idle/dormant while others work, supervisor is dormant, or xsm appears alive but nothing is progressing. Walks through the correct escalation order: xsm daemon health → supervisor patrol → per-worker triage → blocker resolution.
+description: "Diagnose and restart a stalled XSM swarm. Use when the operator says the swarm is blocked, a mix of workers are idle/dormant while others work, supervisor is dormant, or xsm appears alive but nothing is progressing. Walks through the correct escalation order: xsm daemon health → supervisor patrol → per-worker triage → blocker resolution."
 ---
 
 # Unblock Swarm
