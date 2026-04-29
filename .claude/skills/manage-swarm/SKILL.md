@@ -184,9 +184,36 @@ If you find a lane in a state that doesn't fit one of these three categories, do
 
 Don't reach for respawn or kill as the first remediation. Respawn loses session state and hides the underlying classifier gap. Use respawn only when the CLI process is actually dead.
 
+## Fast-Track Severity (xc-zmpda)
+
+Fast-track is a label, not a priority — it sits **above** P0 in every dispatch and landing decision.
+
+A fast-track bead describes a self-blocking swarm bug: code or strategy whose failure mode actively degrades dispatch, landing, or safety-net function so the swarm can no longer drive itself. Reviewing a P1 PR while xsm is failing to dispatch parked_unassigned lanes (xc-nqkd is the canonical example) is wrong-priority — the fix to dispatch comes first because every other slice depends on it.
+
+Use the `fast-track` label deliberately. Examples that qualify:
+- xsm fails to reassign a worker after PR handoff (xc-nqkd)
+- supervisor patrol pane sits idle indefinitely after restart (xc-a3bst)
+- centralized worker-message delivery refuses every gemini lane (xc-wvwdx)
+- landing helper resolves landing lane to a reserved control-plane pane (xc-pwt1h)
+
+Examples that do NOT qualify (use P0 instead):
+- a single failing test on a feature branch
+- a UI regression on a non-critical screen
+- a slow but functional dispatch path
+
+During every wrangle pass:
+1. Run a fast-track scan FIRST, before any P0 sweep:
+   ```bash
+   bd list --json | jq '[.[] | select((.status == "open" or .status == "in_progress") and (.labels // [] | index("fast-track")))]'
+   ```
+2. For each fast-track bead lacking an active worker, dispatch immediately to an idle, parked, or slice-boundary lane. Do not interrupt an actively editing worker mid-slice unless the operator explicitly directs an emergency intervention.
+3. When every lane is active on non-fast-track work and a fast-track bead is unstaffed, finish the lowest-priority worker's current slice and reassign before any new normal dispatch. If every lane is already on fast-track work, escalate the next fast-track bead to the human; do not park it silently.
+4. Fast-track stacks jump the landing queue ahead of P0 stacks. The landing skill enforces the same precedence.
+5. Surface every fast-track bead's status in the wrangle output's changelog so operators see preemption in the audit trail.
+
 ## P0 Priority Rule
 
-P0 beads take absolute priority over all other work.
+P0 beads take absolute priority over all other work *except* fast-track (above).
 
 During every wrangle pass:
 1. Check for open P0 beads with:
@@ -195,7 +222,7 @@ During every wrangle pass:
    ```
 2. If any P0 bead exists and has no active worker, immediately assign the most suitable idle crew member to it. If no crew is idle, preempt the lowest-priority active lane.
 3. P0 beads skip the normal epic-child sequencing. They do not need to wait for their parent epic's phase ordering.
-4. When a P0 bead reaches landing readiness, it jumps the landing queue. The dedicated landing worker should land P0 stacks before any other pending landing.
+4. When a P0 bead reaches landing readiness, it jumps the landing queue ahead of P1+, but **after** any pending fast-track stack. The dedicated landing worker should land fast-track stacks first, then P0 stacks, then everything else.
 5. P0 beads that are blocked must be escalated to the human immediately, not parked.
 
 ## Worker Driver Discipline
@@ -720,7 +747,8 @@ Landing rule:
 - landing workers must get explicit approval in the current session before running any merge command or taking any action that actually lands the branch/PR
 - the current session operator may grant that approval directly; do not wait for a separate human if the current session already authorized landing decisions
 - readiness to merge is a stop-and-approve gate, not implicit permission to merge
-- P0 stacks jump the landing queue. If both a P0 and a P1 stack are ready to land, the landing worker must take the P0 first. If the landing worker is mid-flight on a non-P0 landing and a P0 becomes landing-ready, finish the current landing then immediately take the P0 next.
+- Fast-track stacks jump the landing queue ahead of P0 stacks. The landing worker must scan for fast-track-labelled beads on every loop iteration and land their PR stacks before any non-fast-track stack including P0. If the landing worker is mid-flight on a non-fast-track landing and a fast-track stack becomes landing-ready, finish the current landing then immediately take the fast-track stack next. See `land-submodule-stack` for the merge-time precedence rule.
+- P0 stacks jump the landing queue ahead of P1+ stacks. If both a P0 and a P1 stack are ready to land, the landing worker must take the P0 first (after any pending fast-track stack). If the landing worker is mid-flight on a P1 landing and a P0 becomes landing-ready, finish the current landing then immediately take the P0 next.
 
 Current landing formula:
 - `land-submodule-stack`
@@ -772,12 +800,12 @@ For Claude sessions that may be in vim mode:
 
 Every allocation decision — whether assigning idle crew, preempting, or choosing the next slice — follows this strict priority cascade:
 
-0. **Fast-track beads** — preemptive priority for bugs that break the swarm. Reserved for bugs that actively degrade swarm dispatch, landing, or safety-net function. These preempt all other work, including P0s.
-1. **P0 beads** — absolute top priority, any open or in-progress P0 regardless of parent epic
-2. **Assigned epic children** — any workable bead within the currently hooked/assigned epic and its full child tree, ordered by priority within that tree
-3. **Standalone P1 beads** — any P1 bead that is not a child of the assigned epic (e.g. standalone tasks, bugs, follow-ups)
-4. **Other P1 epics and their children** — P1 epics outside the assigned epic tree, pick the most advanced or unblocked child
-5. **P2 and below** — only when all of the above are either fully staffed or blocked
+1. **Fast-track beads** — any open or in-progress bead carrying the `fast-track` label. Sits above P0 because the swarm cannot drive itself when one is open. See "Fast-Track Severity" above.
+2. **P0 beads** — absolute top priority among non-fast-track work, any open or in-progress P0 regardless of parent epic
+3. **Assigned epic children** — any workable bead within the currently hooked/assigned epic and its full child tree, ordered by priority within that tree
+4. **Standalone P1 beads** — any P1 bead that is not a child of the assigned epic (e.g. standalone tasks, bugs, follow-ups)
+5. **Other P1 epics and their children** — P1 epics outside the assigned epic tree, pick the most advanced or unblocked child
+6. **P2 and below** — only when all of the above are either fully staffed or blocked
 
 An idle crew member is a failure state. The wrangler must always assign work from the highest available tier. If there is genuinely no workable bead at any tier — no open P0s, no unworked children of the assigned epic, no standalone P1s, no other P1 epic children — then the wrangler MUST escalate loudly to the human:
 
@@ -792,8 +820,8 @@ Do not silently accept idle workers. Do not park them on research or cleanup unl
 
 ## Default Manage-Swarm Loop
 
-1. **Fast-track scan**: Check for any open or in-progress beads with the `fast-track` label (e.g., `bd list --labels=fast-track`). If any exist without an active worker, they take priority over EVERYTHING, including P0s. Assign immediately, preempting any lower-priority lane if needed.
-2. **P0 scan**: Check for any open or in-progress P0 beads with `scripts/p0_scan.sh`. If any exist without an active worker, they take priority over everything below. Assign immediately, preempting lower-priority lanes if needed.
+1. **Fast-track scan**: Run `bd list --json | jq '[.[] | select((.status == "open" or .status == "in_progress") and (.labels // [] | index("fast-track")))]'`. Any fast-track bead lacking an active worker is dispatched first to an idle, parked, or slice-boundary lane. Surface every fast-track bead in the wrangle output even when staffed.
+2. **P0 scan**: Check for any open or in-progress P0 beads with `scripts/p0_scan.sh`. If any exist without an active worker, they take priority over everything below (except fast-track). Assign immediately, preempting lower-priority lanes if needed.
 3. **Bead pass**: List all children of the hooked epic via `scripts/bead_show.sh`. For each non-closed bead, check status, assignee, PR state, and classify.
 4. **Crew pass**: For each crew member, capture pane via `scripts/capture_pane.sh`, check hook via `scripts/crew_status.sh`, branch, and classify. Identify idle crew.
 5. **Idle crew reallocation**: For each idle crew member, walk the Work Priority Order top to bottom. Assign the first workable bead found via `scripts/clear_and_assign.sh`. If no workable bead exists at any tier, escalate to the human immediately — do not leave the crew member parked.
