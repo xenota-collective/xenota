@@ -115,7 +115,23 @@ tmux_pane_looks_like_agent_ui() {
 
 tmux_pane_is_sidebar() {
   local target="$1"
-  local current_command width
+  local agent_ui_role current_command width
+
+  # Primary classifier (xc-23ub): explicit @agent_ui_role pane option set by
+  # the workmux/sidebar creation path. `sidebar` forces sidebar treatment;
+  # `agent` opts out of the width-based fallback so legitimate narrow agent
+  # panes on small displays are not misclassified.
+  agent_ui_role="$(
+    "${tmux_cmd[@]}" display-message -p -t "$target" '#{@agent_ui_role}' 2>/dev/null
+  )"
+  case "$agent_ui_role" in
+    sidebar)
+      return 0
+      ;;
+    agent)
+      return 1
+      ;;
+  esac
 
   current_command="$(tmux_pane_current_command "$target")"
   if [[ "$current_command" == "workmux" ]]; then
@@ -124,7 +140,9 @@ tmux_pane_is_sidebar() {
 
   width="$( "${tmux_cmd[@]}" display-message -p -t "$target" '#{pane_width}' )"
   if [[ "$width" -lt 40 ]]; then
-    # Sidebars are typically narrow
+    # Last-resort tiebreaker: a narrow pane with no other signal is treated
+    # as a sidebar. Set `tmux set-option -p -t <pane> @agent_ui_role agent`
+    # on a legitimate narrow agent pane to override.
     return 0
   fi
 
