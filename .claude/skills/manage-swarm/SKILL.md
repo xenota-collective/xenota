@@ -609,16 +609,17 @@ The full state lives in `swarm-state.yaml`. The user can read it directly if the
 
 ### Reminder re-arm
 
-- after reporting, re-arm the reminder injector in `xc-crew-earthshot:0.2` via the helper script:
+- after reporting, re-arm the reminder injector via the helper script:
 ```bash
 /Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/rearm_timer.sh <SECONDS>
 ```
 
+- the helper resolves the current supervisor/timer panes from `.xsm-local/swarm-backlog.yaml` or the live `xc:supervisor` layout; do not hardcode the legacy `xc-crew-earthshot` session
 - the helper script reads `wrangle_count` from `swarm-state.yaml`, increments it, writes the incremented value back, and then decides the reminder mode from the incremented count
 - if the incremented `wrangle_count` is divisible by 5, the script arms the timer to send `/clear`, submit `Enter`, wait, then send `read the manage-swarm skill, then wrangle the swarm`
 - otherwise it arms the normal `wrangle the swarm` reminder
 - do not hand-roll this logic outside the helper unless the script itself is broken
-- re-arm is not complete until you re-capture `xc-crew-earthshot:0.2` and verify the pane is operationally clean (clean prompt plus one current timer arm)
+- re-arm is not complete until you re-capture the resolved timer pane and verify it is operationally clean (clean prompt plus one current timer arm)
 
 ### Wrangle count and periodic context reset
 
