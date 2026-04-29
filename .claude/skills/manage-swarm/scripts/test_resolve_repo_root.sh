@@ -101,7 +101,6 @@ fi
 # from a worktree-local skill copy, which lacks .xsm-local/log and breaks
 # health checks.
 restart_helpers=(
-  restart_wrangle.sh
   restart_local_xsm.sh
   start_supervisor_and_landing.sh
   p0_scan.sh

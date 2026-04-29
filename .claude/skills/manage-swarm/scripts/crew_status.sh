@@ -7,10 +7,16 @@ if [[ $# -ne 1 ]]; then
 fi
 
 worker="$1"
-repo="/Users/jv/gt/xenota/crew/${worker}"
 
-if [[ ! -d "$repo" ]]; then
-  echo "worker repo not found: $repo" >&2
+if ! command -v workmux >/dev/null 2>&1; then
+  echo "workmux is required to resolve worker repo paths" >&2
+  exit 1
+fi
+
+repo="$(workmux path "$worker" 2>/dev/null)"
+
+if [[ -z "$repo" || ! -d "$repo" ]]; then
+  echo "worker repo not found via workmux for: $worker" >&2
   exit 1
 fi
 
@@ -18,5 +24,3 @@ printf 'BRANCH\n'
 git -C "$repo" branch --show-current
 printf '\nSTATUS\n'
 git -C "$repo" status --short
-printf '\nHOOK\n'
-gt hook show "xenota/crew/${worker}"

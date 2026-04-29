@@ -4,17 +4,6 @@ set -euo pipefail
 tmux_bin="${TMUX_BIN:-/opt/homebrew/bin/tmux}"
 tmux_cmd=("$tmux_bin")
 default_shell="${SHELL:-/bin/zsh} -l"
-legacy_crew_handles=(
-  earthshot
-  harbor
-  horizon
-  last
-  life
-  prism
-  prosperity
-  quay
-  starshot
-)
 
 tmux_pane_title() {
   local target="$1"
@@ -439,19 +428,6 @@ tmux_first_pane_in_session() {
   "${tmux_cmd[@]}" list-panes -t "$1" -F '#S:#I.#P' | head -n 1
 }
 
-tmux_handle_is_legacy_crew_lane() {
-  local handle="$1"
-  local legacy
-
-  for legacy in "${legacy_crew_handles[@]}"; do
-    if [[ "$handle" == "$legacy" ]]; then
-      return 0
-    fi
-  done
-
-  return 1
-}
-
 tmux_create_session() {
   local session="$1"
   if ! tmux_session_exists "$session"; then
@@ -620,16 +596,11 @@ resolve_worker_target() {
   local worker="$1"
   if [[ "$worker" == *:* ]]; then
     resolve_explicit_target "$worker"
-  elif [[ "$worker" == xc-crew-* ]]; then
-    echo "tmux_target: worker name must be a handle, not an xc-crew session: $worker" >&2
-    return 1
   elif tmux_target_exists "xc:${worker}.1" && ! tmux_pane_is_sidebar "xc:${worker}.1"; then
     printf 'xc:%s.1\n' "$worker"
     return 0
-  elif tmux_handle_is_legacy_crew_lane "$worker"; then
-    resolve_named_lane_target "xc-crew-${worker}"
   else
-    echo "tmux_target: missing xc worker window and no legacy fallback is allowed for: $worker" >&2
+    echo "tmux_target: missing xc worker window for: $worker" >&2
     return 1
   fi
 }
@@ -641,29 +612,4 @@ resolve_polecat_target() {
   else
     resolve_named_lane_target "xc-${polecat}"
   fi
-}
-
-resolve_earthshot_session() {
-  local session="${EARTHSHOT_SESSION:-}"
-  if [[ -z "$session" ]]; then
-    if tmux_session_exists "xc-crew-earthshot"; then
-      session="xc-crew-earthshot"
-    else
-      session="xc"
-    fi
-  fi
-  printf '%s\n' "$session"
-}
-
-resolve_earthshot_worker_target() {
-  local session
-  session="$(resolve_earthshot_session)"
-  resolve_named_lane_target "$session"
-}
-
-resolve_earthshot_timer_target() {
-  local session
-  session="$(resolve_earthshot_session)"
-  # Fallback to a safe-ish default index if no better target found
-  resolve_named_lane_target "$session" "0.2"
 }

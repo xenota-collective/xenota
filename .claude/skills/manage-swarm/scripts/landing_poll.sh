@@ -104,12 +104,6 @@ refresh_xenon_pointer() {
       echo "$(date -u +%H:%M:%S) pointer commit failed; continuing poll loop"
     fi
   fi
-  if [ -n "${before_xenon_sha:-}" ] && [ -n "${after_xenon_sha:-}" ] && [ "$before_xenon_sha" != "$after_xenon_sha" ]; then
-    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    XSM_RESTART_REASON=landing-poll-post-merge \
-      "$script_dir/restart_wrangle_if_xsm_changed.sh" "$before_xenon_sha" "$after_xenon_sha" xenon \
-      || echo "$(date -u +%H:%M:%S) XSM restart check failed; continuing poll loop"
-  fi
 }
 
 # bd_push_pending persists across cycles. We only clear it on a successful

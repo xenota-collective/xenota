@@ -13,7 +13,7 @@ start_session() {
 
   case "$family" in
     claude)
-      launch_cmd='exec env BD_ACTOR=xenota/crew/transport-claude BD_BACKUP_ENABLED=false BEADS_AGENT_NAME=xenota/transport-claude BEADS_DOLT_AUTO_START=0 BEADS_DOLT_PORT=3307 CLAUDECODE= GIT_AUTHOR_NAME=transport-claude GIT_CEILING_DIRECTORIES=/Users/jv/gt GT_AGENT=claude GT_CREW=transport-claude GT_DOLT_PORT=3307 GT_PROCESS_NAMES=node,claude GT_RIG=xenota GT_ROLE=xenota/crew/transport-claude GT_ROOT=/Users/jv/gt GT_SESSION=xc-transport-claude GT_SESSION_ID_ENV=CLAUDE_SESSION_ID NODE_OPTIONS= /Users/jv/.local/bin/claude --dangerously-skip-permissions --settings /Users/jv/gt/xenota/crew/.claude/settings.json'
+      launch_cmd='exec env BD_ACTOR=xenota/crew/transport-claude BD_BACKUP_ENABLED=false BEADS_AGENT_NAME=xenota/transport-claude BEADS_DOLT_AUTO_START=0 BEADS_DOLT_PORT=3307 CLAUDECODE= GIT_AUTHOR_NAME=transport-claude GIT_CEILING_DIRECTORIES=/Users/jv/projects GT_AGENT=claude GT_CREW=transport-claude GT_DOLT_PORT=3307 GT_PROCESS_NAMES=node,claude GT_RIG=xenota GT_ROLE=xenota/crew/transport-claude GT_ROOT=/Users/jv/projects GT_SESSION=xc-transport-claude GT_SESSION_ID_ENV=CLAUDE_SESSION_ID NODE_OPTIONS= /Users/jv/.local/bin/claude --dangerously-skip-permissions --settings /Users/jv/projects/xenota/.claude/settings.json'
       ;;
     gemini)
       launch_cmd='gemini --approval-mode yolo'

@@ -6,5 +6,5 @@ if [[ $# -ne 1 ]]; then
   exit 2
 fi
 
-cd /Users/jv/gt/xenota/mayor/rig
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && git rev-parse --show-toplevel)"
 exec bd show "$1"

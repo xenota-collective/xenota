@@ -19,24 +19,16 @@ See the [Fast-Track Severity Policy](https://github.com/xenota-collective/handbo
 
 ## Invocation
 
-This is a skill, not a slash command. Invoke it with a plain-language request in the earthshot Codex pane, for example:
+This is a skill, not a slash command. Invoke it with a plain-language request such as:
 
 ```text
 read the manage-swarm skill, then wrangle the swarm
 ```
 
-If you need to clear the earthshot pane first, use the helper script:
-
-```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/restart_wrangle.sh
-```
-
-This helper performs the required `/clear`, separate `Enter`, wait, and re-read sequence. Do not inline this flow in the skill.
-
 When restarting the live XSM manager, use the repo-local launcher:
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/restart_local_xsm.sh
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/restart_local_xsm.sh
 ```
 
 Do not start XSM with `/Users/jv/.local/bin/xsm` or any other global `uv tool` shim. The live manager must run from `xenon/packages/xsm/.venv/bin/xsm` so it uses the checked-out source tree.
@@ -50,7 +42,7 @@ tmux list-panes -s -t xc -F '#{pane_id} #{@xsm_role}' | awk '$2=="runtime"{print
 After a landed xenon pointer updates XSM code, prefer the signal-only restart path:
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/restart_xsm.sh --reason post-merge-xsm-change --sha <xenon-sha>
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/restart_xsm.sh --reason post-merge-xsm-change --sha <xenon-sha>
 ```
 
 This sends SIGTERM only to the active `xsm wrangle` child and relies on `xsm_relaunch_loop.sh` to respawn on the new code. It also appends restart evidence to `.xsm-local/log/xsm-restarts.jsonl`.
@@ -58,7 +50,7 @@ This sends SIGTERM only to the active `xsm wrangle` child and relies on `xsm_rel
 For worker-lane resets, use the helper script in this skill:
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <worker> '<instruction>'
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <worker> '<instruction>'
 ```
 
 Use the default `/clear` reset for routine context hygiene. When XSM or live
@@ -66,13 +58,13 @@ inspection shows the worker CLI is under fd pressure
 (`worker_fd_pressure_threshold`, default 200), force a full pane recycle instead:
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/clear_and_assign.sh --respawn <worker> '<instruction>'
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/clear_and_assign.sh --respawn <worker> '<instruction>'
 ```
 
 For ordinary worker messages or nudges, use the centralized helper:
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/send_worker_message.sh <worker> '<message>'
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/send_worker_message.sh <worker> '<message>'
 ```
 
 These helpers are the only approved worker-message transport. They must route through the checked-out XSM runtime's centralized delivery API and fail closed if delivery cannot be verified. Do not hand-roll `tmux send-keys` for worker assignment, reassignment, `/clear`, or nudge messages.
@@ -220,7 +212,7 @@ P0 beads take absolute priority over all other work *except* fast-track (above).
 During every wrangle pass:
 1. Check for open P0 beads with:
    ```bash
-   /Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/p0_scan.sh
+   /Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/p0_scan.sh
    ```
 2. If any P0 bead exists and has no active worker, immediately assign the most suitable idle crew member to it. If no crew is idle, preempt the lowest-priority active lane.
 3. P0 beads skip the normal epic-child sequencing. They do not need to wait for their parent epic's phase ordering.
@@ -327,8 +319,6 @@ If you detect a worker has pushed directly to main (check with `git log --onelin
 - Treat lack of movement on an active task as a failure condition requiring intervention, not as a password status outcome.
 - Treat crew workers as prone to one-shot request/response behavior. Assume they will often complete one asked-for slice and then park unless given a standing order to self-chain.
 - Default to standing-order nudges, not single-slice nudges. Require the worker to keep choosing and executing the next concrete slice on the same epic until they hit a real blocker or explicit handoff gate.
-- Every wrangle pass must end by re-arming the local reminder injector so `wrangle the swarm` is sent back into the earthshot pane after a delay. This is part of the wrangle loop, not an optional convenience.
-- The reminder delay should be dynamic, not fixed. Speed up when many lanes needed intervention; slow down when the swarm is already flowing without help.
 - If a Claude pane is over 20% context used, compact it during the wrangle pass before leaving the lane unattended.
 - Do not compact Codex panes just because they exist or are active.
 - Outside the Claude-over-20% rule, compact only when a session is explicitly handing off work or starting a new task and needs context cleanup.
@@ -379,7 +369,7 @@ When splitting work across crew:
 - ask for the exact branch name, first bead, and next 2 planned beads
 - when assigning NEW work to a crew member (not continuing existing work), always use the `clear_and_assign.sh` helper:
   ```bash
-  /Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <name> '<new assignment>'
+  /Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <name> '<new assignment>'
   ```
   This helper enforces centralized `/clear`, centralized assignment delivery, and the ready-prompt wait sequence.
 - when a crew member finishes an epic, reaches a real handoff point, or goes idle while still owning an active epic, immediately reassign them or push them onto the next slice
@@ -389,8 +379,8 @@ When splitting work across crew:
 Common helpers:
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/assign_bead.sh <epic> <name>
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/send_worker_message.sh <name> 'Reply with exact branch name, first bead, next 2 beads, and confirm PR-based landing.'
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/assign_bead.sh <epic> <name>
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/send_worker_message.sh <name> 'Reply with exact branch name, first bead, next 2 beads, and confirm PR-based landing.'
 ```
 
 Standing-order nudge pattern:
@@ -405,7 +395,7 @@ Standing-order nudge pattern:
 Preferred wording (via helper):
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/send_worker_message.sh <name> 'Your active assignment is <bead>. Read the start-feature skill FIRST — you must work on a feature branch off origin/main, never push to main. Branch name: <crew>/<bead-id>-<slug>. Start immediately. Never stop at a passing test, summary, or completed micro-slice. After each slice, choose and execute the next concrete slice yourself. When your work is complete, read the prepare-review skill and submit a PR. Do not push to main. Do not merge anything. Only stop at a real blocker or an explicit handoff gate.'
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/send_worker_message.sh <name> 'Your active assignment is <bead>. Read the start-feature skill FIRST — you must work on a feature branch off origin/main, never push to main. Branch name: <crew>/<bead-id>-<slug>. Start immediately. Never stop at a passing test, summary, or completed micro-slice. After each slice, choose and execute the next concrete slice yourself. When your work is complete, read the prepare-review skill and submit a PR. Do not push to main. Do not merge anything. Only stop at a real blocker or an explicit handoff gate.'
 ```
 
 Do not use:
@@ -437,12 +427,12 @@ Default check-in order:
 Mandatory Helper Commands:
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/capture_pane.sh <name>
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/capture_polecat.sh <polecat>
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/crew_status.sh <name>
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/lane_snapshot.sh <name>
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/bead_show.sh <bead>
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/polecat_list.sh xenota
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/capture_pane.sh <name>
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/capture_polecat.sh <polecat>
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/crew_status.sh <name>
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/lane_snapshot.sh <name>
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/bead_show.sh <bead>
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/polecat_list.sh xenota
 ```
 
 Manual tmux verification loop:
@@ -488,9 +478,10 @@ Post-nudge verification:
 5. If the human is actively steering the lane from chat, do not keep nudging on top of that unless the worker is clearly stuck and not working
 
 Session family map for this swarm:
-- Claude panes are the ones whose tmux title explicitly shows `Claude Code` (for example `xc-crew-earthshot:0.1`)
-- Codex panes in this rig usually show `node` as the pane command (for example `xc-crew-harbor:0.0`, `xc-crew-life:0.0`, `xc-crew-starshot:0.0`, `xc-crew-prosperity:0.0`, `xc-crew-quay:0.0`, `xc-crew-last:0.0`, `xc-crew-earthshot:0.0`)
-- Helper shell/timer panes usually show `zsh` or `sleep` and are neither Claude nor Codex worker panes
+- Claude panes are the ones whose tmux title explicitly shows `Claude Code` (for example pane `.1` of a `worker-claude-*` window in `xc`)
+- Codex panes usually show `node` as the pane command (for example pane `.1` of a `worker-codex-*` window)
+- Gemini panes show the gemini banner / `Gemini …` model name (pane `.1` of a `worker-gemini-*` window)
+- Helper shell panes usually show `zsh` and are neither agent panes
 
 Blocker handling:
 1. Do not accept a blocker claim at face value if it only names another epic, boundary, or future dependency
@@ -550,7 +541,7 @@ Epic classification pass:
 
 ## Swarm State File
 
-The wrangler maintains a persistent state file at `swarm-state.yaml` in the earthshot repo.
+The wrangler maintains a persistent state file at `/Users/jv/projects/xenota/swarm-state.yaml`.
 
 This file is the single source of truth for the swarm's last-known state. It is updated at the end of every wrangle pass.
 
@@ -558,7 +549,6 @@ This file is the single source of truth for the swarm's last-known state. It is 
 
 ```yaml
 updated_at: "2026-03-20T09:15:00+13:00"
-wrangle_count: 0  # incremented by rearm_timer.sh after each wrangle pass
 hooked_epic: xc-ds1y
 p0_beads: []  # list of {id, title, assigned_to, status}
 
@@ -636,40 +626,6 @@ The full state lives in `swarm-state.yaml`. The user can read it directly if the
 - always mention ready-for-landing beads in wrangle output, even if unchanged
 - one line each: bead ID, title, gate status
 
-### Reminder re-arm
-
-- after reporting, re-arm the reminder injector via the helper script:
-```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/rearm_timer.sh <SECONDS>
-```
-
-- the helper resolves the current supervisor/timer panes from `.xsm-local/swarm-backlog.yaml` or the live `xc:supervisor` layout; do not hardcode the legacy `xc-crew-earthshot` session
-- the helper script reads `wrangle_count` from `swarm-state.yaml`, increments it, writes the incremented value back, and then decides the reminder mode from the incremented count
-- if the incremented `wrangle_count` is divisible by 5, the script arms the timer to send `/clear`, submit `Enter`, wait, then send `read the manage-swarm skill, then wrangle the swarm`
-- otherwise it arms the normal `wrangle the swarm` reminder
-- do not hand-roll this logic outside the helper unless the script itself is broken
-- re-arm is not complete until you re-capture the resolved timer pane and verify it is operationally clean (clean prompt plus one current timer arm)
-
-### Wrangle count and periodic context reset
-
-The `wrangle_count` field in `swarm-state.yaml` is owned by `rearm_timer.sh`. The helper increments it after each wrangle pass. When the incremented count is divisible by 5, the wrangler must force a context reset before re-arming to prevent drift:
-
-1. Send `/clear` to the earthshot pane to reset context
-2. After the clear, send the instruction to re-read the manage-swarm skill and wrangle
-
-This ensures the wrangler periodically re-reads its own skill definition from disk rather than drifting from accumulated context.
-
-Every-5th-pass re-arm pattern:
-
-```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/rearm_timer.sh <SECONDS>
-```
-
-Important:
-- the helper script is responsible for injecting `/clear` first, sleeping 1, then sending `Enter` as a separate tmux call
-- the helper script must never paste `/clear` and the wrangle instruction into the same send operation
-- if you bypass the helper and skip the `Enter`, the next injected text will be appended to `/clear` and corrupt the command
-
 ## Review Gate
 
 For code-bearing work, require an opposite-flavor review before calling the work done:
@@ -689,8 +645,8 @@ Pattern:
 Helpers:
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/create_review_bead.sh <epic> <claude|codex> [P1]
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/sling_review.sh <review-bead> <claude|codex> xenota
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/create_review_bead.sh <epic> <claude|codex> [P1]
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/sling_review.sh <review-bead> <claude|codex> xenota
 ```
 
 ## Manual Testing Plan Gate
@@ -708,7 +664,7 @@ The plan must include:
 Helper:
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/nudge_manual_test_plan.sh <name> <epic>
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/nudge_manual_test_plan.sh <name> <epic>
 ```
 
 ## Manual Execution Gate
@@ -726,8 +682,8 @@ If the epic is already hooked to a review worker, create a child bead for manual
 Helpers:
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/create_manual_test_bead.sh <epic> [P1]
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/sling_manual_test.sh <manual-test-bead> <claude|codex> xenota
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/create_manual_test_bead.sh <epic> [P1]
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/sling_manual_test.sh <manual-test-bead> <claude|codex> xenota
 ```
 
 ## Landing
@@ -759,7 +715,7 @@ Current landing formula:
 Helper:
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/sling_landing.sh <epic> <landing-agent> codex xenon '<list>'
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/sling_landing.sh <epic> <landing-agent> codex xenon '<list>'
 ```
 
 ## Reassignment Rule
@@ -773,7 +729,7 @@ Session reset pattern:
 Do NOT kill crew sessions. Instead, use the helper reset script to reset context within the running session:
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <name> '<new assignment>'
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <name> '<new assignment>'
 ```
 
 Do not send text like "your old context is cleared" as a substitute for the actual clear. The script sends `/clear`, submits it via separate `Enter`, waits, and only then injects the new assignment.
@@ -787,7 +743,7 @@ Dedicated landing-worker reassignment rule:
 Landing-worker handoff pattern (via helper):
 
 ```bash
-/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <name> 'Your new active assignment is <landing-bead>. This is a landing task. Read the landing skill / landing formula before taking any landing action. Start immediately and use that formula for this task. Do not switch into implementation or review work unless a real landing blocker forces an explicit reroute. Do not merge on your own authority. When the branch/PR is ready, stop and ask the human for approval before merging.'
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <name> 'Your new active assignment is <landing-bead>. This is a landing task. Read the landing skill / landing formula before taking any landing action. Start immediately and use that formula for this task. Do not switch into implementation or review work unless a real landing blocker forces an explicit reroute. Do not merge on your own authority. When the branch/PR is ready, stop and ask the human for approval before merging.'
 ```
 
 Required landing handoff wording elements:
@@ -834,8 +790,7 @@ Do not silently accept idle workers. Do not park them on research or cleanup unl
 9. **Blocker routing**: If the reply is a blocker, classify it as hard or soft and route the next action immediately.
 10. **Gate conversion**: Convert completed implementation into review via `scripts/create_review_bead.sh` and `scripts/sling_review.sh`, completed review into manual execution via `scripts/create_manual_test_bead.sh` and `scripts/sling_manual_test.sh`, and completed gated stacks into landing handoff via `scripts/sling_landing.sh`.
 11. **Landing handoff**: Hand complete stacks to `land-submodule-stack` and do not allow any other landing path.
-12. **State write**: Read previous `swarm-state.yaml`, build new state, write the updated state file, and output only the changes (transitions, new blockers, idle crew, PR state changes, ready-for-landing). If first run, write `wrangle_count: 0`; the re-arm helper will increment it.
-13. **Reminder re-arm**: Run `scripts/rearm_timer.sh <SECONDS>`. The helper increments `wrangle_count`, then checks whether the incremented count is divisible by 5 and chooses the every-5th-pass re-arm pattern or the normal pattern accordingly.
+12. **State write**: Read previous `swarm-state.yaml`, build new state, write the updated state file, and output only the changes (transitions, new blockers, idle crew, PR state changes, ready-for-landing).
 
 ## Do Not
 

@@ -10,5 +10,5 @@ epic="$1"
 agent="$2"
 priority="${3:-P1}"
 
-cd /Users/jv/gt/xenota/mayor/rig
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && git rev-parse --show-toplevel)"
 exec bd create --silent --parent "$epic" -t task -p "$priority" "Run full ${agent} polecat code review for ${epic}"
