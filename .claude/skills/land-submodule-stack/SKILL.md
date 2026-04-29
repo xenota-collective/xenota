@@ -448,6 +448,27 @@ The script will:
 
 After restart, verify wrangle health by waiting ~30 seconds then checking monitor output for healthy classification of active agents.
 
+### Auto-Restart of the Live xsm Daemon (xc-zmpda.3)
+
+The wrangle-pane restart above re-clears the operator-facing claude-code prompt; the **live xsm daemon** running under `xsm_relaunch_loop.sh` (typically in `xc:0.2` / the pane tagged `@xsm_role=runtime`) is a separate process that also has to pick up the new code. Run the auto-restart hook **after the xenota pointer PR merges** when the xenon diff touched xsm runtime:
+
+```bash
+# Auto-restart hook for the live xsm daemon (xc-zmpda.3)
+if .claude/skills/manage-swarm/scripts/restart_wrangle_if_xsm_changed.sh \
+     <before-sha> <after-sha> xenon >/dev/null 2>&1; then
+  .claude/skills/manage-swarm/scripts/restart_xsm.sh \
+    --source post-merge \
+    --pr "<xenota-pr-ref>" \
+    --sha "<after-sha>"
+fi
+```
+
+- `restart_xsm.sh` sends `SIGTERM` to the running `xsm wrangle` process; `xsm_relaunch_loop.sh` treats `rc=143` (128 + SIGTERM) as a graceful exit alongside `rc=0`/`rc=75` and respawns xsm on the new code within ~3 seconds.
+- Every restart (including no-op runs and timeouts) is appended to `.xsm-local/restart_xsm.log` with `outcome=`, `source=`, `pr=`, `sha=`, and the targeted PIDs so retros can attribute every restart to the merge that prompted it.
+- `xsm_relaunch_loop.sh` also self-detects xsm-affecting SHA changes between iterations as a defence-in-depth fallback (set `XSM_RELAUNCH_LOOP_SHA_CMD=""` to disable; default is `git -C xenon log -1 --format=%H -- packages/xsm/`), so even if this hook misfires the daemon picks up the new code at its next graceful exit.
+
+Acceptance check: after the hook fires, verify the live daemon is on the merged xenon SHA by watching `pgrep -fl 'xsm wrangle'` cycle within 30 seconds of the merge.
+
 ## Handbook Handling
 
 Do not rely on a formula for handbook sync.
