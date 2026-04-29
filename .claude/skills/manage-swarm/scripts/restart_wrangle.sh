@@ -3,7 +3,7 @@ set -euo pipefail
 
 restart_wrangle_health_status() {
   local health_json="$1"
-  jq -er '.status // empty' "$health_json"
+  jq -er '.status // empty' <<<"$health_json"
 }
 
 restart_wrangle_bad_worker_count() {
@@ -11,7 +11,7 @@ restart_wrangle_bad_worker_count() {
   jq -er '
     (.state_counts | objects) as $counts
     | (($counts.stopped // 0) + ($counts.respawn_needed // 0))
-  ' "$health_json"
+  ' <<<"$health_json"
 }
 
 if [[ "${RESTART_WRANGLE_TEST_HELPERS_ONLY:-0}" == "1" ]]; then
@@ -79,32 +79,33 @@ if [[ ! -x "$xsm_bin" ]]; then
   xsm_bin="xsm"
 fi
 
-# Wait up to 60s for health
+# Wait up to 60s for health. Capture monitor JSON in-process per iteration so
+# concurrent restart_wrangle invocations cannot race on a shared file (xc-1xc8).
 for i in {1..12}; do
   sleep 5
-  health_json="$repo_root/.xsm-local/log/restart_health.json"
-  if "$xsm_bin" monitor --config "$xsm_config" --once --json > "$health_json" 2>/dev/null; then
-    if ! status="$(restart_wrangle_health_status "$health_json" 2>/dev/null)"; then
-      echo "restart_wrangle: XSM health JSON missing or malformed status. Waiting..."
+  if ! health_json="$("$xsm_bin" monitor --config "$xsm_config" --once --json 2>/dev/null)" \
+      || [[ -z "$health_json" ]]; then
+    echo "restart_wrangle: xsm monitor failed or timed out. Waiting..."
+    continue
+  fi
+  if ! status="$(restart_wrangle_health_status "$health_json" 2>/dev/null)"; then
+    echo "restart_wrangle: XSM health JSON missing or malformed status. Waiting..."
+    continue
+  fi
+  if [[ "$status" == "ready" ]]; then
+    # Check if any workers are in bad states
+    if ! bad_workers="$(restart_wrangle_bad_worker_count "$health_json" 2>/dev/null)"; then
+      echo "restart_wrangle: XSM health JSON missing or malformed state_counts. Waiting..."
       continue
     fi
-    if [[ "$status" == "ready" ]]; then
-      # Check if any workers are in bad states
-      if ! bad_workers="$(restart_wrangle_bad_worker_count "$health_json" 2>/dev/null)"; then
-        echo "restart_wrangle: XSM health JSON missing or malformed state_counts. Waiting..."
-        continue
-      fi
-      if [[ "${bad_workers:-0}" -eq 0 ]]; then
-        echo "restart_wrangle: XSM is healthy and all workers are active."
-        exit 0
-      else
-        echo "restart_wrangle: XSM is ready but $bad_workers workers need attention (stopped/respawn_needed). Waiting..."
-      fi
+    if [[ "${bad_workers:-0}" -eq 0 ]]; then
+      echo "restart_wrangle: XSM is healthy and all workers are active."
+      exit 0
     else
-      echo "restart_wrangle: XSM status is $status. Waiting..."
+      echo "restart_wrangle: XSM is ready but $bad_workers workers need attention (stopped/respawn_needed). Waiting..."
     fi
   else
-    echo "restart_wrangle: xsm monitor failed or timed out. Waiting..."
+    echo "restart_wrangle: XSM status is $status. Waiting..."
   fi
 done
 
