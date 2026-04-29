@@ -23,6 +23,10 @@ fi
 session="${1:-xc}"
 
 # Read role startup prompts from the strategy file used by xsm.
+# The supervisor/landing command allowlists live in the corresponding
+# role_packages.<role>.startup_prompt text in that strategy. To allow a new
+# maintenance command, add it there, restart the lane with this script, and
+# verify the pane shows bypass permissions plus a successful command run.
 # Use awk (POSIX) instead of pyyaml so this works on a fresh box.
 strategy_path="$repo_root/.xsm-local/strategies/live-backlog.yaml"
 if [[ ! -f "$strategy_path" ]]; then

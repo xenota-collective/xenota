@@ -99,6 +99,8 @@ Operator hard rules:
 - For Python package work under `xenon/packages/*`, default to `uv run --project <package> --group dev ...` instead of bare `pytest` or ad hoc `pip` flows.
 - If the package imports sibling modules such as `nucleus`, set `PYTHONPATH` explicitly before running commands.
 - For the live XSM daemon specifically, prefer the checked-out runtime at `xenon/packages/xsm/.venv/bin/xsm`. Do not assume a global `xsm` binary is current.
+- `bd sync` is not a valid beads command. After creating, updating, or closing beads, run `bd dolt push` and verify it reports a successful push.
+- Supervisor and landing Codex command allowlists are carried in `.xsm-local/strategies/live-backlog.yaml` under `role_packages.<role>.startup_prompt`. After adding a maintenance command there, restart the role with `scripts/start_supervisor_and_landing.sh` and verify the pane shows bypass permissions plus a successful command run.
 
 This skill is for operational wrangling, not implementation:
 - assign epics or child beads across crew
