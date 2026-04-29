@@ -46,5 +46,11 @@ output=$(XSM_RESTART_AUDIT_LOG="$audit2" XSM_RESTART_PS_OUTPUT="456 unrelated pr
 assert_contains "no-running-output" "no running xsm wrangle process found" "$output"
 assert_contains "no-running-audit" '"status":"no_running_wrangle"' "$(cat "$audit2")"
 
+audit3="$tmpdir/empty-pr.jsonl"
+output=$(XSM_RESTART_AUDIT_LOG="$audit3" XSM_RESTART_PS_OUTPUT="456 unrelated process" \
+  "$script_dir/restart_xsm.sh" --repo-root "$repo_root" --config "$config" --reason test --pr "" --sha abc123 --dry-run 2>&1)
+assert_contains "empty-pr-output" "no running xsm wrangle process found" "$output"
+assert_contains "empty-pr-audit" '"pr_ref":""' "$(cat "$audit3")"
+
 echo
 echo "All restart_xsm tests passed."

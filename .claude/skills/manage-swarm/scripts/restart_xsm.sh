@@ -18,7 +18,11 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --pr|--pr-ref)
-      pr_ref="${2:?restart_xsm: --pr requires a value}"
+      if [[ $# -lt 2 ]]; then
+        echo "restart_xsm: --pr requires a value" >&2
+        exit 2
+      fi
+      pr_ref="$2"
       shift 2
       ;;
     --sha|--sha-ref)
