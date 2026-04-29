@@ -19,6 +19,7 @@ It replaces the old landing formula path for submodule-backed stacks.
 
 ## Core Rules
 
+- **Fast-track precedence (xc-zmpda)**: before picking the next landing-ready stack, query `bd list --json` for any open or in-progress bead carrying the `fast-track` label. Resolve each fast-track bead's PR stack via standard branch-name-to-PR matching. A fast-track stack lands before any non-fast-track stack including P0; if a fast-track stack is ready, it is the next landing unit regardless of what else is queued. If a fast-track stack is DIRTY, attempt the standard one-rebase recovery before moving on; do not silently skip fast-track stacks for normal flow.
 - Treat the full stack as one landing unit.
 - Start with a **full design council code review** of the landing-ready code stack before you land it.
 - Do not merge submodule PRs until the top-level landing branch is prepared and understood.
@@ -122,6 +123,18 @@ Rules for the sterile worktree path:
 - If worktree creation itself fails (path already exists, submodule init fails, `<landing-branch>` missing), emit `escalate_to_human` with the failing step rather than improvising.
 
 ## Landing Order
+
+### 0. Fast-Track Precedence (xc-zmpda)
+
+Before verifying readiness on the next ordinary stack, run the fast-track query:
+
+```bash
+bd list --json | jq '[.[] | select((.status == "open" or .status == "in_progress") and (.labels // [] | index("fast-track")))]'
+```
+
+For every fast-track bead returned, resolve its PR stack via standard branch-name-to-PR matching across `xenota-collective/xenon`, `xenota-collective/handbook`, and `xenota-collective/xenota`. If any fast-track stack is landing-ready (or can be made ready by the standard one-rebase recovery), it becomes the next landing unit, regardless of what other stacks are queued.
+
+A fast-track stack lands before any non-fast-track stack including P0. If a fast-track stack is genuinely DIRTY after the standard recovery attempt, file/update a landing-blocker bead via the standard helper and continue to the next fast-track candidate before falling back to ordinary precedence.
 
 ### 1. Verify Readiness
 
