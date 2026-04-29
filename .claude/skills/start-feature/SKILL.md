@@ -70,6 +70,20 @@ git push --force-with-lease
 - If you get blocked, update the bead with the exact blocker
 - Do NOT close the bead yourself. Closing happens after PR review and landing.
 
+## Polling Rules (xc-zojv)
+
+When you need to poll for an external event — CI completion, a SHA appearing on a branch, a file showing up — **always wrap the wait with a wall-clock deadline**:
+
+```bash
+# CORRECT: bounded wait
+timeout 30m bash -c 'until [[ $(gh run list --jq ".[0].headSha") == abc123* ]]; do sleep 6; done'
+
+# WRONG: unbounded — survives parent restart, polls forever
+until [[ $(gh run list --jq ".[0].headSha") == abc123* ]]; do sleep 6; done
+```
+
+If you use Claude's Bash tool with `run_in_background: true`, the rule is the same: wrap with `timeout`. Detached shells without a deadline orphan when the watched condition never becomes true (force-pushed branch, never-running workflow, restarted parent), and they keep firing `gh` + `jq` subprocesses indefinitely. The XSM hygiene reaper kills them after 1h, but you should not rely on that — write the deadline yourself.
+
 ## What Not To Do
 
 - Do not push to main under any circumstances
@@ -78,3 +92,4 @@ git push --force-with-lease
 - Do not work on a bead without updating its status
 - Do not leave a branch with failing tests
 - Do not squash your branch history before review — the reviewer wants to see the progression
+- Do not background `until ... do sleep ... done` polls without `timeout` (xc-zojv)

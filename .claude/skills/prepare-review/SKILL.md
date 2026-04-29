@@ -110,6 +110,26 @@ bd comments add <BEAD> "PR created: xenon#<number> - ready for review"
    - Push new commits (do not force-push over review comments)
    - Comment on the PR when changes are ready for re-review
 
+## Polling for CI (xc-zojv)
+
+If you need to wait for CI to finish before merging, **always bound the wait with a wall-clock timeout**. Bare `until ... do sleep ... done` shells started via the Bash tool's `run_in_background: true` mode survive parent session restarts and poll forever, burning the fd budget.
+
+Prefer `gh pr checks --watch` (which exits when checks complete) over a hand-rolled `until` loop:
+
+```bash
+# CORRECT: gh blocks until done, timeout caps the wall-clock
+timeout 30m gh pr checks <PR> --watch
+
+# WRONG: redundant loop around --watch and unbounded if you forget timeout
+until gh pr checks <PR> --watch | grep -q completed; do sleep 30; done
+```
+
+If you genuinely need an `until` loop (polling for a non-CI condition), wrap it with `timeout`:
+
+```bash
+timeout 30m bash -c 'until <test>; do sleep <n>; done'
+```
+
 ## What Not To Do
 
 - Do not create a PR with failing tests
@@ -119,3 +139,4 @@ bd comments add <BEAD> "PR created: xenon#<number> - ready for review"
 - Do not squash commits before review
 - Do not create a PR without a bead reference in the title
 - Do not push directly to main instead of creating a PR
+- Do not background `until ... do sleep ... done` polls without `timeout` (xc-zojv)
