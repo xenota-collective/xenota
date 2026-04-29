@@ -37,6 +37,8 @@ From `WORKER PANE SNAPSHOTS`, read each worker's last 30 lines and classify one 
 
 If a pane shows `Blocker: HARD` or `Human approval needed` the worker is correctly escalating, not stuck.
 
+**Codex placeholder rule (do not misclassify).** Codex's input area always shows a rotating template suggestion when the input box is empty — `› Implement {feature}`, `› Improve documentation in @filename`, `› Use /skills to list available skills`, `› Summarize recent commits`, `› Find and fix a bug in @filename`, etc. These appear regardless of whether the agent is processing or idle. Do NOT classify a codex pane based on the placeholder. Look ABOVE the placeholder for the activity indicator: `Working (Nm Ns • esc to interrupt)`, fresh tool calls, or progress output. If neither activity indicator nor recent output is present, the lane is `parked_unassigned`. The same applies to gemini's `* Type your message or @path/to/file` and claude's empty `❯` prompt — the empty-prompt prompt is not the state, it's the template.
+
 ### Repetition check
 
 From `RESET_AND_ASSIGN REPETITION CHECK`, any agent+bead with count >= 3 is unproductive wrangling. Flag it.

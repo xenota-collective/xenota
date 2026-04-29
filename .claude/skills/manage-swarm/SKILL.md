@@ -108,6 +108,28 @@ Operator gate resolution policy (xsm/supervisor must apply this in-band):
 - **Any other gate**: capture the pane scrollback, infer the answer, send the keystroke, verify clear by recapturing.
 - **If the gate genuinely requires information not visible in the pane**: file a bd bead with the captured snippet AND assign a different bead to the same worker so they keep moving. Do NOT leave the worker parked.
 
+### Operator-intervention RCA rule
+
+Every gate resolved by the wrangler is evidence that supervisor (or xsm) failed to catch it. The wrangler is the safety net for tiers 1 and 2 (xsm and supervisor) — when a gate reaches tier 3, that is a tier-1/tier-2 failure by definition.
+
+For each in-band intervention — modal dismiss, permission dialog, merge approval, rebase-or-route decision, raw-tmux emergency recovery, manually answering a `gh pr create` shell prompt, etc. — the wrangler MUST produce a same-pass RCA row matching the Step 0 schema:
+
+| Gate resolved | Why it reached the wrangler (one line of evidence) | Tier that should have caught it (xsm / supervisor) | Existing bead, or NEW bead filed (id) |
+
+Rules:
+- If the gate has no covering bead in the open backlog, file one in the same wrangle pass via `bd create` before moving on.
+- If multiple gates share the same upstream gap (e.g. supervisor doesn't enumerate landing lanes), file ONE bead and reference it on each row.
+- "I just resolved the gate" without an RCA row is incomplete operator work. The tactical action and the upstream-tier diagnosis are a single unit; recording one without the other guarantees the same gate reaches the wrangler again next pass.
+
+The diagnostic question is identical to Step 0 of the Default Manage-Swarm Loop: *which tier should have caught this, and what changes so it does next time?* Pattern-match against:
+
+- xsm classifier didn't recognise the modal/state → file an xsm-classifier bead with a captured fixture
+- supervisor patrol enumeration excluded the lane → file a strategy/patrol bead
+- supervisor patrol allowlist excluded the gate-resolution command → file an allowlist-expansion bead
+- gate type is genuinely undefined in policy → update the operator-gate resolution policy above and file a bead to teach xsm the new state
+
+Skipping this rule produces the exact failure mode this skill exists to prevent: the wrangler tactically unblocks the swarm while the upstream tier stays broken, and the same gate keeps surfacing on every pass.
+
 ## Escalation tier philosophy
 
 Keeping workers moving is owned strictly in this order. Each tier is the safety net for the previous one. Don't nudge across tiers — fix the layer where the failure originated.
@@ -320,6 +342,8 @@ Conflict rule:
 
 ## Crew Allocation
 
+**Gate**: Step 0 (Root-cause pass) of the Default Manage-Swarm Loop must be complete for every idle lane before any helper in this section runs. If a worker is idle and no row exists for them in the root-cause table, stop and run Step 0 first. Tactical assignment without diagnosis re-creates the same idle state next pass.
+
 When splitting work across crew:
 - assign one epic per crew member unless there is a good reason to split smaller
 - require a feature branch and PR-based landing for each workstream
@@ -469,6 +493,20 @@ Intervention ladder:
    - do this serially, one lane at a time
    - if a worker remains a repeat offender across multiple wrangle passes, use the helper reset script once, re-capture, and if the pane still sits idle classify the lane as `failed reset`
    - do NOT kill crew sessions except for fd-pressure respawns or the established emergency recovery path
+2.5. `raw-tmux dispatch (helper-broken lanes)`
+   - trigger: `clear_and_assign.sh` or `send_worker_message.sh` returns a delivery failure that maps to a tracked open bead — e.g. `Worker is busy (✦ I have completed ...)` (xc-wvwdx, gemini wait-idle classifier sparkle), `idle_after_send / keystrokes likely not received tui=gemini` (xc-4uhlk, gemini Enter delivery), `verification reports passed` but pane still shows codex template (xc-gwxl4, codex Enter silently dropped post-`/clear`)
+   - do NOT stop, do NOT escalate to a separate human, do NOT classify as `failed reset` yet — the helper layer is broken on this lane class, not the lane itself
+   - skip `/clear` (it's the trigger of the bug for these classes); just deliver the assignment text directly:
+     ```bash
+     tmux send-keys -t <pane-id> -l '<single-line assignment text>'
+     sleep 1
+     tmux send-keys -t <pane-id> C-m
+     ```
+   - prefer `C-m` over `Enter` (gemini and codex both occasionally swallow `Enter` at fresh-welcome / post-`/clear`; `C-m` works in those states per xc-4uhlk's fix-proposal hint)
+   - capture the pane after a 5–8 second pause via `capture_pane.sh` and verify positive motion: a `Working`, `Thinking`, `Mulling`, `Transmuting`, `Frolicking`, or equivalent indicator above the placeholder line; OR fresh tool calls / file reads in the scrollback
+   - the codex placeholder line (`› Implement {feature}`, `› Improve documentation in @filename`, `› Use /skills to list available skills`, etc.) is the input-area template — its presence does NOT mean the agent is idle, only that the input is empty. Always look above it for the activity indicator.
+   - reference the tracked bead in the wrangle output for every raw-tmux dispatch (so the system gap is documented even though the lane is moving)
+   - only after a raw-tmux dispatch ALSO fails twice in a row (no motion across two captures) is the lane `failed reset`
 3. `reconfigure task plan and reassign`
    - if the current owner cannot productively advance the slice
    - break the work into a more concrete next bead, reroute ownership via `assign_bead.sh`, or move the worker to a better-fit slice
@@ -577,6 +615,8 @@ wrangle: 2 transitions, 1 idle crew reassigned, 1 P0 alert
 ```
 
 The full state lives in `swarm-state.yaml`. The user can read it directly if they want detail. The wrangle output is a changelog, not a report.
+
+**Anti-pattern: "operator action items" lists.** A wrangle pass that ends with a list of things the operator should do is a wrangle that has failed at its prime directive — xsm/supervisor/wrangler IS the operator. There is no separate human to escalate to in-band. If the wrangle output contains phrases like "Top operator-action items", "needs operator approval", "blocked on human", etc. for state that the wrangler can resolve via raw-tmux dispatch, bead updates, or in-session approval, go back and resolve them now. The wrangle output is a changelog of state transitions and assignments, not a help-wanted ad.
 
 ### Ready for landing
 
@@ -709,6 +749,8 @@ Helper:
 
 ## Reassignment Rule
 
+**Gate**: Step 0 (Root-cause pass) of the Default Manage-Swarm Loop must be complete for the lane being reassigned. If "the worker is idle" is the entire diagnosis, the diagnosis is incomplete — find the system gap that left them idle, file or reference its bead, then reassign.
+
 If a crew member finishes or reaches a real wait-state:
 - reassign them immediately
 - if the old context is heavy, clear/restart the session first via `clear_and_assign.sh`
@@ -748,6 +790,7 @@ For Claude sessions that may be in vim mode:
 
 Every allocation decision — whether assigning idle crew, preempting, or choosing the next slice — follows this strict priority cascade:
 
+0. **Blocker-bead assignment (highest leverage when applicable)** — if a lane is parked because of a tracked delivery / classifier / driver bug (the worker is feeling the bug right now), the highest-leverage assignment for that worker is the bead that fixes their own blocker. Examples: a gemini lane whose helper deliveries are refused by xc-wvwdx → assign gemini lane to xc-wvwdx; a codex lane whose post-`/clear` Enter is silently dropped (xc-gwxl4) → assign codex lane to xc-gwxl4. This converts a parked lane into urgent productive work and gives the bug skin-in-the-game ownership by someone who can reproduce it on demand. Skip this tier only when the worker driver / skills genuinely don't fit the bead (e.g. don't put a landing-only lane on a feature implementation just because the bug bites them too — landing stays landing).
 1. **P0 beads** — absolute top priority, any open or in-progress P0 regardless of parent epic
 2. **Assigned epic children** — any workable bead within the currently hooked/assigned epic and its full child tree, ordered by priority within that tree
 3. **Standalone P1 beads** — any P1 bead that is not a child of the assigned epic (e.g. standalone tasks, bugs, follow-ups)
@@ -767,6 +810,20 @@ Do not silently accept idle workers. Do not park them on research or cleanup unl
 
 ## Default Manage-Swarm Loop
 
+0. **Root-cause pass (gate before any tactical action)**: Before invoking any reassignment, nudge, or `/clear` helper, produce a root-cause table for every idle / off-mission / parked-unassigned / stalled lane discovered by `review-swarm` or by direct pane capture. The table is mandatory — not optional — and must be emitted in chat before Step 1 runs.
+
+   Required columns per lane:
+
+   | Lane | Why idle (one line of evidence) | Which tier should have caught it (xsm / supervisor / wrangler) | Existing bead, or NEW bead filed (id) |
+
+   Rules:
+   - Every idle lane must map to either an existing open bead that covers the system gap, OR a new bead filed in this same pass via `bd create`. "I'll just reassign them" is not an acceptable row.
+   - If two or more lanes share the same root cause, file ONE bead and reference it on each row.
+   - If the root cause is "xsm classifier didn't recognize state X" or "supervisor patrol missing pass Y" or "dispatcher race Z", that is a tier-1 or tier-2 system gap and MUST be filed as a bead before tactical reassignment proceeds.
+   - If after honest investigation the only root cause is "the backlog was empty for this lane's role" or "the worker hit token quota", record that and proceed; those are the only two legitimate idle causes per the escalation tier philosophy above.
+
+   This step exists because the wrangler tier (this skill) is the safety net for xsm and supervisor failures. Skipping straight to `clear_and_assign.sh` masks the underlying tier-1/tier-2 gap and guarantees the same idle pattern recurs next pass. Two consecutive cycles of nudging without root-cause work = system failure.
+
 1. **P0 scan**: Check for any open or in-progress P0 beads with `scripts/p0_scan.sh`. If any exist without an active worker, they take priority over everything below. Assign immediately, preempting lower-priority lanes if needed.
 2. **Bead pass**: List all children of the hooked epic via `scripts/bead_show.sh`. For each non-closed bead, check status, assignee, PR state, and classify.
 3. **Crew pass**: For each crew member, capture pane via `scripts/capture_pane.sh`, check hook via `scripts/crew_status.sh`, branch, and classify. Identify idle crew.
@@ -774,6 +831,7 @@ Do not silently accept idle workers. Do not park them on research or cleanup unl
 5. **Gate pass**: Check active review/manual-test/landing polecats and active gate owners via `scripts/polecat_list.sh` and `scripts/crew_status.sh`.
 6. **Active-bead verification**: For each active bead, verify there is a worker actively moving it now or an explicit active dependency via `scripts/lane_snapshot.sh`.
 7. **Take over stale lanes serially**: For each stale lane, run the serialized lane takeover flow one lane at a time: capture -> reset with `scripts/clear_and_assign.sh` -> one assignment with one first step -> re-capture -> classify moving vs `failed reset`.
+7.5. **Raw-tmux fallback for helper-broken lanes**: If a step-7 helper call fails with a delivery error tied to a tracked open bead (xc-wvwdx wait-idle classifier sparkle, xc-4uhlk gemini Enter delivery, xc-gwxl4 codex Enter silently dropped, etc.), do not stop and do not escalate to a separate human. Walk the rung-2.5 raw-tmux dispatch path from the Intervention ladder: skip `/clear`, deliver via `tmux send-keys -t <pane> -l '<message>'` then `tmux send-keys -t <pane> C-m`, capture and verify motion, reference the tracked bead in the wrangle output. This is mandatory before any lane is classified `failed reset`.
 8. **Blocker routing**: If the reply is a blocker, classify it as hard or soft and route the next action immediately.
 9. **Gate conversion**: Convert completed implementation into review via `scripts/create_review_bead.sh` and `scripts/sling_review.sh`, completed review into manual execution via `scripts/create_manual_test_bead.sh` and `scripts/sling_manual_test.sh`, and completed gated stacks into landing handoff via `scripts/sling_landing.sh`.
 10. **Landing handoff**: Hand complete stacks to `land-submodule-stack` and do not allow any other landing path.
