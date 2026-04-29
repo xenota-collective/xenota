@@ -65,6 +65,7 @@ exit 0
 ")
 config="$tmpdir/cfg"
 echo "{}" >"$config"
+export XSM_RELAUNCH_DISABLE_PATH_POLL=1
 
 # Backoff = 0 to keep the test fast. Cap = 3 so loop stops at 4 iterations.
 output=$(xsm_relaunch_loop "$fake_graceful" "$config" 0 3 2>&1)
@@ -128,6 +129,53 @@ assert_eq "cap-1-loop-rc" 0 "$final_rc"
 # initial + 1 relaunch) before stopping.
 assert_eq "cap-1-loop-iterations" 2 "$final_count"
 assert_contains "cap-1-loop-cap-message" "restart cap reached" "$output"
+
+unset XSM_RELAUNCH_DISABLE_PATH_POLL
+
+# Case 5: packages/xsm path change while xsm is running terminates the child
+# and relaunches without touching the live daemon.
+repo_root="$tmpdir/repo"
+mkdir -p "$repo_root/xenon/packages/xsm/src/xsm" "$repo_root/.xsm-local"
+git -C "$repo_root/xenon" init -q
+git -C "$repo_root/xenon" config user.email "test@example.invalid"
+git -C "$repo_root/xenon" config user.name "test"
+echo "one" >"$repo_root/xenon/packages/xsm/src/xsm/marker.py"
+git -C "$repo_root/xenon" add packages/xsm/src/xsm/marker.py
+git -C "$repo_root/xenon" commit -q -m initial
+
+config5="$repo_root/.xsm-local/swarm-backlog.yaml"
+echo "{}" >"$config5"
+counter_file5="$tmpdir/case5_count"
+echo 0 >"$counter_file5"
+fake_path_change=$(make_fake_xsm "path_change" "
+trap 'exit 75' TERM
+count=\$(cat \"$counter_file5\")
+count=\$((count + 1))
+echo \"\$count\" >\"$counter_file5\"
+if [ \"\$count\" -eq 1 ]; then
+  while true; do sleep 0.1; done
+fi
+exit 5
+")
+audit_log="$tmpdir/restarts.jsonl"
+(
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    [[ "$(cat "$counter_file5")" == "1" ]] && break
+    sleep 0.1
+  done
+  echo "two" >"$repo_root/xenon/packages/xsm/src/xsm/marker.py"
+  git -C "$repo_root/xenon" add packages/xsm/src/xsm/marker.py
+  git -C "$repo_root/xenon" commit -q -m second
+) &
+updater_pid=$!
+final_rc=0
+output=$(XSM_RELAUNCH_AUDIT_LOG="$audit_log" xsm_relaunch_loop "$fake_path_change" "$config5" 0 4 "$repo_root" 0.1 2>&1) || final_rc=$?
+wait "$updater_pid"
+final_count=$(cat "$counter_file5")
+assert_eq "path-change-final-rc" 5 "$final_rc"
+assert_eq "path-change-relaunch-count" 2 "$final_count"
+assert_contains "path-change-message" "packages/xsm sha changed" "$output"
+assert_contains "path-change-audit" "relaunch_loop_path_change" "$(cat "$audit_log")"
 
 echo
 echo "All xsm_relaunch_loop tests passed."
