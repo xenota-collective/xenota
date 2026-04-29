@@ -772,6 +772,7 @@ For Claude sessions that may be in vim mode:
 
 Every allocation decision — whether assigning idle crew, preempting, or choosing the next slice — follows this strict priority cascade:
 
+0. **Fast-track beads** — preemptive priority for bugs that break the swarm. Reserved for bugs that actively degrade swarm dispatch, landing, or safety-net function. These preempt all other work, including P0s.
 1. **P0 beads** — absolute top priority, any open or in-progress P0 regardless of parent epic
 2. **Assigned epic children** — any workable bead within the currently hooked/assigned epic and its full child tree, ordered by priority within that tree
 3. **Standalone P1 beads** — any P1 bead that is not a child of the assigned epic (e.g. standalone tasks, bugs, follow-ups)
@@ -791,18 +792,19 @@ Do not silently accept idle workers. Do not park them on research or cleanup unl
 
 ## Default Manage-Swarm Loop
 
-1. **P0 scan**: Check for any open or in-progress P0 beads with `scripts/p0_scan.sh`. If any exist without an active worker, they take priority over everything below. Assign immediately, preempting lower-priority lanes if needed.
-2. **Bead pass**: List all children of the hooked epic via `scripts/bead_show.sh`. For each non-closed bead, check status, assignee, PR state, and classify.
-3. **Crew pass**: For each crew member, capture pane via `scripts/capture_pane.sh`, check hook via `scripts/crew_status.sh`, branch, and classify. Identify idle crew.
-4. **Idle crew reallocation**: For each idle crew member, walk the Work Priority Order top to bottom. Assign the first workable bead found via `scripts/clear_and_assign.sh`. If no workable bead exists at any tier, escalate to the human immediately — do not leave the crew member parked.
-5. **Gate pass**: Check active review/manual-test/landing polecats and active gate owners via `scripts/polecat_list.sh` and `scripts/crew_status.sh`.
-6. **Active-bead verification**: For each active bead, verify there is a worker actively moving it now or an explicit active dependency via `scripts/lane_snapshot.sh`.
-7. **Take over stale lanes serially**: For each stale lane, run the serialized lane takeover flow one lane at a time: capture -> reset with `scripts/clear_and_assign.sh` -> one assignment with one first step -> re-capture -> classify moving vs `failed reset`.
-8. **Blocker routing**: If the reply is a blocker, classify it as hard or soft and route the next action immediately.
-9. **Gate conversion**: Convert completed implementation into review via `scripts/create_review_bead.sh` and `scripts/sling_review.sh`, completed review into manual execution via `scripts/create_manual_test_bead.sh` and `scripts/sling_manual_test.sh`, and completed gated stacks into landing handoff via `scripts/sling_landing.sh`.
-10. **Landing handoff**: Hand complete stacks to `land-submodule-stack` and do not allow any other landing path.
-11. **State write**: Read previous `swarm-state.yaml`, build new state, write the updated state file, and output only the changes (transitions, new blockers, idle crew, PR state changes, ready-for-landing). If first run, write `wrangle_count: 0`; the re-arm helper will increment it.
-12. **Reminder re-arm**: Run `scripts/rearm_timer.sh <SECONDS>`. The helper increments `wrangle_count`, then checks whether the incremented count is divisible by 5 and chooses the every-5th-pass re-arm pattern or the normal pattern accordingly.
+1. **Fast-track scan**: Check for any open or in-progress beads with the `fast-track` label (e.g., `bd list --labels=fast-track`). If any exist without an active worker, they take priority over EVERYTHING, including P0s. Assign immediately, preempting any lower-priority lane if needed.
+2. **P0 scan**: Check for any open or in-progress P0 beads with `scripts/p0_scan.sh`. If any exist without an active worker, they take priority over everything below. Assign immediately, preempting lower-priority lanes if needed.
+3. **Bead pass**: List all children of the hooked epic via `scripts/bead_show.sh`. For each non-closed bead, check status, assignee, PR state, and classify.
+4. **Crew pass**: For each crew member, capture pane via `scripts/capture_pane.sh`, check hook via `scripts/crew_status.sh`, branch, and classify. Identify idle crew.
+5. **Idle crew reallocation**: For each idle crew member, walk the Work Priority Order top to bottom. Assign the first workable bead found via `scripts/clear_and_assign.sh`. If no workable bead exists at any tier, escalate to the human immediately — do not leave the crew member parked.
+6. **Gate pass**: Check active review/manual-test/landing polecats and active gate owners via `scripts/polecat_list.sh` and `scripts/crew_status.sh`.
+7. **Active-bead verification**: For each active bead, verify there is a worker actively moving it now or an explicit active dependency via `scripts/lane_snapshot.sh`.
+8. **Take over stale lanes serially**: For each stale lane, run the serialized lane takeover flow one lane at a time: capture -> reset with `scripts/clear_and_assign.sh` -> one assignment with one first step -> re-capture -> classify moving vs `failed reset`.
+9. **Blocker routing**: If the reply is a blocker, classify it as hard or soft and route the next action immediately.
+10. **Gate conversion**: Convert completed implementation into review via `scripts/create_review_bead.sh` and `scripts/sling_review.sh`, completed review into manual execution via `scripts/create_manual_test_bead.sh` and `scripts/sling_manual_test.sh`, and completed gated stacks into landing handoff via `scripts/sling_landing.sh`.
+11. **Landing handoff**: Hand complete stacks to `land-submodule-stack` and do not allow any other landing path.
+12. **State write**: Read previous `swarm-state.yaml`, build new state, write the updated state file, and output only the changes (transitions, new blockers, idle crew, PR state changes, ready-for-landing). If first run, write `wrangle_count: 0`; the re-arm helper will increment it.
+13. **Reminder re-arm**: Run `scripts/rearm_timer.sh <SECONDS>`. The helper increments `wrangle_count`, then checks whether the incremented count is divisible by 5 and chooses the every-5th-pass re-arm pattern or the normal pattern accordingly.
 
 ## Do Not
 
