@@ -37,6 +37,14 @@ Do not run the live manager in any pane other than the one tagged `@xsm_role=run
 tmux list-panes -s -t xc -F '#{pane_id} #{@xsm_role}' | awk '$2=="runtime"{print $1}'
 ```
 
+After a landed xenon pointer updates XSM code, prefer the signal-only restart path:
+
+```bash
+/Users/jv/gt/xenota/crew/earthshot/.claude/skills/manage-swarm/scripts/restart_xsm.sh --reason post-merge-xsm-change --sha <xenon-sha>
+```
+
+This sends SIGTERM only to the active `xsm wrangle` child and relies on `xsm_relaunch_loop.sh` to respawn on the new code. It also appends restart evidence to `.xsm-local/log/xsm-restarts.jsonl`.
+
 For worker-lane resets, use the helper script in this skill:
 
 ```bash

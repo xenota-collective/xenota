@@ -443,8 +443,10 @@ Run the detection script with the before and after xenon submodule SHAs:
 
 The script will:
 1. Diff the two xenon commits for changes under `packages/xsm/`
-2. If XSM-affecting changes are found, validate the repo-local `packages/xsm/.venv/bin/xsm` runtime and restart wrangle
+2. If XSM-affecting changes are found, validate the repo-local `packages/xsm/.venv/bin/xsm` runtime and call `restart_xsm.sh`
 3. If no XSM changes, skip silently
+
+`restart_xsm.sh` sends SIGTERM to the active `xsm wrangle` child so `xsm_relaunch_loop.sh` can relaunch on the new checkout, and appends an audit record to `.xsm-local/log/xsm-restarts.jsonl`. Do not kill daemons manually during landing; use this script path.
 
 After restart, verify wrangle health by waiting ~30 seconds then checking monitor output for healthy classification of active agents.
 

@@ -87,10 +87,12 @@ refresh_xenon_pointer() {
     echo "$(date -u +%H:%M:%S) top-level pull/rebase failed; continuing poll loop"
     return 1
   fi
+  before_xenon_sha=$(git -C xenon rev-parse HEAD 2>/dev/null || true)
   if ! git -C xenon fetch origin || ! git -C xenon checkout origin/main; then
     echo "$(date -u +%H:%M:%S) xenon fetch/checkout failed; continuing poll loop"
     return 1
   fi
+  after_xenon_sha=$(git -C xenon rev-parse HEAD 2>/dev/null || true)
   git add xenon
   if git diff --cached --quiet -- xenon; then
     echo "$(date -u +%H:%M:%S) xenon pointer already current"
@@ -101,6 +103,12 @@ refresh_xenon_pointer() {
     else
       echo "$(date -u +%H:%M:%S) pointer commit failed; continuing poll loop"
     fi
+  fi
+  if [ -n "${before_xenon_sha:-}" ] && [ -n "${after_xenon_sha:-}" ] && [ "$before_xenon_sha" != "$after_xenon_sha" ]; then
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    XSM_RESTART_REASON=landing-poll-post-merge \
+      "$script_dir/restart_wrangle_if_xsm_changed.sh" "$before_xenon_sha" "$after_xenon_sha" xenon \
+      || echo "$(date -u +%H:%M:%S) XSM restart check failed; continuing poll loop"
   fi
 }
 
