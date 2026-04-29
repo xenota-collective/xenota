@@ -2,6 +2,5 @@
   "database": "xc",
   "backend": "dolt",
   "dolt_mode": "embedded",
-  "dolt_database": "xc",
-  "project_id": "7a196750-c4bf-45f6-ada7-18b972681ca1"
+  "dolt_database": "xc"
 }
