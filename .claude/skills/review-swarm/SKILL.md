@@ -17,6 +17,26 @@ Run the collection script. It gathers all signals in one pass:
 
 The script outputs labelled sections for: xsm process, daemon pane, latest wrangle run, non-noop events, leader escalations, repetition check, worker panes, swarm-backlog.yaml, xr smoke check, bd beads, and open PRs.
 
+### Evidence bounds
+
+Treat the collection script as the broad pass. After that, only run targeted
+follow-up commands against the specific run ID, bead ID, PR number, or worker
+lane you are investigating.
+
+Do not run recursive `rg` over `.xsm-local/`, all wrangle runs, or the whole
+repo for broad terms like `improvement`, `adaptive`, or `health issue` unless
+you first name the bounded file set and pattern. Those searches pull in full
+pane transcripts and consume the context needed for judgment.
+
+Good follow-up patterns:
+
+```bash
+jq 'select(.event_type == "health_issue")' .xsm-local/log/swarm-backlog/wrangle-runs/<run-id>/events.jsonl | tail -20
+rg -n --max-count 20 "interrupt_guard_blocked" .xsm-local/log/swarm-backlog/wrangle-runs/<run-id>/events.jsonl
+bd show <bead-id> --json | jq '.[0] | {id,title,status,labels,comments}'
+gh pr view <number> --repo xenota-collective/xenon --json number,state,mergeStateStatus,reviews,comments
+```
+
 ## Step 2: Interpret the data
 
 Read the full script output, then produce a tight report using only these judgment calls:
