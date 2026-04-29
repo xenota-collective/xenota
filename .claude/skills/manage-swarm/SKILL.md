@@ -1,11 +1,21 @@
 ---
 name: manage-swarm
-description: Coordinate multiple Xenota crew workers and polecats across implementation, review, manual testing, and landing. Use when managing the swarm across crew, dispatching epics across crew, keeping workers unblocked and moving, enforcing opposite-flavor review gates, requiring manual testing plans and manual execution passes, and handing completed feature stacks to the landing workflow.
+description: Coordinate multiple Xenota crew workers and polecats across implementation, review, manual testing, and landing. Use when managing the swarm across crew, dispatching epics across crew, keeping workers unblocked and moving, enforcing opposite-flavor review gates, requiring manual testing plans and manual execution passes, handling fast-track severity routing, and handing completed feature stacks to the landing workflow.
 ---
 
 # Manage Swarm
 
 Use this skill when coordinating active work across `xenota` crew and polecats.
+
+## Fast-Track Severity Handling
+
+Fast-track severity beads address swarm-blocking bugs and jump the normal P0 queue.
+
+- **Priority routing**: Assign idle or slice-boundary lanes to ready fast-track beads before non-fast-track work. Do not interrupt active implementation mid-edit unless the operator explicitly directs an emergency intervention.
+- **Restart verification**: Fast-track fixes to XSM runtime paths may trigger a manager restart after landing. Verify that restart evidence is recorded and that the manager resumes the wrangle loop.
+- **Handoff acceleration**: Fast-track beads move through review, QA, and landing ahead of lower-priority work while preserving operator approval gates.
+
+See the [Fast-Track Severity Policy](https://github.com/xenota-collective/handbook/blob/main/docs/technical/fast-track-severity.md) in the handbook for criteria and current behavior.
 
 ## Invocation
 
