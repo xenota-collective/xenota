@@ -17,6 +17,11 @@ Run the collection script. It gathers all signals in one pass:
 
 The script outputs labelled sections for: xsm process, daemon pane, latest wrangle run, non-noop events, leader escalations, repetition check, worker panes, swarm-backlog.yaml, xr smoke check, bd beads, and open PRs.
 
+For swarm-improver patrols, treat this script as orientation, not as report
+material. It can include broad live pane captures. After identifying a concrete
+run, bead, PR, or lane, switch to targeted follow-up reads of that specific
+artifact and summarize only the bounded evidence needed for the finding.
+
 ## Step 2: Interpret the data
 
 Read the full script output, then produce a tight report using only these judgment calls:
