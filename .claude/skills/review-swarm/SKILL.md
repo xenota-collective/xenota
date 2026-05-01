@@ -20,13 +20,29 @@ The script outputs labelled sections for: xsm process, daemon pane, latest wrang
 ### Evidence bounds
 
 Treat the collection script as the broad pass. After that, only run targeted
-follow-up commands against the specific run ID, bead ID, PR number, or worker
-lane you are investigating.
+follow-up commands against a resolved target identifier from the script output:
+one run ID, bead ID, PR number, or worker lane.
 
-Do not run recursive `rg` over `.xsm-local/`, all wrangle runs, or the whole
-repo for broad terms like `improvement`, `adaptive`, or `health issue` unless
-you first name the bounded file set and pattern. Those searches pull in full
-pane transcripts and consume the context needed for judgment.
+If the target identifier is missing, ambiguous, or cannot be resolved, stop and
+report that the review needs a concrete run ID, bead ID, PR number, or worker
+lane. Do not recover by recursively searching `.xsm-local/`, all wrangle runs,
+or the whole repo.
+
+Allowed follow-up scopes:
+- One resolved wrangle run: inspect `events.jsonl` or another explicitly named
+  file under `.xsm-local/log/swarm-backlog/wrangle-runs/<run-id>/`.
+- One resolved bead: use `bd show`, `bd comments`, or direct dependency reads
+  for that bead ID.
+- One resolved PR: use `gh pr view <number>` for the known repo.
+- One named worker lane: use the collected pane snapshot or one explicitly
+  named lane log.
+- A precise file budget: at most three explicitly named files, searched with
+  one exact literal or regex pattern tied to the target.
+
+Output caps such as `tail -20`, `head -50`, or `rg --max-count 20` are required
+for potentially large outputs, but they do not bound the search scope by
+themselves. Broad terms like `improvement`, `adaptive`, or `health issue` are
+not valid follow-up patterns outside the allowed scopes above.
 
 Good follow-up patterns:
 
