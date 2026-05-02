@@ -427,7 +427,7 @@ Standing-order nudge pattern:
 Preferred wording (via helper):
 
 ```bash
-/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/send_worker_message.sh <name> 'Your active assignment is <bead>. Read the start-feature skill FIRST — you must work on a feature branch off origin/main, never push to main. Branch name: <crew>/<bead-id>-<slug>. Start immediately. Never stop at a passing test, summary, or completed micro-slice. After each slice, choose and execute the next concrete slice yourself. When your work is complete, read the prepare-review skill and submit a PR. Do not push to main. Do not merge anything. Only stop at a real blocker or an explicit handoff gate.'
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/send_worker_message.sh <name> 'Your active assignment is <bead>. Read the start-feature skill FIRST — you must work on a feature branch off origin/main, never push to main. Branch name: <crew>/<bead-id>-<slug>. Start immediately. Plan, implement, test, and PR continuously — do NOT pause to ask "Ready to proceed?", "Approve plan?", or "Should I continue?" between phases; the assignment is the approval. Never stop at a passing test, summary, or completed micro-slice. After each slice, choose and execute the next concrete slice yourself. When your work is complete, read the prepare-review skill and submit a PR. Do not push to main. Do not merge anything. Only stop at a real blocker, a destructive operation outside the bead scope, or an explicit approval gate named on the bead.'
 ```
 
 Do not use:
