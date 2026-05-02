@@ -13,6 +13,7 @@ Use this skill when beginning work on a bead. It enforces the branch and bead hy
 2. **Always start from a fresh rebase off origin/main.** Stale bases cause merge conflicts that waste reviewer time.
 3. **One bead per branch.** Do not mix unrelated work on the same branch.
 4. **Name branches consistently.** Use the pattern `<crew>/<bead-id>-<short-slug>`.
+5. **Execute continuously through plan → implement → test → PR.** A reasonable plan for an assigned bead is not a stopping point. Do not pause to ask "Ready to proceed?", "Should I continue?", or "Approve plan?" before executing — proceed directly into implementation, then tests, then PR. Stop only for the conditions listed under [Continuous Execution](#continuous-execution).
 
 ## Startup Sequence
 
@@ -61,6 +62,30 @@ git rebase origin/main
 # resolve any conflicts
 git push --force-with-lease
 ```
+
+## Continuous Execution
+
+A worker assignment runs end-to-end without operator confirmation between phases. Once you start a bead, treat it as one continuous task: plan, implement, test, PR. Do not invent intermediate approval gates that the assignment did not name.
+
+**Do not stop to ask any of these:**
+
+- "Here's my plan — ready to proceed?"
+- "Should I continue with implementation?"
+- "Plan looks good — approve before I start?"
+- "Tests pass — should I open a PR?"
+- "I've finished the slice — what's next?" (if the bead clearly defines what's next)
+
+The assignment is the approval. Planning is part of execution, not a checkpoint preceding it.
+
+**Only stop and ask when ALL of the conditions for the question are out of your control:**
+
+1. **Explicit approval gate on the bead** — the bead description literally calls for operator review at a named checkpoint (e.g., "stop after schema migration draft for review"). The assignment text or bead body must name the gate; an implicit "this is a big change so I should check" is not a gate.
+2. **Destructive operation outside the bead's stated scope** — the bead asks for a feature change but you discover you'd need to drop a table, force-push a shared branch, delete files outside your touch set, or run an irreversible data migration. The destructive op itself, not the surrounding work, is what requires confirmation.
+3. **Information unavailable to you** — a credential you do not hold, an external decision (legal/compliance/product) not recorded anywhere readable, a dependency on another in-flight PR whose direction is genuinely undecided. Read the bead, the linked PRs, the handbook, and the codebase first; "I don't know which file to edit" is research, not a blocker.
+
+If none of those three apply, the next step is action, not a question. Choose the next concrete slice and execute it.
+
+When you do hit a real blocker, file or update the bead with the exact blocker text and route it — do not park silently at a prompt.
 
 ## Bead Hygiene
 
