@@ -21,22 +21,30 @@ LATE_REVIEW_OK = 0.20
 SECURITY_FOLLOWUP_OK = 0.10
 
 
-def verdict(driver: str, n: int, late_rate: float, sec_rate: float) -> str:
+# Strong-routed risk classes per README taxonomy. EXPAND_CHEAP only applies
+# to cheap_eligible; STRONG_OK / WATCH_STRONG only to these strong-routed
+# classes. cheap_eligible and routing_evidence are out of strong scope.
+STRONG_RISKS = frozenset(
+    {"production_security", "landing_protocol", "xsm_control_plane"}
+)
+
+
+def verdict(
+    risk: str, driver: str, n: int, late_rate: float, sec_rate: float
+) -> str:
     if n < EXPAND_FLOOR:
         return "INCONCLUSIVE"
     cheap = driver in {"codex", "gemini"}
-    if cheap and late_rate >= LATE_REVIEW_HIGH:
-        return "PAUSE_CHEAP"
-    if not cheap and (
-        late_rate >= LATE_REVIEW_HIGH or sec_rate >= SECURITY_FOLLOWUP_HIGH
-    ):
-        return "WATCH_STRONG"
-    if not cheap and (
-        late_rate <= LATE_REVIEW_OK and sec_rate <= SECURITY_FOLLOWUP_OK
-    ):
-        return "STRONG_OK"
-    if cheap and late_rate <= 0.10:
-        return "EXPAND_CHEAP"
+    if cheap:
+        if late_rate >= LATE_REVIEW_HIGH:
+            return "PAUSE_CHEAP"
+        if risk == "cheap_eligible" and late_rate <= 0.10:
+            return "EXPAND_CHEAP"
+    elif risk in STRONG_RISKS:
+        if late_rate >= LATE_REVIEW_HIGH or sec_rate >= SECURITY_FOLLOWUP_HIGH:
+            return "WATCH_STRONG"
+        if late_rate <= LATE_REVIEW_OK and sec_rate <= SECURITY_FOLLOWUP_OK:
+            return "STRONG_OK"
     return "REVIEW_MEDIUM"
 
 
@@ -144,7 +152,7 @@ def main() -> None:
         rs = by_bucket[key]
         m = metric(rs)
         v = verdict(
-            driver, m["n"], m["late_rate"], m["security_followup_rate"]
+            risk, driver, m["n"], m["late_rate"], m["security_followup_rate"]
         )
         out.append(
             f"| {risk} | {driver} | {m['n']} | {m['late_rate']:.2f} | {v} |"

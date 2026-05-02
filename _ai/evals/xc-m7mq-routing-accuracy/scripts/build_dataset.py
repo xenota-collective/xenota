@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 INPUTS = ROOT / "inputs"
 OUTCOMES = ROOT / "outcomes.csv"
 
-SNAPSHOT_AT = datetime(2026, 5, 2, 0, 0, tzinfo=timezone.utc)
+SNAPSHOT_AT = datetime(2026, 5, 3, 0, 0, tzinfo=timezone.utc)
 STALE_HOURS = 48
 LATE_POINTER_HOURS = 24
 
@@ -68,7 +68,9 @@ RISK_RULES = (
 
 
 def risk_class_for(title: str, head_ref: str) -> str:
-    blob = f"{title.lower()} {head_ref.lower()}"
+    # Pad with spaces so keywords like " gate", "qa ", " docs", " eval"
+    # match when they appear at the very start or end of title/head_ref.
+    blob = f" {title.lower()} {head_ref.lower()} "
     for label, kws in RISK_RULES:
         for kw in kws:
             if kw in blob:

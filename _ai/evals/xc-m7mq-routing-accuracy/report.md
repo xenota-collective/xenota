@@ -51,7 +51,7 @@ Verdicts use the xenon#596 thresholds verbatim. `late_rate` here is the proxy `(
 | routing_evidence | claude | 1 | 1.00 | INCONCLUSIVE |
 | routing_evidence | codex | 12 | 1.00 | PAUSE_CHEAP |
 | routing_evidence | gemini | 2 | 0.00 | INCONCLUSIVE |
-| unclassified | claude | 11 | 0.36 | WATCH_STRONG |
+| unclassified | claude | 11 | 0.36 | REVIEW_MEDIUM |
 | unclassified | codex | 53 | 0.58 | PAUSE_CHEAP |
 | unclassified | gemini | 19 | 0.42 | PAUSE_CHEAP |
 | unclassified | xsm-internal | 2 | 0.00 | INCONCLUSIVE |
