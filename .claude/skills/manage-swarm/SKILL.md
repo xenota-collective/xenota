@@ -71,6 +71,21 @@ These helpers are the only approved worker-message transport. They must route th
 
 Do not fake a clear by telling the worker "your context is cleared." The pane must actually receive `/clear` as its own command before the new assignment text is sent, unless fd pressure requires `--respawn`, which kills and relaunches the worker CLI before sending the assignment.
 
+### Delivery fallback ladder
+
+The helpers have known false-negative cases (xc-r6r8 and siblings). When the standard helper reports `failed`, **always re-capture the pane** before deciding what to do — the helper may have failed verification but the message body actually landed (or the `/clear` landed but the assignment text didn't). The fallback order is:
+
+1. **`clear_and_assign.sh <worker> '<assignment>'`** — first choice for NEW work.
+2. **On `failed` / `unknown_tui_after_send` / `idle_after_send`**: re-capture the pane.
+   - If the pane shows the message in scrollback or is now `Working`/`Thinking`: false-negative, treat as delivered.
+   - If `/clear` landed but the assignment text didn't: fall through to step 3.
+3. **`send_worker_message.sh <worker> '<assignment>'`** — different code path; often succeeds where `clear_and_assign.sh` false-negatives.
+4. **`failed: dirty_buffer`** (codex pane): the message body is sitting in the input buffer but not submitted. Send a single `Enter` keystroke via raw tmux to commit it.
+5. **`failed: ... no live tmux pane id ... <agent-name>`** (e.g. `main` for the supervisor window): control-lane name remap bug — the agent name in `swarm-backlog.yaml` does not match a workmux registration. Use raw-tmux send-keys for that single pane as emergency recovery, then file/extend a bd bead. Do not silently work around it across multiple wrangle passes.
+6. **Gemini pane swallowing keys** (permission dialog or `/rewind` modal): the helper cannot dismiss the modal. Send `Escape` via raw tmux first, then re-run the helper.
+
+After every fallback step, **re-capture the pane** and confirm visible motion (`Working`/`Thinking`/`Grooving`/`Deliberating`/etc.). Helper success status is necessary but not sufficient — the only proof is live pane motion.
+
 Common operations should be run through the scripts in `scripts/`. The skill should describe policy and sequence, not embed raw shell recipes.
 
 Operator hard rules:
@@ -93,6 +108,21 @@ Operator hard rules:
 - For the live XSM daemon specifically, prefer the checked-out runtime at `xenon/packages/xsm/.venv/bin/xsm`. Do not assume a global `xsm` binary is current.
 - `bd sync` is not a valid beads command. After creating, updating, or closing beads, run `bd dolt push` and verify it reports a successful push.
 - Supervisor and landing Codex command allowlists are carried in `.xsm-local/strategies/live-backlog.yaml` under `role_packages.<role>.startup_prompt`. After adding a maintenance command there, restart the role with `scripts/start_supervisor_and_landing.sh` and verify the pane shows bypass permissions plus a successful command run.
+
+## Bootstrap completion gate
+
+Bootstrap is **not** complete until at least one full Default Manage-Swarm Loop has run and every lane shows visible motion. "Agents are running" is not the same as "the swarm is moving."
+
+The trap to avoid: reading `pane_current_command=node`/`claude` and concluding the lane is active. That tells you the CLI is alive — nothing about whether it has work. A `node` process at an empty `❯` prompt or a codex `›` placeholder is **idle**, not active.
+
+After launching xsm + opening worker windows + starting agent CLIs, before declaring the swarm running, do this in order:
+
+1. **Capture every worker, supervisor, and landing pane.** Look at the visible bottom region (alternate screen), not just `pane_current_command`.
+2. **Classify each lane.** A lane is `active now` only if you can see one of: `Working (Ns)`, `Thinking…`, `Grooving…`, `Deliberating…`, `Gusting…`, `Sautéed`, `Submitting`, `Responding`, or live tool/test/edit output. Anything else (empty `❯`, `> Type your message`, codex placeholder lines like `› Summarize recent commits`/`› Write tests for @filename`/`› Use /skills to list…`/`› Run /review on my current changes`/`› Explain this codebase`/`› Implement {feature}`) is `parked_unassigned`.
+3. **Run the Default Manage-Swarm Loop on the parked set.** Walk Work Priority Order; for each parked lane, dispatch via `clear_and_assign.sh` (with the standing-order template), falling through the Delivery fallback ladder when it fails.
+4. **Re-capture and verify motion.** Bootstrap is complete only after every lane is either visibly active or has been escalated with a concrete blocker. If any lane is still parked after one dispatch attempt, escalate or reroute — do not leave it silently idle.
+
+Until that gate passes, do not summarize the run as "swarm running" or "N agents up." Report it as "infrastructure up, dispatch pending" and finish the dispatch.
 
 This skill is for operational wrangling, not implementation:
 - assign epics or child beads across crew
@@ -172,7 +202,9 @@ TUI modal/gate states fall into three categories that xsm and the supervisor mus
 - Auth prompts, sudo prompts, MFA — operator only.
 
 **Empty-prompt placeholder** (xsm classifies as parked_unassigned eligible for dispatch):
-- Codex placeholders: "Summarize recent commits", "Improve documentation in @filename", "Write tests for @filename", "Use /skills to list available skills", "Find and fix a bug in @filename", "Implement {feature}", "Explain this codebase", etc.
+- Codex placeholders (line begins with `›`): "Summarize recent commits", "Improve documentation in @filename", "Write tests for @filename", "Use /skills to list available skills", "Find and fix a bug in @filename", "Implement {feature}", "Explain this codebase", "Run /review on my current changes", etc.
+- Claude empty input: a bare `❯ ` line with no body and `Context ░░░░░░░░░░ 0%` (or single-bar). The status line `-- INSERT -- ⏵⏵ bypass permissions on` directly under `❯ ` with no live progress text above is parked_unassigned.
+- Gemini empty input: the boxed `>   Type your message or @path/to/file` with no `Thinking…`/`Responding`/`Tool` line above it.
 
 If you find a lane in a state that doesn't fit one of these three categories, do NOT classify it as system failure. File a bead targeting xsm's classifier with a captured fixture of the new state, then handle it tactically (auto-dismiss with Escape if safe, or escalate to operator).
 
