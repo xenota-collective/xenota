@@ -1,0 +1,347 @@
+repo,pr,driver_preference,risk_class,outcome_class,state,age_or_delta_hours,title,head_ref,created_at,merged_at
+xenota-collective/xenon,501,xsm-internal,landing_protocol,merged,MERGED,0.01,xc-dbyw.156: add refinement fixture landing reviewer receipt digest tests,xsm/xc-dbyw.156-landing-reviewer-receipt-digest-tests,2026-04-26T08:56:28Z,2026-04-26T08:57:21Z
+xenota-collective/xenon,502,xsm-internal,production_security,merged,MERGED,0.03,xc-dbyw.157: add refinement fixture release audit note digest tests,xsm/xc-dbyw.157-release-audit-note-digest-tests,2026-04-26T09:23:25Z,2026-04-26T09:25:08Z
+xenota-collective/xenon,503,gemini,unclassified,merged,MERGED,0.02,xc-pnwt: bound chat-server artifact listing resource usage,gemini/xc-pnwt-bound-chat-server-artifact-listing,2026-04-26T09:30:12Z,2026-04-26T09:31:29Z
+xenota-collective/xenon,504,xsm-internal,xsm_control_plane,merged,MERGED,0.02,xc-2o6k: protect chat-server artifact inspection endpoints,xsm/xc-2o6k-protect-chat-server-inspection,2026-04-26T09:37:28Z,2026-04-26T09:38:53Z
+xenota-collective/xenon,505,xsm-internal,landing_protocol,merged,MERGED,0.02,xc-aih1: capture late bot review feedback after auto-merge,xsm/xc-aih1-late-review-feedback,2026-04-26T09:44:53Z,2026-04-26T09:46:15Z
+xenota-collective/xenon,506,xsm-internal,xsm_control_plane,merged,MERGED,0.03,xc-zn5l: add duplicate dispatch claim lock tests,xsm/xc-zn5l-duplicate-dispatch-claim-locking,2026-04-26T09:45:50Z,2026-04-26T09:47:28Z
+xenota-collective/xenon,507,gemini,landing_protocol,merged,MERGED,0.02,xc-zc8r: enforce quality gates during pack/export,gemini/xc-zc8r-xrs-quality-gates,2026-04-26T09:46:24Z,2026-04-26T09:47:25Z
+xenota-collective/xenon,508,xsm-internal,xsm_control_plane,merged,MERGED,0.02,xc-hy5r: add driver preference fixtures,xsm/xc-hy5r-driver-preference-dispatch-fixtures,2026-04-26T09:55:53Z,2026-04-26T09:57:11Z
+xenota-collective/xenon,509,xsm-internal,xsm_control_plane,merged,MERGED,0.03,xc-6hlr: quote and validate vps-control remote command helpers,xsm/xc-6hlr-quote-remote-commands,2026-04-26T10:07:24Z,2026-04-26T10:09:02Z
+xenota-collective/xenon,510,xsm-internal,xsm_control_plane,merged,MERGED,0.05,xc-i3t0: add staged bead pipeline strategy,xsm/xc-i3t0-staged-bead-pipeline-strategy,2026-04-26T10:08:14Z,2026-04-26T10:11:22Z
+xenota-collective/xenon,511,xsm-internal,xsm_control_plane,merged,MERGED,0.02,xc-trpb.1: expose read-only swarm IPC,xsm/xc-trpb.1-live-swarm-ipc,2026-04-26T10:24:02Z,2026-04-26T10:25:09Z
+xenota-collective/xenon,512,xsm-internal,xsm_control_plane,merged,MERGED,0.02,xc-hy4x: surface gh pr list scan failures as attention items,xsm/xc-hy4x-surface-pr-scan-failures,2026-04-26T10:25:23Z,2026-04-26T10:26:25Z
+xenota-collective/xenon,513,xsm-internal,xsm_control_plane,merged,MERGED,0.02,xc-25ob: add bd lock timeout diagnostics,xsm/xc-25ob-bd-lock-timeouts,2026-04-26T10:28:45Z,2026-04-26T10:29:44Z
+xenota-collective/xenon,514,codex,unclassified,merged,MERGED,0.04,xc-62sm: render supported acceptance commands,codex/xc-62sm-po-ac-bd-flag,2026-04-26T10:41:26Z,2026-04-26T10:43:50Z
+xenota-collective/xenon,515,gemini,routing_evidence,merged,MERGED,0.02,xc-gcz7: define driver preference routing rules,gemini/xc-gcz7-driver-preference-routing,2026-04-26T10:45:56Z,2026-04-26T10:47:16Z
+xenota-collective/xenon,516,xsm-internal,production_security,merged,MERGED,0.04,xc-95sy: redact local filesystem paths in XSM transcript audit comments,xsm/xc-95sy-redact-transcript-paths,2026-04-26T10:49:46Z,2026-04-26T10:52:18Z
+xenota-collective/xenon,517,xsm-internal,xsm_control_plane,merged,MERGED,0.04,xc-trpb.3: normalize live XSM pulse data,xsm/xc-trpb.3-normalize-live-xsm-pulse,2026-04-26T10:49:57Z,2026-04-26T10:52:14Z
+xenota-collective/xenon,518,xsm-internal,xsm_control_plane,merged,MERGED,0.02,xc-nih1: send real patch content to external review reviewers,xsm/xc-nih1-external-review-patch-content,2026-04-26T10:52:07Z,2026-04-26T10:53:33Z
+xenota-collective/xenon,519,gemini,unclassified,merged,MERGED,0.03,xc-cast: sanitize repertoire output recursively,gemini/xc-cast-sanitize-repertoire,2026-04-26T10:57:21Z,2026-04-26T10:59:26Z
+xenota-collective/xenon,520,gemini,unclassified,merged,MERGED,0.02,xc-qgj3: validate repertoire output dictionary keys recursively,gemini/xc-qgj3-validate-repertoire-keys,2026-04-26T11:03:43Z,2026-04-26T11:04:38Z
+xenota-collective/xenon,521,xsm-internal,landing_protocol,merged,MERGED,0.03,xc-4fc8: detect xsm-affecting submodule pointer landings before restart,xsm/xc-4fc8-submodule-restart,2026-04-26T11:16:53Z,2026-04-26T11:18:32Z
+xenota-collective/xenon,522,xsm-internal,xsm_control_plane,merged,MERGED,0.03,xc-u1j1: harden external-review patch parsing for path edge cases and spoofed empty diffs,xsm/xc-u1j1-harden-patch-parsing,2026-04-26T11:20:35Z,2026-04-26T11:22:14Z
+xenota-collective/xenon,523,codex,xsm_control_plane,merged,MERGED,0.02,xc-renl: centralize worker message delivery,codex/xc-renl-centralized-delivery,2026-04-26T11:33:52Z,2026-04-26T11:35:02Z
+xenota-collective/xenon,524,gemini,xsm_control_plane,merged,MERGED,0.8,xc-ruvb: require XSM-managed metadata and handle match for teardown,gemini/xc-ruvb-require-xsm-metadata,2026-04-26T17:40:06Z,2026-04-26T18:28:01Z
+xenota-collective/xenon,527,gemini,cheap_eligible,merged,MERGED,0.05,xc-qgj3: update docstring for repertoire key validation,gemini/xc-qgj3-validate-repertoire-keys,2026-04-26T18:38:46Z,2026-04-26T18:41:37Z
+xenota-collective/xenon,529,xsm-internal,xsm_control_plane,merged,MERGED,1.35,xc-5b34: validate xc-crew lane name before gt crew restart,xsm/xc-5b34-validate-crew-lane,2026-04-26T19:28:17Z,2026-04-26T20:49:33Z
+xenota-collective/xenon,530,xsm-internal,production_security,merged,MERGED,42.51,xc-vi07: honor changed_paths in qa_state intake to lock sensitive-changes gate,xsm/xc-vi07-qa-state-changed-paths,2026-04-26T19:29:44Z,2026-04-28T14:00:09Z
+xenota-collective/xenon,531,codex,xsm_control_plane,merged,MERGED,4.46,xc-9t40: anchor XSM status tuple parsing,codex/xc-9t40-anchor-status-tuples,2026-04-26T19:36:23Z,2026-04-27T00:04:10Z
+xenota-collective/xenon,532,xsm-internal,landing_protocol,merged,MERGED,6.86,xc-s3r2: gate hook classification on freshness,xsm/xc-s3r2-hook-freshness,2026-04-26T19:38:28Z,2026-04-27T02:30:10Z
+xenota-collective/xenon,533,gemini,landing_protocol,open_stale,OPEN,147.52,xc-cy0z: Enforce manual-QA receipt before staged-pipeline advances,gemini/xc-cy0z-enforce-manual-qa,2026-04-26T20:28:58Z,
+xenota-collective/xenon,534,gemini,unclassified,merged,MERGED,3.74,xc-vybs: implement blocked objective suppression,gemini/xc-vybs-suppress-blocked-objective-children,2026-04-26T20:40:31Z,2026-04-27T00:25:02Z
+xenota-collective/xenon,535,codex,xsm_control_plane,merged,MERGED,1.98,xc-h532: bound XSM pulse subprocesses,codex/xc-h532-bound-pulse-subprocesses,2026-04-26T20:44:32Z,2026-04-26T22:43:23Z
+xenota-collective/xenon,536,gemini,landing_protocol,open_stale,OPEN,147.15,xc-338x: ignore unresolvable LiteLLM updates,gemini/xc-338x-fix-litellm-click-conflict,2026-04-26T20:50:56Z,
+xenota-collective/xenon,537,codex,production_security,merged,MERGED,2.0,xc-ubt4: enforce emergency hotfix audit,codex/xc-ubt4-hotfix-audit-push-enforcement,2026-04-26T20:51:29Z,2026-04-26T22:51:33Z
+xenota-collective/xenon,538,xsm-internal,xsm_control_plane,open_stale,OPEN,147.1,xc-trpb.2: replace demo swarm routes with live data hook,xsm/xc-trpb.2-live-data-hook,2026-04-26T20:54:10Z,
+xenota-collective/xenon,539,codex,xsm_control_plane,open_stale,OPEN,145.7,Pin reopened workmux windows to worker handles,codex/xsm-workmux-driver-window-fix,2026-04-26T22:18:09Z,
+xenota-collective/xenon,540,xsm-internal,landing_protocol,open_stale,OPEN,144.93,xc-6aoe: add submodule-pointer PR required-check verifier and landing gate,xsm/xc-6aoe-pointer-pr-check-coverage,2026-04-26T23:03:55Z,
+xenota-collective/xenon,541,codex,routing_evidence,open_stale,OPEN,144.61,xc-ixg6: route dependency-update PRs by risk,codex/xc-ixg6-dep-update-routing,2026-04-26T23:23:39Z,
+xenota-collective/xenon,542,gemini,unclassified,open_stale,OPEN,143.91,"xc-trpb.5: show available AI accounts, quotas, and token usage",gemini/xc-trpb.5-account-capacity-view,2026-04-27T00:05:35Z,
+xenota-collective/xenon,544,xsm-internal,xsm_control_plane,open_stale,OPEN,143.5,xc-mkq3: reject self-blocked backlog leaves,xsm/xc-mkq3-self-blocked-leaf,2026-04-27T00:29:55Z,
+xenota-collective/xenon,545,xsm-internal,landing_protocol,open_stale,OPEN,141.91,xc-k7p6: require PR handoff preflight,xsm/xc-k7p6-pr-preflight,2026-04-27T02:05:20Z,
+xenota-collective/xenon,546,xsm-internal,xsm_control_plane,open_stale,OPEN,141.69,xc-qj62: quarantine malformed XSM event rows,xsm/xc-qj62-event-quarantine,2026-04-27T02:18:43Z,
+xenota-collective/xenon,547,codex,xsm_control_plane,merged,MERGED,46.8,xc-17ri: harden Gemini delivery verification,codex/xc-17ri-gemini-modal-recovery,2026-04-27T02:44:53Z,2026-04-29T01:32:46Z
+xenota-collective/xenon,548,codex,xsm_control_plane,open_stale,OPEN,139.55,Enforce bead skill matching in XSM dispatch,codex/xc-f5r8-required-worker-skills,2026-04-27T04:27:08Z,
+xenota-collective/xenon,550,claude,xsm_control_plane,open_stale,OPEN,139.35,xc-bqeb: make interrupt_guard_blocked terminal for the rejected restart attempt,claude/xc-bqeb-interrupt-guard-terminal,2026-04-27T04:39:07Z,
+xenota-collective/xenon,551,codex,xsm_control_plane,open_stale,OPEN,121.55,xc-qcgt: validate worker skills before startup,codex/xc-qcgt-lane-skill-validation,2026-04-27T22:27:01Z,
+xenota-collective/xenon,552,codex,xsm_control_plane,merged,MERGED,4.51,xc-so9a: respawn workers under fd pressure,codex/xc-so9a-respawn-on-fd-pressure,2026-04-27T23:48:38Z,2026-04-28T04:19:15Z
+xenota-collective/xenon,553,xsm-internal,xsm_control_plane,open_stale,OPEN,119.0,xc-3c4d: keep wrangle alive on repertoire failure,xsm/xc-3c4d-codex-ca-certs,2026-04-28T00:59:45Z,
+xenota-collective/xenon,554,xsm-internal,xsm_control_plane,merged,MERGED,24.59,xc-mklx: prophylactic gemini pane recycle for fd leak workaround,xsm/xc-mklx-gemini-fd-recycler,2026-04-28T01:17:59Z,2026-04-29T01:53:09Z
+xenota-collective/xenon,555,codex,xsm_control_plane,merged,MERGED,3.04,xc-6rry: require pool-fill dispatch provenance,codex/xc-6rry-pool-fill-provenance,2026-04-28T01:32:37Z,2026-04-28T04:34:51Z
+xenota-collective/xenon,556,codex,cheap_eligible,open_stale,OPEN,117.03,xc-mqte: fix Codex prompt delivery verification,codex/xc-mqte-codex-prompt-delivery,2026-04-28T02:58:09Z,
+xenota-collective/xenon,557,codex,xsm_control_plane,merged,MERGED,0.11,xc-w5po: refresh XSM assignment status from branch,codex/xc-w5po-xsm-monitor-refresh,2026-04-28T03:00:49Z,2026-04-28T03:07:36Z
+xenota-collective/xenon,558,claude,xsm_control_plane,open_stale,OPEN,116.96,xc-yfqo: re-prime role patrol lanes with role_packages on /clear,claude/xc-yfqo-role-patrol-relaunch,2026-04-28T03:02:41Z,
+xenota-collective/xenon,560,codex,xsm_control_plane,open_stale,OPEN,116.17,xc-8v2b0: add patrol parked lane safety net,codex/xc-8v2b0-supervisor-parked-walk,2026-04-28T03:49:38Z,
+xenota-collective/xenon,561,codex,landing_protocol,open_stale,OPEN,115.86,xc-r8bsr: add TUI gate grammar,codex/xc-r8bsr-tui-grammar,2026-04-28T04:08:34Z,
+xenota-collective/xenon,562,claude,xsm_control_plane,merged,MERGED,20.51,xc-zojv: reap orphaned worker poll-loops in wrangle pass,claude/xc-zojv-orphan-poll-cleanup,2026-04-28T04:24:01Z,2026-04-29T00:54:20Z
+xenota-collective/xenon,563,claude,xsm_control_plane,merged,MERGED,12.46,xc-mvrh: tmux window-name hygiene + stable workmux-handle targeting,claude/xc-mvrh-tmux-window-name-hygiene,2026-04-28T04:45:22Z,2026-04-28T17:12:43Z
+xenota-collective/xenon,564,claude,unclassified,open_stale,OPEN,114.84,xc-74za: bound queue entry size and drain batch memory,claude/xc-74za-queue-payload-bounds,2026-04-28T05:09:48Z,
+xenota-collective/xenon,565,codex,routing_evidence,open_stale,OPEN,114.71,xc-twv1: surface evidence collection failures,codex/xc-twv1-evidence-failures,2026-04-28T05:17:36Z,
+xenota-collective/xenon,566,codex,landing_protocol,merged,MERGED,1.88,xc-5pc4: fail pr handoff on lookup errors,codex/xc-5pc4-pr-handoff-lookup-errors,2026-04-28T05:29:57Z,2026-04-28T07:22:58Z
+xenota-collective/xenon,567,codex,landing_protocol,open_stale,OPEN,112.44,xc-4nlcj: resolve known operator gates,codex/xc-4nlcj-operator-gate-resolver,2026-04-28T07:33:38Z,
+xenota-collective/xenon,568,claude,unclassified,merged,MERGED,17.15,xc-9l5su: enforce single-active-bead invariant via drift reconciler,claude/xc-9l5su-single-active-bead,2026-04-28T07:39:13Z,2026-04-29T00:48:27Z
+xenota-collective/xenon,569,codex,xsm_control_plane,open_stale,OPEN,111.97,xc-4uhlk: submit Gemini prompts with control m,codex/xc-4uhlk-gemini-enter-delivery,2026-04-28T08:02:05Z,
+xenota-collective/xenon,570,codex,xsm_control_plane,open_stale,OPEN,111.75,xc-m3e7: add supervisor patrol cadence,codex/xc-m3e7-supervisor-no-sleep-cadence,2026-04-28T08:15:11Z,
+xenota-collective/xenon,571,codex,xsm_control_plane,open_stale,OPEN,111.67,xc-3s63: cover pool-fill restart cross-talk,codex/xc-3s63-pool-fill-settlement-coverage,2026-04-28T08:19:47Z,
+xenota-collective/xenon,572,codex,xsm_control_plane,open_stale,OPEN,111.48,xc-9kbx: add role lane self-resume,codex/xc-9kbx-role-lane-self-resume,2026-04-28T08:31:09Z,
+xenota-collective/xenon,573,codex,unclassified,open_stale,OPEN,111.2,xc-yzkw: require strong review receipts,codex/xc-yzkw-strong-review-receipts,2026-04-28T08:47:53Z,
+xenota-collective/xenon,574,codex,unclassified,open_stale,OPEN,111.06,xc-qxqt: ignore blocked objective notes,codex/xc-qxqt-blocked-objective-classification,2026-04-28T08:56:40Z,
+xenota-collective/xenon,575,codex,landing_protocol,open_stale,OPEN,110.9,xc-5hlu: close obsolete dirty landing beads,codex/xc-5hlu-obsolete-dirty-landings,2026-04-28T09:05:47Z,
+xenota-collective/xenon,576,codex,xsm_control_plane,open_stale,OPEN,110.69,xc-x6ud: separate read-only XSM routing labels,codex/xc-x6ud-xsm-label-taxonomy,2026-04-28T09:18:25Z,
+xenota-collective/xenon,577,codex,unclassified,open_stale,OPEN,110.41,xc-3kyt: validate staged strategy metadata,codex/xc-3kyt-strategy-schema-contract,2026-04-28T09:35:19Z,
+xenota-collective/xenon,578,codex,xsm_control_plane,open_stale,OPEN,110.24,xc-2k77: add XSM PR provenance blocks,codex/xc-2k77-pr-provenance-blocks,2026-04-28T09:45:34Z,
+xenota-collective/xenon,579,codex,routing_evidence,open_stale,OPEN,110.03,xc-u8p2: reset exhausted interventions on evidence change,codex/xc-u8p2-intervention-evidence-reset,2026-04-28T09:58:02Z,
+xenota-collective/xenon,580,codex,xsm_control_plane,open_stale,OPEN,109.89,xc-fv0c: constrain xsm queue worker ids,codex/xc-fv0c-safe-worker-ids,2026-04-28T10:06:23Z,
+xenota-collective/xenon,581,codex,xsm_control_plane,open_stale,OPEN,109.64,xc-fkr2: route pool dispatch by preference,codex/xc-fkr2-driver-routing,2026-04-28T10:21:34Z,
+xenota-collective/xenon,582,codex,unclassified,open_stale,OPEN,107.18,test live dependency lookup failures,codex/xc-edsg-fail-closed-deps,2026-04-28T12:49:11Z,
+xenota-collective/xenon,583,codex,production_security,open_stale,OPEN,107.17,xc-3gdtz: clear stale routing audit fields,codex/xc-3gdtz-clear-routing-audit,2026-04-28T12:49:48Z,
+xenota-collective/xenon,584,codex,routing_evidence,open_stale,OPEN,107.11,test unlabeled driver preference routing,codex/xc-fi5hp-unlabeled-driver-routing,2026-04-28T12:53:42Z,
+xenota-collective/xenon,585,codex,unclassified,open_stale,OPEN,107.02,enforce driver preference resolution,codex/xc-x97gi-enforce-driver-strength,2026-04-28T12:59:05Z,
+xenota-collective/xenon,586,codex,production_security,open_stale,OPEN,106.96,Enforce SSH host key verification in vps-control,codex/xc-gc8z-ssh-host-key,2026-04-28T13:02:20Z,
+xenota-collective/xenon,587,codex,unclassified,open_stale,OPEN,106.95,honor projection work queue state,codex/xc-tvxs-work-state-scan,2026-04-28T13:03:11Z,
+xenota-collective/xenon,588,codex,xsm_control_plane,merged,MERGED,12.96,xc-a3bst prime control roles on respawn,codex/xc-a3bst-prime-control-respawn,2026-04-28T13:10:51Z,2026-04-29T02:08:44Z
+xenota-collective/xenon,589,gemini,xsm_control_plane,open_stale,OPEN,106.8,xc-vccrk: retry transient codex failures and stabilize wrangle loop,gemini-1/xc-vccrk-codex-subprocess-crash,2026-04-28T13:12:16Z,
+xenota-collective/xenon,590,codex,unclassified,open_stale,OPEN,106.68,xc-wvwdx: fix wait-idle activity classifier,codex/xc-wvwdx-wait-idle-classifier,2026-04-28T13:19:14Z,
+xenota-collective/xenon,591,codex,xsm_control_plane,open_stale,OPEN,106.67,xc-e94u block generic prompts to main lane,codex/xc-e94u-block-main-injection,2026-04-28T13:20:00Z,
+xenota-collective/xenon,592,claude,xsm_control_plane,open_stale,OPEN,106.64,xc-0yqv: block off-mission prompt injection into role patrol lanes,claude/xc-0yqv-role-lane-prompt-guard,2026-04-28T13:21:25Z,
+xenota-collective/xenon,593,claude,landing_protocol,open_stale,OPEN,106.58,xc-aui5z: nudge workers when PRs become conflicting,claude/xc-aui5z-pr-conflicting-patrol,2026-04-28T13:25:04Z,
+xenota-collective/xenon,594,codex,landing_protocol,merged,MERGED,10.84,xc-cgkun: surface control lane approval gates,codex/xc-cgkun-supervisor-landing-gates,2026-04-28T13:29:37Z,2026-04-29T00:19:52Z
+xenota-collective/xenon,595,codex,unclassified,merged,MERGED,12.39,xc-fjtg: wire late review followups,codex/xc-fjtg-late-review-input,2026-04-28T13:32:13Z,2026-04-29T01:55:24Z
+xenota-collective/xenon,596,claude,xsm_control_plane,open_stale,OPEN,106.37,xc-lgcz: add routing-accuracy eval for driver_preference dispatch,claude/xc-lgcz-routing-accuracy-eval,2026-04-28T13:37:52Z,
+xenota-collective/xenon,597,codex,production_security,merged,MERGED,10.57,xc-qkx1: audit partial pool rollback,codex/xc-qkx1-pool-fill-audit,2026-04-28T13:41:08Z,2026-04-29T00:15:05Z
+xenota-collective/xenon,598,codex,production_security,open_stale,OPEN,106.22,xc-vi07.4: fail closed sensitive approvals,codex/xc-vi07.4-sensitive-approvals,2026-04-28T13:47:00Z,
+xenota-collective/xenon,599,gemini,production_security,open_stale,OPEN,106.19,xc-gc8z: enforce SSH host-key verification in vps-control Target,gemini/xc-gc8z-ssh-host-key,2026-04-28T13:48:41Z,
+xenota-collective/xenon,600,claude,landing_protocol,merged,MERGED,8.25,xc-hi4uz: restore xenon check.sh gate health,claude/xc-hi4uz-xenon-check-gate,2026-04-28T13:49:09Z,2026-04-28T22:04:17Z
+xenota-collective/xenon,601,codex,unclassified,open_stale,OPEN,105.99,xc-c3r0w: fix gemini interrupt delivery,codex/xc-c3r0w-gemini-interrupt,2026-04-28T14:00:49Z,
+xenota-collective/xenon,602,claude,production_security,open_stale,OPEN,105.97,xc-vi07.5: record trusted approval provenance for sensitive-change reviews,claude/xc-vi07-5-trusted-approval-provenance,2026-04-28T14:01:39Z,
+xenota-collective/xenon,603,codex,xsm_control_plane,open_stale,OPEN,105.93,xc-17ri.5: define fail-closed delivery lane lifecycle,codex/xc-17ri5-fail-closed-lifecycle,2026-04-28T14:03:59Z,
+xenota-collective/xenon,604,gemini,xsm_control_plane,open_stale,OPEN,105.74,xc-pdjo: Clean XSM package-wide black/flake8 baseline,gemini/xc-pdjo-xsm-lint-baseline,2026-04-28T14:15:23Z,
+xenota-collective/xenon,605,codex,xsm_control_plane,open_stale,OPEN,105.74,xc-l1hr: strip ANSI prefixes from XSM status tuples,codex/xc-l1hr-ansi-status-parsing,2026-04-28T14:15:37Z,
+xenota-collective/xenon,606,codex,xsm_control_plane,open_stale,OPEN,105.24,xc-iq2py: add supervisor intervention RCA role,codex/xc-iq2py-supervisor-pane-rca,2026-04-28T14:45:30Z,
+xenota-collective/xenon,607,claude,xsm_control_plane,merged,MERGED,1.16,xc-9kbx: role lane self-resume from role_packages on pane pollution,claude/xc-9kbx-role-self-resume,2026-04-28T14:53:18Z,2026-04-28T16:03:04Z
+xenota-collective/xenon,608,codex,unclassified,merged,MERGED,1.17,xc-gwxl4: suppress Codex template pollution resets,codex/xc-gwxl4-codex-template-pollution,2026-04-28T14:54:00Z,2026-04-28T16:04:25Z
+xenota-collective/xenon,609,codex,unclassified,merged,MERGED,1.09,xc-gwxl4: verify codex assignment delivery,codex/xc-gwxl4-codex-enter-positive-verification,2026-04-28T15:02:26Z,2026-04-28T16:07:47Z
+xenota-collective/xenon,610,codex,xsm_control_plane,merged,MERGED,2.03,xc-mb5r: claim ready beads before worker reset,codex/xc-mb5r-claim-ready-before-reset,2026-04-28T15:43:25Z,2026-04-28T17:45:09Z
+xenota-collective/xenon,611,codex,xsm_control_plane,merged,MERGED,1.85,xc-oxuov: reroute Gemini quota-blocked lanes,codex/xc-oxuov-gemini-quota-reroute,2026-04-28T16:05:24Z,2026-04-28T17:56:23Z
+xenota-collective/xenon,612,codex,xsm_control_plane,merged,MERGED,7.73,xc-g0vrq/xc-oxl01: add intervention ledger and preserve role self-resume,codex/xc-g0vrq-intervention-ledger,2026-04-28T16:14:13Z,2026-04-28T23:57:44Z
+xenota-collective/xenon,613,codex,landing_protocol,merged,MERGED,0.42,xc-ofo2c: ignore stale Codex blocker summaries,codex/xc-ofo2c-codex-blocker-summary,2026-04-28T16:27:33Z,2026-04-28T16:52:31Z
+xenota-collective/xenon,614,claude,unclassified,merged,MERGED,0.41,xc-2q593: resolve filesystem repo paths to OWNER/REPO before gh --repo,claude/xc-2q593-pr-scan-repo-path,2026-04-28T16:30:01Z,2026-04-28T16:54:34Z
+xenota-collective/xenon,615,codex,cheap_eligible,merged,MERGED,0.61,xc-zy9s5: harden Gemini prompt submit,codex/xc-zy9s5-gemini-idle-send,2026-04-28T17:15:55Z,2026-04-28T17:52:29Z
+xenota-collective/xenon,616,codex,xsm_control_plane,merged,MERGED,1.38,xc-kt9ug: resolve pane-id leases during restart recovery,codex/xc-kt9ug-restart-recovery-pane-ids,2026-04-28T17:47:58Z,2026-04-28T19:10:31Z
+xenota-collective/xenon,617,codex,xsm_control_plane,open_stale,OPEN,102.15,xc-iojlw: recover poisoned Gemini sessions,codex/xc-iojlw-gemini-poisoned-session,2026-04-28T17:50:54Z,
+xenota-collective/xenon,618,claude,landing_protocol,open_stale,OPEN,101.78,xc-xs8t: drop LLM-supplied bead_id and pr_number from parse_verdict,claude/xc-xs8t-drop-llm-supplied-ids,2026-04-28T18:13:17Z,
+xenota-collective/xenon,619,codex,xsm_control_plane,merged,MERGED,76.83,xc-jbuo2: recover workmux disconnects,worker-codex-2/xc-jbuo2-gemini-workmux-disconnect,2026-04-28T18:19:34Z,2026-05-01T23:09:12Z
+xenota-collective/xenon,620,codex,landing_protocol,merged,MERGED,7.55,xc-pwt1h: fix landing pane target resolution,codex/xc-pwt1h-landing-pane-resolution,2026-04-28T18:30:57Z,2026-04-29T02:04:08Z
+xenota-collective/xenon,621,codex,xsm_control_plane,open_stale,OPEN,101.27,xc-id4g: share XSM status-line regex,codex/xc-id4g-status-regex,2026-04-28T18:43:44Z,
+xenota-collective/xenon,622,codex,xsm_control_plane,open_stale,OPEN,101.19,xc-eech: add dispatchable status allowlist,codex/xc-eech-find-available-allowlist,2026-04-28T18:48:43Z,
+xenota-collective/xenon,623,codex,xsm_control_plane,open_stale,OPEN,101.13,xc-eb9s: log near-miss XSM status lines,codex/xc-eb9s-status-near-miss-log,2026-04-28T18:52:27Z,
+xenota-collective/xenon,624,codex,unclassified,open_stale,OPEN,101.04,xc-g9j2: add structured blocked-parent bypass,codex/xc-g9j2-structured-blocked-bypass,2026-04-28T18:57:38Z,
+xenota-collective/xenon,625,codex,xsm_control_plane,open_stale,OPEN,100.82,xc-dhdq: prune stale worker assignment metadata,codex/xc-dhdq-worker-metadata-realign,2026-04-28T19:10:53Z,
+xenota-collective/xenon,626,gemini,unclassified,open_stale,OPEN,100.74,xc-pui0l: handle Gemini Shell awaiting input,gemini/xc-pui0l-shell-input,2026-04-28T19:15:52Z,
+xenota-collective/xenon,627,codex,xsm_control_plane,open_stale,OPEN,100.36,xc-7pdez: guard Gemini shell-mode delivery,codex/xc-7pdez-clear-assign-gemini-stale-pane,2026-04-28T19:38:33Z,
+xenota-collective/xenon,628,claude,landing_protocol,open_stale,OPEN,100.0,xc-zo3s: rip unused handoff intervention helpers,claude/xc-zo3s-rip-unused-handoff-tracker,2026-04-28T19:59:50Z,
+xenota-collective/xenon,629,codex,xsm_control_plane,open_stale,OPEN,99.95,xc-f63k: enforce lifecycle hook scopes,codex/xc-f63k-lifecycle-hook-scope,2026-04-28T20:02:55Z,
+xenota-collective/xenon,630,codex,xsm_control_plane,open_stale,OPEN,99.71,xc-7r33: acknowledge XSM worker hooks by raw record count,codex/xc-7r33-hook-alignment,2026-04-28T20:17:13Z,
+xenota-collective/xenon,631,codex,xsm_control_plane,open_stale,OPEN,99.62,xc-avjd: document crew lane validation contract,codex/xc-avjd-lane-validation-contract,2026-04-28T20:22:51Z,
+xenota-collective/xenon,632,codex,unclassified,open_stale,OPEN,99.52,xc-x7wm: persist invalid assignment latch,codex/xc-x7wm-invalid-assignment-latch,2026-04-28T20:28:57Z,
+xenota-collective/xenon,633,gemini,unclassified,open_stale,OPEN,99.28,xc-pqp5: compute authoritative changed_paths from git,gemini/xc-pqp5-authoritative-changed-paths,2026-04-28T20:42:58Z,
+xenota-collective/xenon,634,codex,landing_protocol,open_stale,OPEN,99.17,Automate emergency hotfix SLA breach patrol,codex/xc-qf84-hotfix-sla-patrol,2026-04-28T20:50:01Z,
+xenota-collective/xenon,635,codex,landing_protocol,open_stale,OPEN,99.05,Fix XSM lint and format gates,codex/xc-wtkmz-xsm-lint-format,2026-04-28T20:56:47Z,
+xenota-collective/xenon,636,codex,landing_protocol,open_stale,OPEN,98.97,Surface QA handoff JSON parse failures as blocked,codex/xc-loao-qa-json-parse,2026-04-28T21:01:36Z,
+xenota-collective/xenon,637,codex,landing_protocol,open_stale,OPEN,98.84,Contain QA verdict path reads,codex/xc-0xhe-qa-verdict-path-bound,2026-04-28T21:09:30Z,
+xenota-collective/xenon,638,codex,xsm_control_plane,open_stale,OPEN,98.76,xc-gic3: recover failed actuator prompt prep,codex/xc-53up-actuator-prep-rollback,2026-04-28T21:14:41Z,
+xenota-collective/xenon,639,codex,xsm_control_plane,open_stale,OPEN,98.67,Isolate multiline tmux prompt buffers,codex/xc-ksso-named-tmux-buffer,2026-04-28T21:19:52Z,
+xenota-collective/xenon,640,gemini,unclassified,open_stale,OPEN,98.62,xc-9kjq.2: implement objective patrol loop CLI and data model,gemini/xc-9kjq.2-objective-patrol-loop,2026-04-28T21:23:03Z,
+xenota-collective/xenon,641,claude,landing_protocol,open_stale,OPEN,98.14,xc-9y39: preserve full BLOCKER/HANDOFF text when value contains '=',claude/xc-slp3-status-tuple-equals,2026-04-28T21:51:50Z,
+xenota-collective/xenon,642,claude,xsm_control_plane,merged,MERGED,1.57,xc-l573l + xc-3c5on: tmux fallback when workmux loses agent (single + duplicate xc windows),claude/xc-l573l-tmux-fallback-duplicate-windows,2026-04-28T22:08:36Z,2026-04-28T23:42:57Z
+xenota-collective/xenon,643,claude,landing_protocol,merged,MERGED,2.73,xc-fpam4: add landing-pivot patrol policy and pivot-bead emitter,claude/xc-fpam4-landing-pivot,2026-04-28T22:14:43Z,2026-04-29T00:58:24Z
+xenota-collective/xenon,645,claude,xsm_control_plane,merged,MERGED,1.17,xc-gl4fx: safe stale bd lock recovery for XSM dependency checks,claude/xc-gl4fx-stale-bd-lock-recovery,2026-04-28T22:25:50Z,2026-04-28T23:36:05Z
+xenota-collective/xenon,646,claude,xsm_control_plane,open_stale,OPEN,96.61,xc-y8w8.1: spec RPT-declared portable worker skill injection contract,claude/xc-y8w8.1-rpt-skill-contract,2026-04-28T23:23:41Z,
+xenota-collective/xenon,647,claude,xsm_control_plane,merged,MERGED,2.44,xc-y8w8.3: add swarm-improver role package and prompt,claude/xc-y8w8.3-swarm-improver-lane,2026-04-28T23:31:46Z,2026-04-29T01:58:26Z
+xenota-collective/xenon,648,claude,xsm_control_plane,merged,MERGED,1.06,xc-nqkd: bias pool-fill toward bd-assignee + emit pool-fill counters and no-work notifications,claude/xc-nqkd-pool-fill-on-release-v2,2026-04-28T23:40:14Z,2026-04-29T00:44:01Z
+xenota-collective/xenon,649,codex,xsm_control_plane,merged,MERGED,2.53,xc-kls60: recover Codex stream disconnects,codex/xc-kls60-codex-stream-recovery,2026-04-28T23:47:32Z,2026-04-29T02:19:22Z
+xenota-collective/xenon,650,claude,xsm_control_plane,merged,MERGED,2.12,xc-y8w8.2: implement portable worker skill injection adapters,claude/xc-y8w8.2-skill-injection-adapters,2026-04-28T23:52:27Z,2026-04-29T01:59:29Z
+xenota-collective/xenon,651,codex,landing_protocol,merged,MERGED,2.14,xc-aui5z: nudge conflicting PR owners,codex/xc-aui5z-pr-conflict-nudge,2026-04-29T00:03:29Z,2026-04-29T02:12:00Z
+xenota-collective/xenon,653,codex,unclassified,open_stale,OPEN,95.83,xc-9kjq.2: Objective patrol loop and CLI,codex/xc-9kjq.2-objective-patrol,2026-04-29T00:09:55Z,
+xenota-collective/xenon,654,codex,routing_evidence,open_stale,OPEN,95.77,xc-9kjq.3: Objective completion evaluator and metric review,codex/xc-9kjq.3-objective-evaluator,2026-04-29T00:13:56Z,
+xenota-collective/xenon,655,codex,landing_protocol,open_stale,OPEN,95.15,xc-k1xkp: Require QA verdict artifacts before landing-lane handoff,codex/xc-k1xkp-qa-verdict-requirement,2026-04-29T00:50:46Z,
+xenota-collective/xenon,656,claude,xsm_control_plane,merged,MERGED,0.4,xc-zmpda.1: honor fast-track bd label as preemptive dispatch priority,claude/xc-zmpda.1-fast-track-dispatch,2026-04-29T00:50:46Z,2026-04-29T01:14:34Z
+xenota-collective/xenon,657,gemini,xsm_control_plane,open_stale,OPEN,93.95,xc-w87n: Fail closed on duplicate tmux pane resolution,gemini/xc-qrxmr-fail-closed-pane-resolution,2026-04-29T02:02:53Z,
+xenota-collective/xenon,658,gemini,xsm_control_plane,merged,MERGED,0.12,xc-z3ytk: detect and recover from Gemini CLI state corruption,gemini/xc-z3ytk-corrupted-state-respawn,2026-04-29T02:09:09Z,2026-04-29T02:16:36Z
+xenota-collective/xenon,659,codex,routing_evidence,open_stale,OPEN,93.39,xc-tx49i: bound swarm-improver evidence collection,codex/xc-tx49i-bound-improver-evidence,2026-04-29T02:36:44Z,
+xenota-collective/xenon,660,codex,unclassified,open_recent,OPEN,25.25,xc-u3ai: fix Gemini capacity classification,codex/xc-u3ai-gemini-capacity-classification,2026-05-01T22:44:47Z,
+xenota-collective/xenon,661,codex,cheap_eligible,open_recent,OPEN,25.12,xc-3oi3: handle Codex update prompts,codex/xc-3oi3-codex-update-prompts,2026-05-01T22:52:55Z,
+xenota-collective/xenon,662,claude,unclassified,open_recent,OPEN,24.63,xc-r6r8: anchor workmux driver subprocess cwd to xenota repo root,claude/xc-r6r8-workmux-cwd-anchor,2026-05-01T23:22:21Z,
+xenota-collective/xenon,663,codex,xsm_control_plane,open_recent,OPEN,24.46,xc-5v6o: fix xsm window hygiene names,codex/xc-5v6o-window-hygiene,2026-05-01T23:32:28Z,
+xenota-collective/xenon,664,claude,xsm_control_plane,open_recent,OPEN,24.41,xc-w87n: fail closed when duplicate pane resolution degrades,claude/xc-w87n-fail-closed-duplicate-pane,2026-05-01T23:35:25Z,
+xenota-collective/xenon,665,codex,xsm_control_plane,open_recent,OPEN,24.4,xc-gic3: recover partial actuator prep failures,codex/xc-gic3-actuator-prep-recovery,2026-05-01T23:35:43Z,
+xenota-collective/xenon,666,codex,unclassified,open_recent,OPEN,24.29,xc-qxym: clear ghost branch assignments,codex/xc-qxym-clear-ghost-assignments,2026-05-01T23:42:40Z,
+xenota-collective/xenon,667,codex,xsm_control_plane,open_recent,OPEN,24.23,xc-47sl: recover permission-gated redispatch,codex/xc-47sl-idle-permission-redispatch,2026-05-01T23:46:25Z,
+xenota-collective/xenon,668,gemini,unclassified,open_recent,OPEN,24.18,xc-2qrv: Stop synthetic backlog IDs from triggering repeated bd_backend_blocked events,gemini/xc-2qrv-synthetic-backlog-ids,2026-05-01T23:48:54Z,
+xenota-collective/xenon,669,claude,landing_protocol,open_recent,OPEN,24.16,xc-9y39: preserve full BLOCKER/HANDOFF text when value contains '=',claude/xc-9y39-status-tuple-equals,2026-05-01T23:50:31Z,
+xenota-collective/xenon,670,claude,landing_protocol,open_recent,OPEN,24.12,xc-z5qk: drop LLM-supplied bead_id and pr_number from parse_verdict,claude/xc-z5qk-drop-llm-supplied-ids,2026-05-01T23:52:46Z,
+xenota-collective/xenon,671,xsm-internal,unclassified,open_recent,OPEN,24.11,xc-qxym: clear ghost ownership when branch bead is missing from bd,starshot/xc-qxym-clear-missing-branch-bead-drift,2026-05-01T23:53:16Z,
+xenota-collective/xenon,672,codex,landing_protocol,open_recent,OPEN,24.1,xc-4x9i: route landing roles from PR pressure,codex/xc-4x9i-landing-pressure,2026-05-01T23:53:56Z,
+xenota-collective/xenon,673,codex,xsm_control_plane,open_recent,OPEN,24.03,xc-t3bo: align wrangler patrol role,codex/xc-t3bo-wrangler-patrol,2026-05-01T23:58:11Z,
+xenota-collective/xenon,674,gemini,xsm_control_plane,open_recent,OPEN,24.01,xc-elpe: add tag-based role routing for XSM backlog pickup,gemini/xc-elpe-tag-role-routing,2026-05-01T23:59:22Z,
+xenota-collective/xenota,214,gemini,unclassified,merged,MERGED,0.02,xc-pnwt: bound chat-server artifact listing resource usage,gemini/xc-pnwt-bound-chat-server-artifact-listing,2026-04-26T09:30:28Z,2026-04-26T09:31:26Z
+xenota-collective/xenota,215,xsm-internal,xsm_control_plane,merged,MERGED,0.0,xc-zn5l: update xenon pointer for claim lock tests,xsm/xc-zn5l-duplicate-dispatch-claim-locking,2026-04-26T09:46:04Z,2026-04-26T09:46:11Z
+xenota-collective/xenota,217,xsm-internal,landing_protocol,merged,MERGED,0.0,xc-zn5l: refresh xenon pointer after merge,xsm/xc-zn5l-refresh-xenon-pointer,2026-04-26T09:49:27Z,2026-04-26T09:49:36Z
+xenota-collective/xenota,218,xsm-internal,xsm_control_plane,merged,MERGED,0.08,xc-hy5r: advance xenon driver preference fixtures,xsm/xc-hy5r-driver-preference-dispatch-fixtures,2026-04-26T09:56:03Z,2026-04-26T10:00:36Z
+xenota-collective/xenota,219,xsm-internal,xsm_control_plane,merged,MERGED,0.01,xc-6hlr: bump xenon pointer for vps-control remote command quoting,xsm/xc-6hlr-quote-vps-control-remote,2026-04-26T10:07:32Z,2026-04-26T10:07:55Z
+xenota-collective/xenota,220,xsm-internal,xsm_control_plane,merged,MERGED,0.06,xc-i3t0: add staged bead pipeline strategy,xsm/xc-i3t0-staged-bead-pipeline-strategy,2026-04-26T10:09:55Z,2026-04-26T10:13:34Z
+xenota-collective/xenota,221,xsm-internal,xsm_control_plane,merged,MERGED,0.01,xc-trpb.1: update xenon desktop IPC pointer,xsm/xc-trpb.1-live-swarm-ipc,2026-04-26T10:24:17Z,2026-04-26T10:25:01Z
+xenota-collective/xenota,222,xsm-internal,xsm_control_plane,merged,MERGED,0.01,xc-25ob: advance xenon bd lock diagnostics,xsm/xc-25ob-bd-lock-timeouts,2026-04-26T10:29:10Z,2026-04-26T10:29:39Z
+xenota-collective/xenota,223,codex,unclassified,merged,MERGED,0.03,xc-62sm: update xenon pointer,codex/xc-62sm-po-ac-bd-flag,2026-04-26T10:42:02Z,2026-04-26T10:43:43Z
+xenota-collective/xenota,224,gemini,routing_evidence,merged,MERGED,0.02,xc-gcz7: update xenon routing pointer,gemini/xc-gcz7-driver-preference-routing,2026-04-26T10:46:10Z,2026-04-26T10:47:11Z
+xenota-collective/xenota,225,xsm-internal,xsm_control_plane,merged,MERGED,0.0,xc-trpb.3: update xenon pointer for normalizer,xsm/xc-trpb.3-normalize-live-xsm-pulse,2026-04-26T10:50:08Z,2026-04-26T10:50:22Z
+xenota-collective/xenota,228,gemini,unclassified,merged,MERGED,0.01,xc-cast: update xenon submodule for recursive sanitization,gemini/xc-cast-sanitize-repertoire,2026-04-26T10:57:38Z,2026-04-26T10:57:58Z
+xenota-collective/xenota,229,gemini,unclassified,merged,MERGED,7.65,xc-qgj3: update xenon submodule for key validation,gemini/xc-qgj3-validate-repertoire-keys,2026-04-26T11:03:56Z,2026-04-26T18:42:59Z
+xenota-collective/xenota,231,codex,xsm_control_plane,merged,MERGED,6.9,xc-renl: centralize supervisor messaging,codex/xc-renl-centralized-delivery,2026-04-26T11:34:14Z,2026-04-26T18:28:06Z
+xenota-collective/xenota,234,xsm-internal,xsm_control_plane,merged,MERGED,1.38,xc-5b34: bump xenon pointer for crew lane validation,xsm/xc-5b34-validate-crew-lane,2026-04-26T19:28:26Z,2026-04-26T20:51:21Z
+xenota-collective/xenota,235,codex,unclassified,merged,MERGED,4.47,xc-9t40: update xenon pointer for status tuple parser,codex/xc-9t40-anchor-status-tuples,2026-04-26T19:37:02Z,2026-04-27T00:05:20Z
+xenota-collective/xenota,236,xsm-internal,xsm_control_plane,merged,MERGED,6.87,xc-s3r2: refresh xenon hook freshness pointer,xsm/xc-s3r2-hook-freshness,2026-04-26T19:38:42Z,2026-04-27T02:31:05Z
+xenota-collective/xenota,237,xsm-internal,landing_protocol,merged,MERGED,41.36,xc-vi07: update xenon submodule for qa_state changed_paths,xsm/xc-vi07-pointer,2026-04-26T20:39:59Z,2026-04-28T14:01:42Z
+xenota-collective/xenota,238,gemini,unclassified,merged,MERGED,3.75,xc-vybs: update xenon pointer for blocked objective suppression,gemini/xc-vybs-suppress-blocked-objective-children,2026-04-26T20:40:48Z,2026-04-27T00:25:59Z
+xenota-collective/xenota,239,codex,unclassified,merged,MERGED,2.0,xc-h532: update xenon pointer for pulse bounds,codex/xc-h532-bound-pulse-subprocesses,2026-04-26T20:44:44Z,2026-04-26T22:45:00Z
+xenota-collective/xenota,240,codex,production_security,merged,MERGED,2.02,xc-ubt4: point at hotfix audit enforcement,codex/xc-ubt4-hotfix-audit-push-enforcement,2026-04-26T20:51:48Z,2026-04-26T22:52:53Z
+xenota-collective/xenota,241,gemini,landing_protocol,open_stale,OPEN,147.13,xc-338x: update xenon LiteLLM ignore pointer,gemini/xc-338x-fix-litellm-click-conflict,2026-04-26T20:52:02Z,
+xenota-collective/xenota,242,xsm-internal,xsm_control_plane,open_stale,OPEN,147.09,xc-trpb.2: refresh xenon pointer for live swarm data hook,xsm/xc-trpb.2-live-data-hook,2026-04-26T20:54:44Z,
+xenota-collective/xenota,243,xsm-internal,landing_protocol,merged,MERGED,51.93,xc-c1xq: deduplicate landing blockers,xsm/xc-c1xq-deduplicate-landing-blockers,2026-04-26T20:56:23Z,2026-04-29T00:51:57Z
+xenota-collective/xenota,244,codex,xsm_control_plane,open_stale,OPEN,145.7,Update xenon pointer for workmux window pin,codex/xsm-workmux-window-pin,2026-04-26T22:18:12Z,
+xenota-collective/xenota,245,xsm-internal,xsm_control_plane,open_stale,OPEN,144.93,xc-6aoe: add pointer-PR required-check workflow and bump submodule pointers,xsm/xc-6aoe-pointer-pr-check-coverage,2026-04-26T23:04:29Z,
+xenota-collective/xenota,246,codex,routing_evidence,open_stale,OPEN,144.6,xc-ixg6: update xenon dependency routing pointer,codex/xc-ixg6-dep-update-routing,2026-04-26T23:24:05Z,
+xenota-collective/xenota,247,gemini,xsm_control_plane,merged,MERGED,1.01,xc-utgg: fix XSM restart targeting and add health check,gemini/xc-utgg-xsm-restart-closeout-fix,2026-04-26T23:56:57Z,2026-04-27T00:57:25Z
+xenota-collective/xenota,248,gemini,unclassified,open_stale,OPEN,143.9,xc-trpb.5: update xenon pointer for account capacity view,gemini/xc-trpb.5-account-capacity-view,2026-04-27T00:05:58Z,
+xenota-collective/xenota,250,codex,xsm_control_plane,merged,MERGED,46.97,xc-u8o0: bound xsm monitor health checks,codex/xc-u8o0-monitor-timeout,2026-04-27T01:29:27Z,2026-04-29T00:27:23Z
+xenota-collective/xenota,251,codex,unclassified,open_stale,OPEN,141.91,xc-k7p6: update PR preflight workflow,codex/xc-k7p6-pr-preflight,2026-04-27T02:05:40Z,
+xenota-collective/xenota,252,codex,unclassified,open_stale,OPEN,141.69,xc-qj62: point xenon at event row quarantine,codex/xc-qj62-event-quarantine,2026-04-27T02:18:52Z,
+xenota-collective/xenota,253,codex,xsm_control_plane,merged,MERGED,46.82,xc-17ri: point xenon at Gemini delivery fix,codex/xc-17ri-gemini-modal-recovery,2026-04-27T02:45:49Z,2026-04-29T01:35:07Z
+xenota-collective/xenota,254,codex,xsm_control_plane,open_stale,OPEN,139.54,Update xenon pointer for XSM skill dispatch,codex/xc-f5r8-required-worker-skills,2026-04-27T04:27:41Z,
+xenota-collective/xenota,256,claude,unclassified,open_stale,OPEN,139.34,xc-bqeb: point xenon at interrupt-guard terminal fix,claude/xc-bqeb-interrupt-guard-terminal,2026-04-27T04:39:37Z,
+xenota-collective/xenota,257,codex,xsm_control_plane,open_stale,OPEN,121.54,xc-qcgt: update xenon pointer for skill validation,codex/xc-qcgt-lane-skill-validation,2026-04-27T22:27:26Z,
+xenota-collective/xenota,258,codex,xsm_control_plane,open_stale,OPEN,121.5,xc-tcjs: update handbook pool-fill docs pointer,codex/xc-tcjs-pool-fill-docs,2026-04-27T22:30:09Z,
+xenota-collective/xenota,259,codex,xsm_control_plane,merged,MERGED,4.56,xc-so9a: add fd-pressure respawn helpers,codex/xc-so9a-respawn-on-fd-pressure,2026-04-27T23:48:57Z,2026-04-28T04:22:25Z
+xenota-collective/xenota,260,codex,xsm_control_plane,open_stale,OPEN,119.0,xc-3c4d: set XSM restart CA cert env,codex/xc-3c4d-codex-ca-certs,2026-04-28T01:00:05Z,
+xenota-collective/xenota,261,codex,cheap_eligible,merged,MERGED,24.4,xc-r74o: point handbook at Gemini modal docs,codex/xc-r74o-gemini-modal-docs,2026-04-28T01:12:56Z,2026-04-29T01:36:49Z
+xenota-collective/xenota,262,xsm-internal,xsm_control_plane,merged,MERGED,24.6,xc-mklx: point xenon to gemini periodic recycle,xsm/xc-mklx-gemini-fd-recycler,2026-04-28T01:18:12Z,2026-04-29T01:54:02Z
+xenota-collective/xenota,263,codex,unclassified,open_stale,OPEN,118.62,xc-wosa: point handbook at build fix,codex/xc-wosa-handbook-build-deps,2026-04-28T01:22:47Z,
+xenota-collective/xenota,264,xsm-internal,xsm_control_plane,open_stale,OPEN,118.59,xc-ebw1: point handbook to xsm gemini recycle docs,xsm/xc-ebw1-handbook-pointer,2026-04-28T01:24:42Z,
+xenota-collective/xenota,265,codex,xsm_control_plane,merged,MERGED,5.62,xc-6rry: update xenon provenance pointer,codex/xc-6rry-pool-fill-provenance,2026-04-28T01:33:37Z,2026-04-28T07:10:38Z
+xenota-collective/xenota,266,codex,cheap_eligible,open_stale,OPEN,117.03,xc-mqte: point xenon at prompt delivery fix,codex/xc-mqte-codex-prompt-delivery,2026-04-28T02:58:25Z,
+xenota-collective/xenota,267,codex,xsm_control_plane,merged,MERGED,0.14,xc-w5po: refresh XSM branch assignment pointers,codex/xc-w5po-xsm-monitor-refresh,2026-04-28T03:01:09Z,2026-04-28T03:09:20Z
+xenota-collective/xenota,268,claude,xsm_control_plane,open_stale,OPEN,116.95,xc-yfqo: bump xenon to role patrol re-prime fix,claude/xc-yfqo-role-patrol-relaunch,2026-04-28T03:02:58Z,
+xenota-collective/xenota,270,codex,xsm_control_plane,open_stale,OPEN,116.16,xc-8v2b0: point xenon at patrol safety net,codex/xc-8v2b0-supervisor-parked-walk,2026-04-28T03:50:25Z,
+xenota-collective/xenota,271,codex,landing_protocol,open_stale,OPEN,115.84,xc-r8bsr: point xenon at TUI gate grammar,codex/xc-r8bsr-tui-grammar,2026-04-28T04:09:35Z,
+xenota-collective/xenota,272,codex,xsm_control_plane,merged,MERGED,3.02,xc-5efxv: prevent tmux target orphan sessions,codex/xc-5efxv-tmux-target-no-orphans,2026-04-28T04:16:34Z,2026-04-28T07:17:30Z
+xenota-collective/xenota,273,claude,xsm_control_plane,merged,MERGED,20.51,xc-zojv: bump xenon pointer and timeout-rule worker prompts,claude/xc-zojv-orphan-poll-cleanup,2026-04-28T04:24:24Z,2026-04-29T00:54:57Z
+xenota-collective/xenota,274,codex,landing_protocol,merged,MERGED,2.8,xc-vi07.3: update handbook pointer for qa_state docs,codex/xc-vi07.3-handbook-qa-state,2026-04-28T04:29:38Z,2026-04-28T07:17:23Z
+xenota-collective/xenota,275,claude,xsm_control_plane,merged,MERGED,2.75,xc-twaa6: auto-relaunch xsm on graceful self-exit,claude/xc-twaa6-xsm-launcher-relaunch,2026-04-28T04:32:16Z,2026-04-28T07:17:18Z
+xenota-collective/xenota,276,claude,xsm_control_plane,merged,MERGED,12.46,xc-mvrh: tmux window-name hygiene + stable workmux-handle targeting,claude/xc-mvrh-tmux-window-name-hygiene,2026-04-28T04:45:43Z,2026-04-28T17:13:35Z
+xenota-collective/xenota,277,claude,unclassified,open_stale,OPEN,114.83,xc-74za: bump xenon to queue payload bounds,claude/xc-74za-queue-payload-bounds,2026-04-28T05:10:02Z,
+xenota-collective/xenota,278,codex,xsm_control_plane,open_stale,OPEN,114.7,xc-twv1: surface xsm evidence failures,codex/xc-twv1-evidence-failures,2026-04-28T05:17:59Z,
+xenota-collective/xenota,279,codex,landing_protocol,merged,MERGED,4.81,xc-5pc4: fail pr handoff on lookup errors,codex/xc-5pc4-pr-handoff-lookup-errors,2026-04-28T05:30:28Z,2026-04-28T10:19:17Z
+xenota-collective/xenota,280,claude,xsm_control_plane,open_stale,OPEN,112.71,xc-lvy8t: resolve worker target by active agent pane,claude/xc-lvy8t-tmux-target-active-pane,2026-04-28T07:17:11Z,
+xenota-collective/xenota,281,claude,xsm_control_plane,merged,MERGED,16.51,"xc-6tdu2: address xsm runtime pane by @xsm_role tag, not pane index",claude/xc-6tdu2-launcher-pane-tag,2026-04-28T07:18:29Z,2026-04-28T23:49:06Z
+xenota-collective/xenota,282,codex,landing_protocol,open_stale,OPEN,112.44,xc-4nlcj: update operator gate resolver pointers,codex/xc-4nlcj-operator-gate-resolver,2026-04-28T07:33:50Z,
+xenota-collective/xenota,283,claude,xsm_control_plane,merged,MERGED,17.15,xc-9l5su: enforce single-active-bead invariant for crew workers,claude/xc-9l5su-single-active-bead,2026-04-28T07:40:06Z,2026-04-29T00:49:09Z
+xenota-collective/xenota,284,codex,unclassified,open_stale,OPEN,111.96,xc-4uhlk: update Gemini delivery pointers,codex/xc-4uhlk-gemini-enter-delivery,2026-04-28T08:02:25Z,
+xenota-collective/xenota,285,codex,xsm_control_plane,open_stale,OPEN,111.74,xc-m3e7: update supervisor patrol cadence,codex/xc-m3e7-supervisor-no-sleep-cadence,2026-04-28T08:15:44Z,
+xenota-collective/xenota,286,codex,xsm_control_plane,open_stale,OPEN,111.67,xc-3s63: update pool-fill settlement coverage,codex/xc-3s63-pool-fill-settlement-coverage,2026-04-28T08:20:02Z,
+xenota-collective/xenota,287,codex,unclassified,merged,MERGED,15.47,xc-844w: fail unhealthy on jq health errors,codex/xc-844w-health-jq-fail-unhealthy,2026-04-28T08:23:56Z,2026-04-28T23:52:01Z
+xenota-collective/xenota,288,codex,xsm_control_plane,open_stale,OPEN,111.48,xc-9kbx: update role lane self-resume,codex/xc-9kbx-role-lane-self-resume,2026-04-28T08:31:27Z,
+xenota-collective/xenota,289,codex,unclassified,open_stale,OPEN,111.19,xc-yzkw: update xenon strong review receipts,codex/xc-yzkw-strong-review-receipts,2026-04-28T08:48:28Z,
+xenota-collective/xenota,290,codex,unclassified,open_stale,OPEN,111.05,xc-qxqt: update xenon blocked objective handling,codex/xc-qxqt-blocked-objective-classification,2026-04-28T08:57:00Z,
+xenota-collective/xenota,291,codex,landing_protocol,open_stale,OPEN,110.9,xc-5hlu: update xenon obsolete dirty landings,codex/xc-5hlu-obsolete-dirty-landings,2026-04-28T09:06:07Z,
+xenota-collective/xenota,292,codex,xsm_control_plane,open_stale,OPEN,110.69,xc-x6ud: update xenon routing label taxonomy,codex/xc-x6ud-xsm-label-taxonomy,2026-04-28T09:18:46Z,
+xenota-collective/xenota,293,codex,unclassified,open_stale,OPEN,110.4,xc-3kyt: update xenon staged strategy metadata,codex/xc-3kyt-strategy-schema-contract,2026-04-28T09:35:43Z,
+xenota-collective/xenota,294,codex,unclassified,open_stale,OPEN,110.23,xc-2k77: update xenon PR provenance,codex/xc-2k77-pr-provenance-blocks,2026-04-28T09:45:54Z,
+xenota-collective/xenota,295,codex,routing_evidence,open_stale,OPEN,110.03,xc-u8p2: update xenon for evidence reset,codex/xc-u8p2-intervention-evidence-reset,2026-04-28T09:58:13Z,
+xenota-collective/xenota,296,codex,xsm_control_plane,open_stale,OPEN,109.89,xc-fv0c: update xenon for safe queue ids,codex/xc-fv0c-safe-worker-ids,2026-04-28T10:06:37Z,
+xenota-collective/xenota,297,codex,xsm_control_plane,merged,MERGED,3.16,xc-pchm: exclude xsm worker state,codex/xc-pchm-worker-state-metadata,2026-04-28T10:11:31Z,2026-04-28T13:20:57Z
+xenota-collective/xenota,298,codex,routing_evidence,open_stale,OPEN,109.64,xc-fkr2: update xenon for driver routing,codex/xc-fkr2-driver-routing,2026-04-28T10:21:50Z,
+xenota-collective/xenota,300,codex,unclassified,open_stale,OPEN,107.18,point xenon at dependency lookup tests,codex/xc-edsg-fail-closed-deps,2026-04-28T12:49:27Z,
+xenota-collective/xenota,301,codex,production_security,open_stale,OPEN,107.17,xc-3gdtz: update xenon for routing audit cleanup,codex/xc-3gdtz-clear-routing-audit,2026-04-28T12:49:48Z,
+xenota-collective/xenota,302,codex,routing_evidence,open_stale,OPEN,107.1,point xenon at unlabeled routing test,codex/xc-fi5hp-unlabeled-driver-routing,2026-04-28T12:53:58Z,
+xenota-collective/xenota,303,codex,unclassified,open_stale,OPEN,107.01,point xenon at driver resolution fix,codex/xc-x97gi-enforce-driver-strength,2026-04-28T12:59:22Z,
+xenota-collective/xenota,304,claude,unclassified,merged,MERGED,10.22,xc-9kjq.1: bump handbook for swarm-objectives design contract,claude/xc-9kjq-1-objective-model,2026-04-28T13:01:54Z,2026-04-28T23:15:03Z
+xenota-collective/xenota,305,codex,production_security,open_stale,OPEN,106.96,Update xenon for vps-control SSH host-key verification,codex/xc-gc8z-ssh-host-key,2026-04-28T13:02:34Z,
+xenota-collective/xenota,306,codex,unclassified,open_stale,OPEN,106.94,point xenon at work queue state fix,codex/xc-tvxs-work-state-scan,2026-04-28T13:03:31Z,
+xenota-collective/xenota,308,gemini,unclassified,open_stale,OPEN,106.79,xc-vccrk: codex reliability and pre-flight auth check,gemini-1/xc-vccrk-codex-subprocess-crash,2026-04-28T13:12:42Z,
+xenota-collective/xenota,309,codex,unclassified,open_stale,OPEN,106.68,xc-wvwdx: update xenon wait-idle classifier,codex/xc-wvwdx-wait-idle-classifier,2026-04-28T13:19:28Z,
+xenota-collective/xenota,310,codex,xsm_control_plane,open_stale,OPEN,106.67,xc-e94u point xenon at main lane prompt guard,codex/xc-e94u-block-main-injection,2026-04-28T13:20:00Z,
+xenota-collective/xenota,311,claude,xsm_control_plane,open_stale,OPEN,106.63,xc-0yqv: bump xenon for role-lane prompt-injection guard,claude/xc-0yqv-role-lane-prompt-guard,2026-04-28T13:22:04Z,
+xenota-collective/xenota,312,claude,landing_protocol,open_stale,OPEN,106.57,xc-aui5z: bump xenon pointer for PR conflict patrol,claude/xc-aui5z-pr-conflicting-patrol,2026-04-28T13:25:33Z,
+xenota-collective/xenota,313,codex,landing_protocol,merged,MERGED,10.86,xc-cgkun: point xenon at control gate surfacing,codex/xc-cgkun-supervisor-landing-gates,2026-04-28T13:29:37Z,2026-04-29T00:21:21Z
+xenota-collective/xenota,314,codex,unclassified,merged,MERGED,12.41,xc-fjtg: update xenon late-review pointer,codex/xc-fjtg-late-review-input,2026-04-28T13:33:09Z,2026-04-29T01:57:57Z
+xenota-collective/xenota,315,claude,routing_evidence,open_stale,OPEN,106.36,xc-lgcz: bump xenon for routing-accuracy eval pipeline,claude/xc-lgcz-routing-accuracy-eval,2026-04-28T13:38:24Z,
+xenota-collective/xenota,316,codex,production_security,merged,MERGED,10.58,xc-qkx1: update xenon pool rollback pointer,codex/xc-qkx1-pool-fill-audit,2026-04-28T13:41:38Z,2026-04-29T00:16:33Z
+xenota-collective/xenota,317,codex,production_security,open_stale,OPEN,106.21,xc-vi07.4: update xenon sensitive QA pointer,codex/xc-vi07.4-sensitive-approvals,2026-04-28T13:47:39Z,
+xenota-collective/xenota,318,claude,xsm_control_plane,merged,MERGED,8.31,xc-hi4uz: exempt xsm-control beads from prefix guard + xenon pointer,claude/xc-hi4uz-xenon-check-gate,2026-04-28T13:49:27Z,2026-04-28T22:08:04Z
+xenota-collective/xenota,319,gemini,production_security,open_stale,OPEN,106.16,xc-gc8z: enforce SSH host-key verification in vps-control Target,gemini/xc-gc8z-ssh-host-key,2026-04-28T13:50:13Z,
+xenota-collective/xenota,320,claude,landing_protocol,open_stale,OPEN,106.05,xc-kaip: add stale submodule pointer CI gate,claude/xc-kaip-stale-submodule-pointer-gate,2026-04-28T13:57:01Z,
+xenota-collective/xenota,321,claude,xsm_control_plane,merged,MERGED,10.2,xc-1xc8: drop shared restart_health.json in restart_wrangle,claude/xc-1xc8-mktemp-restart-health,2026-04-28T14:00:26Z,2026-04-29T00:12:41Z
+xenota-collective/xenota,322,codex,unclassified,open_stale,OPEN,105.98,xc-c3r0w: route gemini resets safely,codex/xc-c3r0w-gemini-interrupt,2026-04-28T14:01:12Z,
+xenota-collective/xenota,323,claude,unclassified,open_stale,OPEN,105.96,xc-vi07.5: bump xenon for trusted approval provenance,claude/xc-vi07-5-trusted-approval-provenance,2026-04-28T14:02:07Z,
+xenota-collective/xenota,324,codex,production_security,open_stale,OPEN,105.94,xc-zmtk: add worktree abandonment audit,codex/xc-zmtk-worktree-abandonment-audit,2026-04-28T14:03:51Z,
+xenota-collective/xenota,325,xsm-internal,xsm_control_plane,open_stale,OPEN,105.93,xc-17ri.5: update submodules for fail-closed delivery lifecycle,xsm/xc-17ri5-fail-closed-lifecycle,2026-04-28T14:04:28Z,
+xenota-collective/xenota,326,claude,xsm_control_plane,merged,MERGED,10.03,xc-uhxy: guard tmux_launch_claude_in_shell C-c with idle pre-probe,claude/xc-uhxy-cc-idle-guard,2026-04-28T14:07:23Z,2026-04-29T00:09:17Z
+xenota-collective/xenota,327,claude,xsm_control_plane,merged,MERGED,9.84,xc-23ub: replace width<40 sidebar heuristic with @agent_ui_role marker,claude/xc-23ub-sidebar-role-marker,2026-04-28T14:12:02Z,2026-04-29T00:02:40Z
+xenota-collective/xenota,328,gemini,xsm_control_plane,open_stale,OPEN,105.74,xc-pdjo: Update xenon pointer for XSM lint baseline,gemini/xc-pdjo-xsm-lint-baseline,2026-04-28T14:15:49Z,
+xenota-collective/xenota,329,codex,unclassified,open_stale,OPEN,105.74,xc-l1hr: update xenon pointer for ANSI status parsing,codex/xc-l1hr-ansi-status-parsing,2026-04-28T14:15:50Z,
+xenota-collective/xenota,330,codex,xsm_control_plane,open_stale,OPEN,105.24,xc-iq2py: update xenon pointer for supervisor RCA role,codex/xc-iq2py-supervisor-pane-rca,2026-04-28T14:45:51Z,
+xenota-collective/xenota,331,codex,unclassified,merged,MERGED,1.2,xc-gwxl4: update xenon pointer for Codex template reset fix,codex/xc-gwxl4-codex-template-pollution,2026-04-28T14:54:21Z,2026-04-28T16:06:06Z
+xenota-collective/xenota,332,claude,xsm_control_plane,merged,MERGED,1.14,xc-9kbx: bump xenon for role lane self-resume,claude/xc-9kbx-role-self-resume,2026-04-28T14:55:45Z,2026-04-28T16:03:58Z
+xenota-collective/xenota,333,codex,unclassified,merged,MERGED,1.09,xc-gwxl4: update xenon delivery verification,codex/xc-gwxl4-codex-enter-positive-verification,2026-04-28T15:03:08Z,2026-04-28T16:08:24Z
+xenota-collective/xenota,334,codex,xsm_control_plane,merged,MERGED,2.04,xc-mb5r: bump xenon for bd-ready dispatch,codex/xc-mb5r-claim-ready-before-reset,2026-04-28T15:43:38Z,2026-04-28T17:46:00Z
+xenota-collective/xenota,335,codex,unclassified,merged,MERGED,1.87,xc-oxuov: update xenon for Gemini reroute,codex/xc-oxuov-gemini-quota-reroute,2026-04-28T16:05:42Z,2026-04-28T17:57:49Z
+xenota-collective/xenota,336,codex,unclassified,merged,MERGED,7.75,xc-g0vrq/xc-oxl01: update xenon pointer,codex/xc-g0vrq-intervention-ledger,2026-04-28T16:14:30Z,2026-04-28T23:59:42Z
+xenota-collective/xenota,337,codex,landing_protocol,merged,MERGED,0.43,xc-ofo2c: point to Codex blocker fix,codex/xc-ofo2c-codex-blocker-summary,2026-04-28T16:28:17Z,2026-04-28T16:53:55Z
+xenota-collective/xenota,338,claude,unclassified,merged,MERGED,0.43,xc-2q593: bump xenon for pr scan repo path resolution,claude/xc-2q593-pr-scan-repo-path,2026-04-28T16:30:30Z,2026-04-28T16:56:18Z
+xenota-collective/xenota,339,claude,unclassified,merged,MERGED,6.63,xc-xq5rt: resolve live xenota repo root from worktree-local manage-swarm skill copies,claude/xc-xq5rt-manage-swarm-repo-root,2026-04-28T17:12:15Z,2026-04-28T23:50:17Z
+xenota-collective/xenota,340,codex,unclassified,merged,MERGED,0.64,xc-zy9s5: refresh xenon Gemini delivery pointer,codex/xc-zy9s5-gemini-idle-send,2026-04-28T17:16:08Z,2026-04-28T17:54:19Z
+xenota-collective/xenota,341,claude,xsm_control_plane,merged,MERGED,6.34,xc-fqskk: harden manage-swarm restart helpers for worktree closeout,claude/xc-fqskk-restart-helpers,2026-04-28T17:34:36Z,2026-04-28T23:55:05Z
+xenota-collective/xenota,342,codex,xsm_control_plane,merged,MERGED,1.4,xc-kt9ug: point xenon at restart recovery pane fix,codex/xc-kt9ug-restart-recovery-pane-ids,2026-04-28T17:47:57Z,2026-04-28T19:11:48Z
+xenota-collective/xenota,343,codex,unclassified,open_stale,OPEN,102.15,xc-iojlw: update xenon poisoned-session pointer,codex/xc-iojlw-gemini-poisoned-session,2026-04-28T17:51:08Z,
+xenota-collective/xenota,344,claude,landing_protocol,open_stale,OPEN,101.77,xc-xs8t: bump xenon pointer for parse_verdict id-drop,claude/xc-xs8t-drop-llm-supplied-ids,2026-04-28T18:13:40Z,
+xenota-collective/xenota,345,codex,xsm_control_plane,merged,MERGED,76.84,xc-jbuo2: advance workmux recovery,worker-codex-2/xc-jbuo2-gemini-workmux-disconnect,2026-04-28T18:19:53Z,2026-05-01T23:10:28Z
+xenota-collective/xenota,346,codex,landing_protocol,merged,MERGED,7.56,xc-pwt1h: point xenon at landing pane fix,codex/xc-pwt1h-landing-pane-resolution,2026-04-28T18:31:10Z,2026-04-29T02:04:31Z
+xenota-collective/xenota,347,codex,unclassified,open_stale,OPEN,101.26,xc-id4g: point xenon at shared status regex,codex/xc-id4g-status-regex,2026-04-28T18:44:31Z,
+xenota-collective/xenota,348,codex,xsm_control_plane,open_stale,OPEN,101.17,xc-eech: point xenon at dispatch status allowlist,codex/xc-eech-find-available-allowlist,2026-04-28T18:49:35Z,
+xenota-collective/xenota,349,codex,unclassified,open_stale,OPEN,101.11,xc-eb9s: point xenon at status near-miss logging,codex/xc-eb9s-status-near-miss-log,2026-04-28T18:53:21Z,
+xenota-collective/xenota,350,codex,unclassified,open_stale,OPEN,101.03,xc-g9j2: point xenon at structured blocked bypass,codex/xc-g9j2-structured-blocked-bypass,2026-04-28T18:58:23Z,
+xenota-collective/xenota,351,codex,xsm_control_plane,open_stale,OPEN,100.81,xc-dhdq: point xenon at worker metadata realignment,codex/xc-dhdq-worker-metadata-realign,2026-04-28T19:11:39Z,
+xenota-collective/xenota,352,gemini,unclassified,open_stale,OPEN,100.73,xc-pui0l: handle Gemini Shell awaiting input,gemini/xc-pui0l-gemini-shell-input,2026-04-28T19:16:17Z,
+xenota-collective/xenota,353,codex,xsm_control_plane,open_stale,OPEN,100.36,xc-7pdez: guard Gemini clear assignment targets,codex/xc-7pdez-clear-assign-gemini-stale-pane,2026-04-28T19:38:33Z,
+xenota-collective/xenota,354,claude,landing_protocol,open_stale,OPEN,100.0,xc-zo3s: bump xenon for handoff intervention rip,claude/xc-zo3s-rip-unused-handoff-tracker,2026-04-28T20:00:10Z,
+xenota-collective/xenota,355,codex,xsm_control_plane,open_stale,OPEN,99.94,xc-f63k: update lifecycle hook scope pointers,codex/xc-f63k-lifecycle-hook-scope,2026-04-28T20:03:24Z,
+xenota-collective/xenota,356,codex,xsm_control_plane,open_stale,OPEN,99.71,xc-7r33: update xenon for worker hook alignment fix,codex/xc-7r33-hook-alignment,2026-04-28T20:17:17Z,
+xenota-collective/xenota,357,codex,xsm_control_plane,open_stale,OPEN,99.61,xc-avjd: point xenon at crew lane validation contract,codex/xc-avjd-lane-validation-contract,2026-04-28T20:23:23Z,
+xenota-collective/xenota,358,codex,unclassified,open_stale,OPEN,99.51,xc-x7wm: point xenon at invalid assignment latch fix,codex/xc-x7wm-invalid-assignment-latch,2026-04-28T20:29:39Z,
+xenota-collective/xenota,359,codex,cheap_eligible,open_stale,OPEN,99.42,xc-pcvk: point handbook at staged pipeline docs,codex/xc-pcvk-staged-pipeline-docs,2026-04-28T20:34:58Z,
+xenota-collective/xenota,360,gemini,unclassified,open_stale,OPEN,99.28,xc-pqp5: update xenon for authoritative changed_paths,gemini/xc-pqp5-authoritative-changed-paths,2026-04-28T20:43:01Z,
+xenota-collective/xenota,361,codex,landing_protocol,open_stale,OPEN,99.15,Point at emergency hotfix SLA breach patrol,codex/xc-qf84-hotfix-sla-patrol,2026-04-28T20:51:07Z,
+xenota-collective/xenota,362,codex,landing_protocol,open_stale,OPEN,99.05,Point at XSM lint gate cleanup,codex/xc-wtkmz-xsm-lint-format,2026-04-28T20:57:18Z,
+xenota-collective/xenota,363,codex,landing_protocol,open_stale,OPEN,98.96,Point at QA handoff parse fix,codex/xc-loao-qa-json-parse,2026-04-28T21:02:10Z,
+xenota-collective/xenota,364,codex,landing_protocol,open_stale,OPEN,98.83,Update xenon pointer for QA verdict path containment,codex/xc-0xhe-qa-verdict-path-bound,2026-04-28T21:10:10Z,
+xenota-collective/xenota,365,codex,xsm_control_plane,open_stale,OPEN,98.75,xc-gic3: bump xenon for actuator prep recovery,codex/xc-53up-actuator-prep-rollback,2026-04-28T21:15:11Z,
+xenota-collective/xenota,366,codex,xsm_control_plane,open_stale,OPEN,98.66,Update xenon pointer for named tmux buffers,codex/xc-ksso-named-tmux-buffer,2026-04-28T21:20:27Z,
+xenota-collective/xenota,367,claude,xsm_control_plane,merged,MERGED,1.61,xc-l573l + xc-3c5on: bump xenon for tmux fallback when workmux loses agent,claude/xc-l573l-tmux-fallback-duplicate-windows,2026-04-28T22:08:51Z,2026-04-28T23:45:18Z
+xenota-collective/xenota,369,claude,xsm_control_plane,merged,MERGED,1.2,xc-gl4fx: bump xenon for safe stale bd lock recovery,claude/xc-gl4fx-stale-bd-lock-recovery,2026-04-28T22:26:10Z,2026-04-28T23:38:12Z
+xenota-collective/xenota,370,claude,xsm_control_plane,merged,MERGED,1.07,xc-nqkd: bump xenon for pool-fill assignee bias + counters + notifications,claude/xc-nqkd-pool-fill-on-release-v2,2026-04-28T23:40:33Z,2026-04-29T00:44:41Z
+xenota-collective/xenota,371,codex,xsm_control_plane,merged,MERGED,2.51,xc-kls60: point xenon at stream recovery,codex/xc-kls60-codex-stream-recovery,2026-04-28T23:48:53Z,2026-04-29T02:19:42Z
+xenota-collective/xenota,372,codex,landing_protocol,merged,MERGED,2.13,xc-aui5z: point xenon at PR conflict nudges,codex/xc-aui5z-pr-conflict-nudge,2026-04-29T00:04:35Z,2026-04-29T02:12:21Z
+xenota-collective/xenota,373,codex,unclassified,open_stale,OPEN,95.83,xc-9kjq.2: point xenon at objective patrol loop,codex/xc-9kjq.2-objective-patrol,2026-04-29T00:10:08Z,
+xenota-collective/xenota,374,codex,routing_evidence,open_stale,OPEN,95.76,xc-9kjq.3: point xenon at objective evaluator,codex/xc-9kjq.3-objective-evaluator,2026-04-29T00:14:09Z,
+xenota-collective/xenota,375,codex,unclassified,merged,MERGED,0.9,xc-zmpda.4: Fast-track severity policy and skill update,codex/xc-zmpda.4-fast-track-docs,2026-04-29T00:16:36Z,2026-04-29T01:10:24Z
+xenota-collective/xenota,376,codex,unclassified,merged,MERGED,1.46,xc-s16b0: document bd dolt push command,codex/xc-s16b0-bd-sync-guard,2026-04-29T00:21:48Z,2026-04-29T01:49:11Z
+xenota-collective/xenota,377,codex,landing_protocol,open_stale,OPEN,95.16,xc-k1xkp: Require QA verdict artifacts before landing-lane handoff,codex/xc-k1xkp-qa-verdict-requirement,2026-04-29T00:50:33Z,
+xenota-collective/xenota,378,claude,xsm_control_plane,merged,MERGED,0.43,xc-zmpda.1: bump xenon for fast-track dispatcher preemption,claude/xc-zmpda.1-fast-track-dispatch,2026-04-29T00:51:05Z,2026-04-29T01:16:54Z
+xenota-collective/xenota,379,codex,landing_protocol,merged,MERGED,0.13,xc-zmpda.3: add XSM post-merge restart path,codex/xc-zmpda.3-xsm-auto-restart,2026-04-29T00:52:36Z,2026-04-29T01:00:31Z
+xenota-collective/xenota,380,claude,landing_protocol,merged,MERGED,0.0,xc-fpam4: bump xenon for landing-pivot patrol policy,claude/xc-fpam4-landing-pivot,2026-04-29T00:59:00Z,2026-04-29T00:59:07Z
+xenota-collective/xenota,381,codex,unclassified,merged,MERGED,0.27,xc-ln1n2: fix rearm timer target resolution,codex/xc-ln1n2-rearm-timer-target,2026-04-29T01:06:11Z,2026-04-29T01:22:12Z
+xenota-collective/xenota,382,gemini,landing_protocol,merged,MERGED,0.07,xc-zmpda: Fast-track severity (dispatcher + auto-restart + docs),gemini/xc-zmpda-landing,2026-04-29T01:15:38Z,2026-04-29T01:20:04Z
+xenota-collective/xenota,383,claude,landing_protocol,merged,MERGED,0.1,xc-zmpda.2: add fast-track precedence to supervisor + landing standing_orders + skills,claude/xc-zmpda.2-fast-track-precedence,2026-04-29T01:18:02Z,2026-04-29T01:24:17Z
+xenota-collective/xenota,385,codex,unclassified,merged,MERGED,0.15,xc-ebzwa: fix unblock-swarm skill frontmatter,codex/xc-ebzwa-unblock-swarm-yaml,2026-04-29T01:40:53Z,2026-04-29T01:49:42Z
+xenota-collective/xenota,386,claude,xsm_control_plane,merged,MERGED,0.0,xc-y8w8: bump xenon for skill injection + swarm-improver role,claude/xc-y8w8-skill-injection-pointer,2026-04-29T02:01:12Z,2026-04-29T02:01:19Z
+xenota-collective/xenota,387,gemini,xsm_control_plane,open_stale,OPEN,93.95,xc-w87n: Fail closed on duplicate tmux pane resolution,gemini/xc-qrxmr-fail-closed-pane-resolution,2026-04-29T02:02:50Z,
+xenota-collective/xenota,388,gemini,unclassified,merged,MERGED,0.12,xc-fccu3: Remove hardcoded earthshot session from rearm_timer.sh,gemini/xc-fccu3-remove-hardcoded-session,2026-04-29T02:07:10Z,2026-04-29T02:14:27Z
+xenota-collective/xenota,389,gemini,xsm_control_plane,merged,MERGED,0.12,xc-z3ytk: update xenon pointer for Gemini corruption fix,gemini/xc-z3ytk-corrupted-state-respawn,2026-04-29T02:09:47Z,2026-04-29T02:16:57Z
+xenota-collective/xenota,390,codex,xsm_control_plane,merged,MERGED,0.0,xc-a3bst: bump xenon for prime control roles on respawn,codex/xc-a3bst-pointer,2026-04-29T02:09:52Z,2026-04-29T02:09:59Z
+xenota-collective/xenota,391,codex,routing_evidence,open_stale,OPEN,93.39,xc-tx49i: bound swarm-improver patrol evidence,codex/xc-tx49i-bound-improver-evidence,2026-04-29T02:36:44Z,
+xenota-collective/xenota,392,codex,unclassified,open_recent,OPEN,25.24,xc-u3ai: bump xenon for Gemini capacity fix,codex/xc-u3ai-gemini-capacity-classification,2026-05-01T22:45:25Z,
+xenota-collective/xenota,393,codex,cheap_eligible,open_recent,OPEN,25.11,xc-3oi3: bump xenon for Codex update prompts,codex/xc-3oi3-codex-update-prompts,2026-05-01T22:53:27Z,
+xenota-collective/xenota,394,claude,xsm_control_plane,open_recent,OPEN,24.59,xc-r6r8: bump xenon pointer + anchor send_worker_message helper cwd,claude/xc-r6r8-workmux-cwd-anchor,2026-05-01T23:24:29Z,
+xenota-collective/xenota,395,codex,xsm_control_plane,open_recent,OPEN,24.45,xc-5v6o: update xenon window hygiene fix,codex/xc-5v6o-window-hygiene,2026-05-01T23:33:10Z,
+xenota-collective/xenota,396,codex,xsm_control_plane,open_recent,OPEN,24.4,xc-gic3: point xenon at actuator prep recovery,codex/xc-gic3-actuator-prep-recovery,2026-05-01T23:35:43Z,
+xenota-collective/xenota,397,claude,xsm_control_plane,open_recent,OPEN,24.4,xc-w87n: bump xenon for fail-closed duplicate pane resolution,claude/xc-w87n-fail-closed-duplicate-pane,2026-05-01T23:35:46Z,
+xenota-collective/xenota,398,codex,unclassified,open_recent,OPEN,24.28,xc-qxym: update xenon ghost assignment fix,codex/xc-qxym-clear-ghost-assignments,2026-05-01T23:43:07Z,
+xenota-collective/xenota,399,codex,landing_protocol,open_recent,OPEN,24.22,xc-47sl: point xenon at permission gate recovery,codex/xc-47sl-idle-permission-redispatch,2026-05-01T23:46:36Z,
+xenota-collective/xenota,400,gemini,unclassified,open_recent,OPEN,24.18,xc-2qrv: Stop synthetic backlog IDs from triggering repeated bd_backend_blocked events,gemini/xc-2qrv-synthetic-backlog-ids,2026-05-01T23:49:18Z,
+xenota-collective/xenota,401,claude,unclassified,open_recent,OPEN,24.15,xc-9y39: bump xenon for status-tuple equals fix,claude/xc-9y39-status-tuple-equals,2026-05-01T23:50:49Z,
+xenota-collective/xenota,402,claude,landing_protocol,open_recent,OPEN,24.12,xc-z5qk: bump xenon for parse_verdict id-drop,claude/xc-z5qk-drop-llm-supplied-ids,2026-05-01T23:53:00Z,
+xenota-collective/xenota,403,xsm-internal,unclassified,open_recent,OPEN,24.1,xc-qxym: bump xenon for missing-branch-bead drift fix,starshot/xc-qxym-clear-missing-branch-bead-drift,2026-05-01T23:53:56Z,
+xenota-collective/xenota,404,codex,landing_protocol,open_recent,OPEN,24.1,xc-4x9i: point xenon at landing PR pressure,codex/xc-4x9i-landing-pressure,2026-05-01T23:54:09Z,
+xenota-collective/xenota,405,codex,xsm_control_plane,open_recent,OPEN,24.03,xc-t3bo: point xenon at wrangler patrol role,codex/xc-t3bo-wrangler-patrol,2026-05-01T23:58:25Z,
+xenota-collective/xenota,406,gemini,xsm_control_plane,open_recent,OPEN,24.0,xc-elpe: update xenon for tag-based routing,gemini/xc-elpe-tag-role-routing,2026-05-02T00:00:06Z,
