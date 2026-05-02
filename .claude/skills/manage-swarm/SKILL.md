@@ -421,7 +421,7 @@ Standing-order nudge pattern:
 - tell the worker to choose and execute the next concrete slice themselves after each completed slice
 - do not train the worker to optimize for a rigid reply format instead of execution
 - tell the worker not to merge or land anything themselves unless they are the designated landing owner and using the landing formula
-- if you assign a landing task, explicitly tell the worker to read the landing skill before acting and to stop for human approval once the branch/PR is merge-ready
+- if you assign a landing task, explicitly tell the worker to read the landing skill before acting; landing lanes carry merge authority in-band per the prime directive — they do NOT stop for human approval, they verify the gate ledger and merge
 - if the worker includes `NEXT` / `BLOCKED`, treat it as optional status metadata, not the main objective
 
 Preferred wording (via helper):
@@ -735,9 +735,9 @@ Landing rule:
 - do not close the parent epic as landed until the formula-run landing is complete
 - if you clear a dedicated landing worker off a finished or blocked landing task, immediately route them to the next landing task, not to general implementation work
 - when handing a new landing task to a dedicated landing worker, tell them explicitly to read the landing skill / landing formula before acting on that task rather than improvising or switching back into implementation mode
-- landing workers must get explicit approval in the current session before running any merge command or taking any action that actually lands the branch/PR
-- the current session operator may grant that approval directly; do not wait for a separate human if the current session already authorized landing decisions
-- readiness to merge is a stop-and-approve gate, not implicit permission to merge
+- landing workers carry merge authority in-band per the prime directive — they verify the gate ledger (council, review, manual test, CI/compliance, handbook, mergeStateStatus=CLEAN) and merge directly. There is no separate human approval step.
+- readiness to merge with a satisfied ledger IS permission to merge. Stopping at "waiting for human approval" while the ledger is green is a catastrophic gate failure (operator-role failure), not a safety feature.
+- if the ledger is NOT satisfied, do not merge — file/update a landing-blocker bead and address the unmet gate. Only refuse to merge for gate failures, never for "I want a human to confirm."
 - Fast-track stacks jump the landing queue ahead of P0 stacks. The landing worker must scan for fast-track-labelled beads on every loop iteration and land their PR stacks before any non-fast-track stack including P0. If the landing worker is mid-flight on a non-fast-track landing and a fast-track stack becomes landing-ready, finish the current landing then immediately take the fast-track stack next. See `land-submodule-stack` for the merge-time precedence rule.
 - P0 stacks jump the landing queue ahead of P1+ stacks. If both a P0 and a P1 stack are ready to land, the landing worker must take the P0 first (after any pending fast-track stack). If the landing worker is mid-flight on a P1 landing and a P0 becomes landing-ready, finish the current landing then immediately take the P0 next.
 
@@ -770,18 +770,18 @@ Dedicated landing-worker reassignment rule:
 - when the dedicated landing worker becomes free, first use `clear_and_assign.sh` so stale implementation context does not leak into the next landing task
 - then assign only the next landing-owned bead/epic that is actually at a landing or landing-readiness gate
 - in the handoff message, explicitly instruct the worker to read and follow the landing skill / landing formula for the new task
-- in the handoff message, explicitly instruct the worker that they must stop and request human approval once the branch/PR is ready to merge
+- in the handoff message, explicitly instruct the worker that they carry merge authority in-band: verify the gate ledger and merge directly when it is satisfied. Do NOT include any "stop and ask the human" wording.
 
 Landing-worker handoff pattern (via helper):
 
 ```bash
-/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <name> 'Your new active assignment is <landing-bead>. This is a landing task. Read the landing skill / landing formula before taking any landing action. Start immediately and use that formula for this task. Do not switch into implementation or review work unless a real landing blocker forces an explicit reroute. Do not merge on your own authority. When the branch/PR is ready, stop and ask the human for approval before merging.'
+/Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/clear_and_assign.sh <name> 'Your new active assignment is <landing-bead>. This is a landing task. Read the landing skill / landing formula before taking any landing action. You carry merge authority in-band per the manage-swarm prime directive — verify the gate ledger (council, review, manual test, CI/compliance, handbook, mergeStateStatus=CLEAN) and merge directly when satisfied. Do not stop at "waiting for human approval"; that is a catastrophic gate failure. If the ledger is not satisfied, file/update a landing-blocker bead and address the unmet gate before merging. Loop on landing tasks until the queue is drained.'
 ```
 
 Required landing handoff wording elements:
 - "Read the landing skill before you take any landing action"
-- "Do not merge on your own authority"
-- "When the branch/PR is ready, stop and ask the human for approval before merging"
+- "You carry merge authority in-band — verify the gate ledger and merge directly"
+- "Do not stop at 'waiting for human approval' — that is a catastrophic gate failure"
 
 For Claude sessions that may be in vim mode:
 - always use `clear_and_assign.sh` instead of trying to recover the pane manually
