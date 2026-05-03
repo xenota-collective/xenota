@@ -56,6 +56,13 @@ fi
 xsm_bin="${XSM_BIN:-$repo_root/xenon/packages/xsm/.venv/bin/xsm}"
 xsm_config="${XSM_CONFIG:-$repo_root/.xsm-local/swarm-backlog.yaml}"
 
+if [[ "$xsm_bin" != /* ]]; then
+  xsm_bin="$PWD/$xsm_bin"
+fi
+if [[ "$xsm_config" != /* ]]; then
+  xsm_config="$PWD/$xsm_config"
+fi
+
 worker_id="$worker"
 if [[ "$worker_id" == *:* ]]; then
   worker_id="${worker_id#*:}"
@@ -82,8 +89,13 @@ if [[ "$respawn" == "1" ]]; then
   args+=(--respawn)
 fi
 
+# xc-r6r8: anchor xsm's cwd to the xenota workspace root so the workmux
+# driver's `workmux list --json` lookup returns top-level worktrees (e.g.
+# worker-claude-1) instead of submodule-scoped results. Without this, a
+# helper invoked from inside the xenon submodule fails closed with
+# "No agent running in worktree '<handle>'" against an active worker pane.
 output="$(
-  "$xsm_bin" "${args[@]}"
+  cd "$repo_root" && XENOTA_REPO="$repo_root" "$xsm_bin" "${args[@]}"
 )"
 
 if command -v jq >/dev/null 2>&1; then
