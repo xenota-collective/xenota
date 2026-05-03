@@ -360,6 +360,7 @@ If you detect a worker has pushed directly to main (check with `git log --onelin
 - If the pane shows recent direct human input from the current chat session, treat that as a strong coordination signal: do not aggressively reallocate, redirect, or pile on messages just because the lane is momentarily paused.
 - When the human is present in the chat, only send a worker message if the worker is actually stuck and not working. Human-steered lanes should default to observation and minimal interference.
 - Never try to land work ad hoc. Every landing must go through the landing formula.
+- **Bundled batch landing**: the landing lane drains CLEAN xenon PRs in batches of 3–5, then pushes **one** xenota pointer bump commit listing all bead IDs (e.g. `bump xenon: xc-ab12, xc-cd34, xc-ef56`). Never open per-PR xenota pointer PRs — they clog the queue. Single-bead pointer bumps are only for emergency/hotfix landings with explicit operator authorisation. See `land-submodule-stack` skill for the exact bash pattern.
 - The current session operator has authority to approve or deny worker blockers, requests, and gates directly.
 - The current session operator has authority to approve landing requests directly.
 - Do not leave lanes parked on vague approval waits when you can issue the approval yourself in the current session.
