@@ -745,8 +745,13 @@ Do not merge, close, or call work landed outside the landing formula.
 
 For submodule-backed features:
 - use the `land-submodule-stack` formula
-- keep submodule PRs and the top-level pointer PR as one coordinated landing unit
-- delay submodule merges until the top-level PR is integration-tested and ready to merge
+- normal implementation workers open the submodule PR only; they do not create
+  paired per-PR xenota pointer PRs
+- the landing lane drains CLEAN xenon PRs in bundled batches of 3-5, then pushes
+  one consolidated top-level pointer bump commit listing all bead IDs in the
+  batch
+- single-bead top-level pointer updates are reserved for explicit
+  landing/hotfix exceptions or the final unbatchable PR in a landing session
 
 Landing rule:
 - if a stack is ready to land, hand it to the landing formula

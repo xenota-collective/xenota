@@ -41,6 +41,13 @@ Do NOT submit a PR with failing tests. Fix them first.
 git status  # must be clean
 ```
 
+For normal `xenon/` feature work, review preparation stops at the xenon PR.
+Do **not** create a paired xenota pointer PR for each submodule PR. The landing
+lane drains CLEAN xenon PRs in batches of 3-5 and then pushes one consolidated
+xenota pointer bump commit listing all bead IDs in the batch. Create a
+top-level pointer branch only when the bead is explicitly a landing,
+handbook-sync, or emergency/hotfix pointer task.
+
 For xenota top-level pointer PRs, also verify local XSM worker state is not
 tracked or staged:
 
