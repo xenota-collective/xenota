@@ -672,7 +672,26 @@ Rules:
 Pattern:
 1. Create a dedicated review child bead via `create_review_bead.sh`
 2. Dispatch a polecat of the opposite flavor via `sling_review.sh`
-3. Require comments on the epic or review bead
+3. **Reviews MUST be posted on the GitHub PR via `gh pr review`** — this is the canonical artifact that landing lanes filter on. Bd bead comments are auxiliary, not a substitute.
+
+Required review-posting form:
+
+```bash
+# For approval:
+gh pr review <pr-number> --repo <repo> --approve --body "<full review text>"
+
+# For requesting changes:
+gh pr review <pr-number> --repo <repo> --request-changes --body "<full review text>"
+
+# For commentary without verdict:
+gh pr review <pr-number> --repo <repo> --comment --body "<full review text>"
+```
+
+Why GH-side reviews are mandatory:
+
+- Landing lanes filter on `reviewDecision` (APPROVED / CHANGES_REQUESTED). PRs with reviews only on bd beads show `reviewDecision: ""` → landing skips them → backlog grows. **This is exactly how the xenon backlog hit 89 open PRs**: thorough reviews existed on bd beads but zero showed up on the PRs themselves.
+- The PR is the canonical artifact for both human and machine readers. A reviewer who only writes the bead comment is invisible to GitHub's review workflow.
+- Bd bead comments can still be posted as supplementary RCA evidence, but the verdict (APPROVE / CHANGES_REQUESTED / COMMENT) goes through `gh pr review`.
 
 Helpers:
 
