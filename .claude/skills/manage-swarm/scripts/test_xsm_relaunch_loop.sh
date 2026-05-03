@@ -177,5 +177,105 @@ assert_eq "path-change-relaunch-count" 2 "$final_count"
 assert_contains "path-change-message" "packages/xsm sha changed" "$output"
 assert_contains "path-change-audit" "relaunch_loop_path_change" "$(cat "$audit_log")"
 
+# Case 6: path change thrash protection (debounce).
+# Two rapid changes should only result in ONE relaunch if they occur
+# within the debounce window.
+repo_root6="$tmpdir/repo6"
+mkdir -p "$repo_root6/xenon/packages/xsm/src/xsm" "$repo_root6/.xsm-local"
+git -C "$repo_root6/xenon" init -q
+git -C "$repo_root6/xenon" config user.email "test@example.invalid"
+git -C "$repo_root6/xenon" config user.name "test"
+echo "one" >"$repo_root6/xenon/packages/xsm/src/xsm/marker.py"
+git -C "$repo_root6/xenon" add packages/xsm/src/xsm/marker.py
+git -C "$repo_root6/xenon" commit -q -m initial
+
+config6="$repo_root6/.xsm-local/swarm-backlog.yaml"
+echo "{}" >"$config6"
+counter_file6="$tmpdir/case6_count"
+echo 0 >"$counter_file6"
+# We need the child to stay alive long enough to see both changes.
+fake_debounce=$(make_fake_xsm "debounce" "
+trap 'exit 75' TERM
+count=\$(cat \"$counter_file6\")
+count=\$((count + 1))
+echo \"\$count\" >\"$counter_file6\"
+if [ \"\$count\" -le 2 ]; then
+  while true; do sleep 0.1; done
+fi
+exit 6
+")
+
+# We use a 2s debounce and 0.1s polling.
+# We'll trigger two changes 0.2s apart.
+(
+  # Wait for the first iteration to start
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    [[ "$(cat "$counter_file6")" == "1" ]] && break
+    sleep 0.1
+  done
+  
+  # First change -> should trigger relaunch
+  echo "two" >"$repo_root6/xenon/packages/xsm/src/xsm/marker.py"
+  git -C "$repo_root6/xenon" add packages/xsm/src/xsm/marker.py
+  git -C "$repo_root6/xenon" commit -q -m second
+  
+  # Wait for second iteration to start
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    [[ "$(cat "$counter_file6")" == "2" ]] && break
+    sleep 0.1
+  done
+  
+  # Second change -> should be DEBOUNCED
+  echo "three" >"$repo_root6/xenon/packages/xsm/src/xsm/marker.py"
+  git -C "$repo_root6/xenon" add packages/xsm/src/xsm/marker.py
+  git -C "$repo_root6/xenon" commit -q -m third
+  
+  # Wait 0.5s (still within 2s debounce)
+  sleep 0.5
+  
+  # Now kill the child manually so the loop can exit (iteration 2)
+  # But wait, if we kill it, rc will be 143 (SIGTERM), which IS graceful.
+  # So it would relaunch for iteration 3.
+  # If it relaunches for iteration 3, then final_count will be 3.
+  # If debounce worked, iteration 2 was NOT killed by the SHA change.
+) &
+updater_pid6=$!
+
+# Run the loop. We expect it to exit with rc=6 (from the fake script's 3rd iteration)
+# Wait, if we want it to exit after 3 iterations, we set cap=2.
+# 1 (initial) + 1 (relaunch from 1st change) + 1 (manual kill or next change)
+# But wait, if we want to PROVE debounce, we should see that the 2nd change
+# DID NOT terminate the 2nd child.
+
+# Let's adjust the fake script:
+# count 1: sleep forever (until killed by SHA change)
+# count 2: sleep for 1s then exit with rc=6
+# If debounce works, child 2 sleeps for 1s and exits rc=6.
+# If debounce fails, child 2 is killed by SHA change and we get child 3.
+
+fake_debounce_v2=$(make_fake_xsm "debounce_v2" "
+trap 'exit 75' TERM
+count=\$(cat \"$counter_file6\")
+count=\$((count + 1))
+echo \"\$count\" >\"$counter_file6\"
+if [ \"\$count\" -eq 1 ]; then
+  while true; do sleep 0.1; done
+fi
+if [ \"\$count\" -eq 2 ]; then
+  sleep 1.5
+  exit 6
+fi
+exit 7
+")
+
+export XSM_RELAUNCH_DEBOUNCE_SECONDS=2
+output=$(xsm_relaunch_loop "$fake_debounce_v2" "$config6" 0 4 "$repo_root6" 0.1 2>&1) || final_rc=$?
+wait "$updater_pid6"
+final_count=$(cat "$counter_file6")
+
+assert_eq "debounce-final-rc" 6 "$final_rc"
+assert_eq "debounce-relaunch-count" 2 "$final_count"
+assert_contains "debounce-first-change" "packages/xsm sha changed" "$output"
+
 echo
 echo "All xsm_relaunch_loop tests passed."

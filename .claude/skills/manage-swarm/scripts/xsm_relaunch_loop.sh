@@ -28,8 +28,11 @@ xsm_relaunch_loop() {
   local restart_cap="${4:-20}"
   local repo_root="${5:-${XSM_RELAUNCH_REPO_ROOT:-}}"
   local poll_seconds="${6:-${XSM_RELAUNCH_POLL_SECONDS:-3}}"
+  local debounce_seconds="${XSM_RELAUNCH_DEBOUNCE_SECONDS:-60}"
 
   local restarts=0
+  local last_restart_time=0
+  local now=0
   local rc=0
   local child_pid=""
   local packages_sha=""
@@ -46,6 +49,7 @@ xsm_relaunch_loop() {
 
   while true; do
     path_restart="0"
+    last_restart_time="$(date +%s)"
     "$xsm_bin" wrangle --config "$config_path" --json &
     child_pid="$!"
     while xsm_relaunch_child_running "$child_pid"; do
@@ -53,6 +57,11 @@ xsm_relaunch_loop() {
         sleep "$poll_seconds"
         current_packages_sha="$(xsm_relaunch_packages_sha "$repo_root")"
         if [[ -n "$current_packages_sha" && "$current_packages_sha" != "$packages_sha" ]]; then
+          now="$(date +%s)"
+          if (( now - last_restart_time < debounce_seconds )); then
+            # xc-nf3i: suppress relaunch if we just restarted recently (thrash protection)
+            continue
+          fi
           echo "xsm packages/xsm sha changed ($packages_sha -> $current_packages_sha); terminating child for relaunch"
           xsm_relaunch_audit "$repo_root" "$resolved_config_path" "relaunch_loop_path_change" "$packages_sha" "$current_packages_sha" "$child_pid"
           kill -TERM "$child_pid" 2>/dev/null || true
