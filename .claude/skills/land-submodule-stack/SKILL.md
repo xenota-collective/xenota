@@ -364,25 +364,41 @@ After each merge:
 
 Do not trust the PR head SHA once merge completes. Use the merge commit or current `origin/main`.
 
-### 10. Refresh Top-Level Branch
+### 10. Inline Pointer Bump (no separate xenota PR)
 
-Once submodule PRs are merged:
+**The previous "open a paired xenota pointer-bump PR" pattern is RETIRED.** It produced a treadmill: every xenon merge invalidated all other pending pointer PRs, accumulating a DIRTY pile that never drained. From now on:
 
-1. check out the merged `xenon/main` commit in `xenon/`
-2. check out the merged `handbook/main` commit in `handbook/` if applicable
-3. stage only the submodule pointers in the top repo
-4. make one final pointer refresh commit
+After merging the xenon (and handbook, if applicable) submodule PR(s), the **same landing pass commits the xenota pointer bump directly to xenota main**:
 
-If the top-level branch contains stale earlier pointer commits:
+```bash
+# Inside the sterile temp worktree, post-merge of xenon/handbook PRs
+cd $WT  # the landing worktree
+git -C xenon fetch origin --quiet
+git -C xenon checkout origin/main
+# (handbook only if it had a paired PR)
+git -C handbook fetch origin --quiet
+git -C handbook checkout origin/main
 
-- rebase onto current `origin/main`
-- skip obsolete pointer-only commits
-- preserve only the final top-level state that should actually land
+git checkout main
+git pull --rebase origin main
+git add xenon handbook
+# only commit if pointers actually moved
+if ! git diff --cached --quiet; then
+  git commit -m "bump submodules for <bead-id>"
+  git push origin main
+fi
+```
 
-The goal is:
+Why this is safe:
 
-- one clean top-level PR carrying the real merged submodule pointers
-- not a historical pile of no-longer-relevant pointer updates
+- Pointer-only commits carry no code-review surface — the xenon/handbook PR's review covers the actual work.
+- xenota repo CI is disabled, so there are no checks to gate on at the xenota layer.
+- The commit is atomic with the merge — there is no window for the pointer to go stale, and no orphan PR can pile up.
+- It matches the zero-human-gate philosophy already in place for merge decisions.
+
+The "PR-only landing" rule still applies to **code changes** in xenota (anything other than `xenon` or `handbook` submodule pointers). Skill edits, script changes, workflows, etc. still go through PRs.
+
+**Stale top-level branch handling**: if a paired xenota PR was opened by an older flow and is now DIRTY, close it with a comment explaining it has been superseded by inline pointer bumps — do not refresh and merge it.
 
 ### 11. Double-Check Alignment
 
