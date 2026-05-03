@@ -128,7 +128,10 @@ When the diagnosis is a code bug:
 1. Run **Step 0** — check beads and PRs. The bug may already be filed (grep `bd` for `signature:*-latch:*`, `stale-`, `handoff`, `classif`, `preflight`) or a PR may already be open.
 2. Implement the fix in `xenon/packages/xsm/src/xsm/` with focused unit tests that capture the exact preflight/classifier/dispatch scenario observed in the events.
 3. Run the relevant test file(s) and then the full suite (`.venv/bin/python -m pytest tests/ -q`). Know which pre-existing failures are unrelated so you don't mistake them for regressions.
-4. Commit, push, bump the xenota submodule pointer, push xenota. The code is live once the xsm checkout in `xenon/packages/xsm/.venv/bin/xsm` contains the new commit.
+4. Commit and push the xenon fix branch. Do not open a paired per-PR xenota
+   pointer PR for normal feature work; the landing lane owns bundled pointer
+   bumps after draining CLEAN xenon PRs. Only bump the top-level xenota pointer
+   here when the unblock is an explicit emergency/hotfix landing task.
 5. **Kill and restart xsm** — a running daemon holds onto the old code via its import graph.
 6. Only *then* run Step 5/6 to deal with any residual stuck panes. With the bug fixed, many lanes will resolve themselves on the next wrangle pass.
 

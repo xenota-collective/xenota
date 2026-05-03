@@ -65,10 +65,14 @@ This repo uses git submodules (`xenon/`, `handbook/`). Treat submodules as separ
   - Top repo: `git status`
   - Submodule: `git -C <submodule> status`
 - Never commit top-level pointer changes before submodule commits are pushed.
-- For code changes in `xenon/`:
+- For normal code changes in `xenon/`:
   1. Commit and push inside `xenon/` first.
-  2. Then commit the updated `xenon` pointer in top repo.
-  3. Run `git pull --rebase`, `bd dolt push`, `git push` in top repo.
+  2. Open/update the xenon PR for review.
+  3. Do not create a per-PR top-level `xenon` pointer PR. The landing lane
+     batches CLEAN xenon PRs in groups of 3-5 and then pushes one consolidated
+     xenota pointer bump commit listing all bead IDs in the batch.
+  4. Only create a single-bead top-level pointer update when a landing/hotfix
+     assignment explicitly calls for it.
 - For `handbook/`, follow Handbook Oversight rules above.
 
 ### Rebase/Merge Safety for Submodules
@@ -80,7 +84,10 @@ This repo uses git submodules (`xenon/`, `handbook/`). Treat submodules as separ
   - `git submodule update --init --recursive <submodule>`
 - If submodule has local edits you intend to keep:
   1. Commit/push inside the submodule.
-  2. Return to top repo and commit/push updated submodule pointer.
+  2. For normal xenon feature work, stop after the submodule PR is pushed; the
+     landing lane owns the bundled top-level pointer bump. For handbook work or
+     an explicit landing/hotfix assignment, return to the top repo and
+     commit/push the requested pointer update.
 - If submodule has unexpected changes you did not make:
   - Stop and ask for human direction before modifying submodule content.
 
@@ -95,6 +102,10 @@ This repo uses git submodules (`xenon/`, `handbook/`). Treat submodules as separ
   - `git submodule status` has no leading `+`
 
 ## XSM Worker-State Metadata in Pointer PRs
+
+Normal xenon feature work should not open top-level pointer PRs. This section
+applies only to explicit pointer branches created by the landing lane, handbook
+sync work, or emergency/hotfix assignments.
 
 - Do not track `.xsm-worker.json` in xenota pointer branches. It is local runtime state and is ignored.
 - Pointer PRs may include stable review metadata only in the PR body or bead comments: bead ID/title, branch names, submodule PR links, test evidence, CI status, review path, and provenance.
