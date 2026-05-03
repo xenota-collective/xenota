@@ -1,6 +1,6 @@
 ---
 name: review-swarm
-description: Read-only status review of the live XSM swarm. Checks xsm daemon pane + logs, each worker pane, the swarm-backlog config, the bead backlog, and open PRs across xenota + xenon. Use when the operator asks "what's the swarm doing", "why is xsm idle", "status", or when starting a wrangle session and you need to orient.
+description: Read-only status review of the live XSM swarm. Checks xsm daemon pane + logs, each worker pane, the swarm-backlog config, the bead backlog, and open PRs across xenota, xenon, and handbook. Use when the operator asks "what's the swarm doing", "why is xsm idle", "status", or when starting a wrangle session and you need to orient.
 ---
 
 # Review Swarm
@@ -53,6 +53,7 @@ From the `OPEN PRs` sections:
 - PRs authored by workers that are CLEAN + green but unmerged → blocked on human, match to worker `blocked_declared` states.
 - Dependabot PRs → count them, they relate to bead `xc-o7f3`.
 - PRs with `CONFLICTING` → worker needs to rebase.
+- Handbook PRs are part of swarm pressure because `handbook/` is a submodule in this repo; include clean waiting-review docs/planning PRs and dirty/stale handbook PRs in the review flags.
 
 ## Step 3: Emit the report
 
@@ -71,6 +72,7 @@ Workers:
 Backlog: <N open beads>, top: <bead-id> P<n> <title>
 Open PRs xenota: <N> (<blocked-on-human>)
 Open PRs xenon:  <N> (<blocked-on-human>, <dependabot>)
+Open PRs handbook: <N> (<blocked-on-human>, <dirty/stale>)
 
 Flags:
   - <concrete issue or "none">

@@ -6,7 +6,7 @@
 #   - swarm-backlog.yaml + live pane mapping
 #   - xr repertoire smoke check
 #   - bd open beads
-#   - open PRs in both repos
+#   - open PRs in xenota, xenon, and handbook
 #
 # Prints a single plain-text section-delimited report on stdout.
 # Does NOT mutate any state.
@@ -167,6 +167,14 @@ fi
 section "OPEN PRs — xenon"
 if command -v gh >/dev/null 2>&1; then
   gh pr list -R xenota-collective/xenon --state=open \
+    --json=number,title,author,isDraft,mergeable,updatedAt \
+    --template '{{range .}}#{{.number}} {{.author.login}} [{{.mergeable}}]{{if .isDraft}} DRAFT{{end}} {{.title}}  (updated {{timefmt "2006-01-02" .updatedAt}}){{"\n"}}{{end}}' \
+    2>&1 | head -80
+fi
+
+section "OPEN PRs — handbook"
+if command -v gh >/dev/null 2>&1; then
+  gh pr list -R xenota-collective/handbook --state=open \
     --json=number,title,author,isDraft,mergeable,updatedAt \
     --template '{{range .}}#{{.number}} {{.author.login}} [{{.mergeable}}]{{if .isDraft}} DRAFT{{end}} {{.title}}  (updated {{timefmt "2006-01-02" .updatedAt}}){{"\n"}}{{end}}' \
     2>&1 | head -80
