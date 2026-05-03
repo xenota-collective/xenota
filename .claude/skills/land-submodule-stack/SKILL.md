@@ -368,14 +368,16 @@ Do not trust the PR head SHA once merge completes. Use the merge commit or curre
 
 **The previous "open a paired xenota pointer-bump PR" pattern is RETIRED.** It produced a treadmill: every xenon merge invalidated all other pending pointer PRs, accumulating a DIRTY pile that never drained. From now on:
 
-After merging the xenon (and handbook, if applicable) submodule PR(s), the **same landing pass commits the xenota pointer bump directly to xenota main**:
+#### Normal flow: batch landing (3–5 PRs per bump)
+
+The default pattern for the landing lane is to **drain CLEAN xenon PRs in batches of 3–5**, then push **one** xenota pointer bump listing all bead IDs. Do not push a separate xenota commit per xenon PR.
 
 ```bash
-# Inside the sterile temp worktree, post-merge of xenon/handbook PRs
+# After merging a batch of xenon PRs (e.g. xc-ab12, xc-cd34, xc-ef56)
 cd $WT  # the landing worktree
 git -C xenon fetch origin --quiet
 git -C xenon checkout origin/main
-# (handbook only if it had a paired PR)
+# (handbook only if a paired handbook PR was included in the batch)
 git -C handbook fetch origin --quiet
 git -C handbook checkout origin/main
 
@@ -384,16 +386,27 @@ git pull --rebase origin main
 git add xenon handbook
 # only commit if pointers actually moved
 if ! git diff --cached --quiet; then
-  git commit -m "bump submodules for <bead-id>"
+  git commit -m "bump xenon: xc-ab12, xc-cd34, xc-ef56"
   git push origin main
 fi
 ```
+
+Commit message format: `bump xenon: <bead-id-1>, <bead-id-2>, ...` — list every bead in the batch.
+If handbook also moved: `bump xenon + handbook: xc-ab12, xc-cd34`.
+
+#### Exception: single-bead bump
+
+A single-bead pointer bump is only appropriate for:
+- An emergency/hotfix landing where the `emergency_hotfix` gate is open and the operator has authorised it explicitly.
+- The very last PR in a session when no additional CLEAN PRs are available to batch.
+
+In those cases use `bump xenon: <bead-id>` as the commit message.
 
 Why this is safe:
 
 - Pointer-only commits carry no code-review surface — the xenon/handbook PR's review covers the actual work.
 - xenota repo CI is disabled, so there are no checks to gate on at the xenota layer.
-- The commit is atomic with the merge — there is no window for the pointer to go stale, and no orphan PR can pile up.
+- The commit is atomic with the batch — there is no window for the pointer to go stale, and no orphan PRs can pile up.
 - It matches the zero-human-gate philosophy already in place for merge decisions.
 
 The "PR-only landing" rule still applies to **code changes** in xenota (anything other than `xenon` or `handbook` submodule pointers). Skill edits, script changes, workflows, etc. still go through PRs.
