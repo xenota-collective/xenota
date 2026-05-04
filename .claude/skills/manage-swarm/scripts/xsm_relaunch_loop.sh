@@ -98,10 +98,12 @@ xsm_relaunch_loop() {
       rc=75
     fi
     if [ "$rc" -ne 0 ] && [ "$rc" -ne 75 ] && [ "$rc" -ne 143 ]; then
+      xsm_relaunch_record_loop_died "$repo_root" "$resolved_config_path" "non_graceful_exit" "$restarts" "$rc" "$tracker_file"
       echo "xsm exited rc=$rc (non-graceful); not auto-restarting; restarts=$restarts"
       return "$rc"
     fi
     if [ "$restarts" -gt "$restart_cap" ]; then
+      xsm_relaunch_record_loop_died "$repo_root" "$resolved_config_path" "restart_cap_reached" "$restarts" "$rc" "$tracker_file"
       echo "xsm restart cap reached ($restarts in this session); refusing to loop further"
       return 0
     fi
@@ -157,6 +159,71 @@ xsm_relaunch_audit() {
     --arg child_pid "$child_pid" \
     '{timestamp:$ts,tool:"xsm_relaunch_loop",trigger:$trigger,config_path:$config_path,before_packages_xsm_sha:$before_sha,after_packages_xsm_sha:$after_sha,child_pid:($child_pid|tonumber? // $child_pid)}' \
     >>"$audit_log"
+}
+
+xsm_relaunch_latest_run_id() {
+  local repo_root="$1"
+  local runs_dir="$repo_root/.xsm-local/log/swarm-backlog/wrangle-runs"
+  [[ -d "$runs_dir" ]] || return 0
+  find "$runs_dir" -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null |
+    while IFS= read -r run_dir; do
+      printf '%s\t%s\n' "$(basename "$run_dir")" "$run_dir"
+    done |
+    sort -k1,1r |
+    head -1 |
+    cut -f1
+}
+
+xsm_relaunch_file_mtime() {
+  local path="$1"
+  [[ -f "$path" ]] || return 1
+  stat -f %m "$path" 2>/dev/null || stat -c %Y "$path" 2>/dev/null
+}
+
+xsm_relaunch_record_loop_died() {
+  local repo_root="$1"
+  local config_path="$2"
+  local reason="$3"
+  local restarts="$4"
+  local last_rc="$5"
+  local tracker_file="$6"
+  local died_log="${XSM_LOOP_DIED_LOG:-$repo_root/.xsm-local/loop-died.jsonl}"
+  local now_epoch
+  local tracker_mtime=""
+  local tracker_file_age_secs=""
+  local last_run_id
+
+  now_epoch="$(date +%s)"
+  if tracker_mtime="$(xsm_relaunch_file_mtime "$tracker_file" 2>/dev/null)"; then
+    tracker_file_age_secs=$((now_epoch - tracker_mtime))
+  fi
+  last_run_id="$(xsm_relaunch_latest_run_id "$repo_root")"
+
+  mkdir -p "$(dirname "$died_log")"
+  jq -cn \
+    --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --arg reason "$reason" \
+    --arg restarts "$restarts" \
+    --arg last_rc "$last_rc" \
+    --arg config_path "$config_path" \
+    --arg last_run_id "$last_run_id" \
+    --arg tracker_file "$tracker_file" \
+    --arg tracker_file_age_secs "$tracker_file_age_secs" \
+    '{
+      timestamp:$ts,
+      reason:$reason,
+      restarts:($restarts|tonumber? // $restarts),
+      last_rc:($last_rc|tonumber? // $last_rc),
+      config_path:$config_path,
+      last_run_id:($last_run_id // ""),
+      tracker_file:$tracker_file,
+      tracker_file_age_secs:(
+        if $tracker_file_age_secs == "" then null
+        else ($tracker_file_age_secs|tonumber? // $tracker_file_age_secs)
+        end
+      )
+    }' \
+    >>"$died_log"
 }
 
 # When invoked as a standalone script (not sourced), run the loop with
