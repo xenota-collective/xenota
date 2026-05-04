@@ -154,6 +154,71 @@ output=$(XSM_LOOP_DIED_LOG="$loop_died_log4b" xsm_relaunch_loop "$fake_cap_marke
 assert_contains "cap-marker-latest-run" '"last_run_id":"20260504T020000-new"' "$(cat "$loop_died_log4b")"
 assert_contains "cap-marker-tracker-age" '"tracker_file_age_secs":' "$(cat "$loop_died_log4b")"
 
+# Case 4c: default cap is 50 when no explicit cap/env override is passed.
+counter_file4c="$tmpdir/case4c_count"
+echo 0 >"$counter_file4c"
+fake_default_cap=$(make_fake_xsm "default_cap" "
+count=\$(cat \"$counter_file4c\")
+count=\$((count + 1))
+echo \"\$count\" >\"$counter_file4c\"
+exit 0
+")
+output=$(xsm_relaunch_loop "$fake_default_cap" "$config" 0 2>&1)
+final_rc=$?
+final_count=$(cat "$counter_file4c")
+assert_eq "default-cap-loop-rc" 0 "$final_rc"
+assert_eq "default-cap-loop-iterations" 51 "$final_count"
+assert_contains "default-cap-message" "restart cap reached" "$output"
+
+# Case 4d: env override controls the default cap when no explicit cap is passed.
+counter_file4d="$tmpdir/case4d_count"
+echo 0 >"$counter_file4d"
+fake_env_cap=$(make_fake_xsm "env_cap" "
+count=\$(cat \"$counter_file4d\")
+count=\$((count + 1))
+echo \"\$count\" >\"$counter_file4d\"
+exit 0
+")
+output=$(XSM_RELAUNCH_RESTART_CAP=2 xsm_relaunch_loop "$fake_env_cap" "$config" 0 2>&1)
+final_rc=$?
+final_count=$(cat "$counter_file4d")
+assert_eq "env-cap-loop-rc" 0 "$final_rc"
+assert_eq "env-cap-loop-iterations" 3 "$final_count"
+assert_contains "env-cap-message" "restart cap reached" "$output"
+
+# Case 4e: code-change exits inside the carve-out window do not consume cap.
+repo_root4e="$tmpdir/repo4e"
+mkdir -p "$repo_root4e/xenon/packages/xsm/src/xsm" "$repo_root4e/.xsm-local"
+git -C "$repo_root4e/xenon" init -q
+git -C "$repo_root4e/xenon" config user.email "test@example.invalid"
+git -C "$repo_root4e/xenon" config user.name "test"
+echo "0" >"$repo_root4e/xenon/packages/xsm/src/xsm/marker.py"
+git -C "$repo_root4e/xenon" add packages/xsm/src/xsm/marker.py
+git -C "$repo_root4e/xenon" commit -q -m initial
+
+config4e="$repo_root4e/.xsm-local/swarm-backlog.yaml"
+echo "{}" >"$config4e"
+counter_file4e="$tmpdir/case4e_count"
+echo 0 >"$counter_file4e"
+fake_code_change_cascade=$(make_fake_xsm "code_change_cascade" "
+count=\$(cat \"$counter_file4e\")
+count=\$((count + 1))
+echo \"\$count\" >\"$counter_file4e\"
+if [ \"\$count\" -le 30 ]; then
+  echo \"\$count\" >\"$repo_root4e/xenon/packages/xsm/src/xsm/marker.py\"
+  git -C \"$repo_root4e/xenon\" add packages/xsm/src/xsm/marker.py
+  git -C \"$repo_root4e/xenon\" commit -q -m \"change-\$count\"
+  exit 75
+fi
+exit 5
+")
+final_rc=0
+output=$(XSM_RELAUNCH_RESTART_CAP=3 XSM_RELAUNCH_CODE_CHANGE_WINDOW_SECS=60 xsm_relaunch_loop "$fake_code_change_cascade" "$config4e" 0 "" "$repo_root4e" 2>&1) || final_rc=$?
+final_count=$(cat "$counter_file4e")
+assert_eq "code-change-cascade-final-rc" 5 "$final_rc"
+assert_eq "code-change-cascade-iterations" 31 "$final_count"
+assert_contains "code-change-cascade-carveout" "code-change carve-out" "$output"
+
 unset XSM_RELAUNCH_DISABLE_PATH_POLL
 
 # Case 5: packages/xsm path change while xsm is running terminates the child

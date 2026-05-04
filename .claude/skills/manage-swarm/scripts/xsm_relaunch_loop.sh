@@ -25,10 +25,11 @@ xsm_relaunch_loop() {
   local xsm_bin="${1:?xsm_relaunch_loop: missing xsm_bin}"
   local config_path="${2:?xsm_relaunch_loop: missing config_path}"
   local backoff="${3:-3}"
-  local restart_cap="${4:-20}"
+  local restart_cap="${4:-${XSM_RELAUNCH_RESTART_CAP:-50}}"
   local repo_root="${5:-${XSM_RELAUNCH_REPO_ROOT:-}}"
   local poll_seconds="${6:-${XSM_RELAUNCH_POLL_SECONDS:-3}}"
   local debounce_seconds="${XSM_RELAUNCH_DEBOUNCE_SECONDS:-60}"
+  local code_change_window_seconds="${XSM_RELAUNCH_CODE_CHANGE_WINDOW_SECS:-60}"
 
   local restarts=0
   local rc=0
@@ -36,6 +37,7 @@ xsm_relaunch_loop() {
   local packages_sha=""
   local current_packages_sha=""
   local path_restart="0"
+  local launch_ts=0
   local resolved_config_path="$config_path"
   if [[ -f "$config_path" ]]; then
     resolved_config_path="$(cd "$(dirname "$config_path")" && pwd)/$(basename "$config_path")"
@@ -51,6 +53,7 @@ xsm_relaunch_loop() {
     packages_sha="$(xsm_relaunch_packages_sha "$repo_root")"
     
     local now="$(date +%s)"
+    launch_ts="$now"
     mkdir -p "$(dirname "$tracker_file")"
     echo "$now" > "$tracker_file"
     
@@ -93,21 +96,31 @@ xsm_relaunch_loop() {
       wait "$child_pid" || rc=$?
       child_pid=""
     fi
-    restarts=$((restarts + 1))
+    local countable_restart="1"
     if [[ "$path_restart" == "1" ]]; then
       rc=75
+      countable_restart="0"
+    elif xsm_relaunch_is_code_change_carveout "$repo_root" "$packages_sha" "$rc" "$launch_ts" "$code_change_window_seconds"; then
+      countable_restart="0"
     fi
     if [ "$rc" -ne 0 ] && [ "$rc" -ne 75 ] && [ "$rc" -ne 143 ]; then
       xsm_relaunch_record_loop_died "$repo_root" "$resolved_config_path" "non_graceful_exit" "$restarts" "$rc" "$tracker_file"
       echo "xsm exited rc=$rc (non-graceful); not auto-restarting; restarts=$restarts"
       return "$rc"
     fi
+    if [[ "$countable_restart" == "1" ]]; then
+      restarts=$((restarts + 1))
+    fi
     if [ "$restarts" -gt "$restart_cap" ]; then
       xsm_relaunch_record_loop_died "$repo_root" "$resolved_config_path" "restart_cap_reached" "$restarts" "$rc" "$tracker_file"
       echo "xsm restart cap reached ($restarts in this session); refusing to loop further"
       return 0
     fi
-    echo "xsm exited rc=$rc (graceful); relaunching in ${backoff}s; restarts=$restarts"
+    if [[ "$countable_restart" == "0" ]]; then
+      echo "xsm exited rc=$rc (code-change carve-out); relaunching in ${backoff}s; restarts=$restarts"
+    else
+      echo "xsm exited rc=$rc (graceful); relaunching in ${backoff}s; restarts=$restarts"
+    fi
     sleep "$backoff"
   done
 }
@@ -129,6 +142,25 @@ xsm_relaunch_packages_sha() {
   local repo_root="${1:-}"
   [[ -n "$repo_root" && -d "$repo_root/xenon/.git" || -f "$repo_root/xenon/.git" ]] || return 0
   git -C "$repo_root/xenon" log -1 --format=%H -- packages/xsm/ 2>/dev/null || true
+}
+
+xsm_relaunch_is_code_change_carveout() {
+  local repo_root="$1"
+  local launch_packages_sha="$2"
+  local rc="$3"
+  local launch_ts="$4"
+  local window_seconds="$5"
+  local now
+  local current_packages_sha
+
+  [[ "$window_seconds" =~ ^[0-9]+$ ]] || return 1
+  [[ "$window_seconds" -gt 0 ]] || return 1
+  now="$(date +%s)"
+  (( now - launch_ts <= window_seconds )) || return 1
+
+  [[ "$rc" == "0" || "$rc" == "75" ]] || return 1
+  current_packages_sha="$(xsm_relaunch_packages_sha "$repo_root")"
+  [[ -n "$launch_packages_sha" && -n "$current_packages_sha" && "$current_packages_sha" != "$launch_packages_sha" ]]
 }
 
 xsm_relaunch_child_running() {
