@@ -216,3 +216,5 @@ files:
 #   #   - host_path: ~/data
 #   #     guest_path: /mnt/data
 #   #     writable: true
+
+agent: gemini
