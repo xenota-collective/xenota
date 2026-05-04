@@ -38,6 +38,10 @@ tmux_pane_ready_for_input() {
   )"
   last_line="$(tail -n 1 <<<"$bottom")"
 
+  if grep -Eq '^[[:space:]]*[❯›>][[:space:]]+/[[:alnum:]_-]+' <<<"$bottom"; then
+    return 1
+  fi
+
   if grep -q '^›' <<<"$bottom"; then
     return 0
   fi
