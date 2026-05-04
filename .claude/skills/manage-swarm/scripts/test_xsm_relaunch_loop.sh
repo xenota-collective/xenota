@@ -66,6 +66,8 @@ exit 0
 config="$tmpdir/cfg"
 echo "{}" >"$config"
 export XSM_RELAUNCH_DISABLE_PATH_POLL=1
+loop_died_log="$tmpdir/loop-died.jsonl"
+export XSM_LOOP_DIED_LOG="$loop_died_log"
 
 # Backoff = 0 to keep the test fast. Cap = 3 so loop stops at 4 iterations.
 output=$(xsm_relaunch_loop "$fake_graceful" "$config" 0 3 2>&1)
@@ -75,6 +77,7 @@ assert_eq "graceful-loop-rc" 0 "$final_rc"
 assert_eq "graceful-loop-iterations" 4 "$final_count"
 assert_contains "graceful-loop-cap-message" "restart cap reached" "$output"
 assert_contains "graceful-loop-relaunch-message" "graceful" "$output"
+assert_contains "graceful-loop-died-marker" '"reason":"restart_cap_reached"' "$(cat "$loop_died_log")"
 
 # Case 2: non-graceful exit (rc=2) on first invocation breaks immediately
 counter_file2="$tmpdir/case2_count"
@@ -91,6 +94,8 @@ assert_eq "failure-loop-rc" 2 "$final_rc"
 assert_eq "failure-loop-iterations" 1 "$final_count"
 assert_contains "failure-loop-message" "non-graceful" "$output"
 assert_contains "failure-loop-not-auto-restart" "not auto-restarting" "$output"
+assert_contains "failure-loop-died-marker" '"reason":"non_graceful_exit"' "$(cat "$loop_died_log")"
+assert_contains "failure-loop-died-rc" '"last_rc":2' "$(cat "$loop_died_log")"
 
 # Case 3: graceful then failure — graceful relaunches, failure breaks
 counter_file3="$tmpdir/case3_count"
@@ -129,6 +134,25 @@ assert_eq "cap-1-loop-rc" 0 "$final_rc"
 # initial + 1 relaunch) before stopping.
 assert_eq "cap-1-loop-iterations" 2 "$final_count"
 assert_contains "cap-1-loop-cap-message" "restart cap reached" "$output"
+
+# Case 4b: loop-died marker carries the latest wrangle run id and tracker age.
+repo_root4b="$tmpdir/repo4b"
+mkdir -p "$repo_root4b/.xsm-local/log/swarm-backlog/wrangle-runs/20260504T010000-old"
+mkdir -p "$repo_root4b/.xsm-local/log/swarm-backlog/wrangle-runs/20260504T020000-new"
+config4b="$repo_root4b/.xsm-local/swarm-backlog.yaml"
+echo "{}" >"$config4b"
+counter_file4b="$tmpdir/case4b_count"
+echo 0 >"$counter_file4b"
+fake_cap_marker=$(make_fake_xsm "cap_marker" "
+count=\$(cat \"$counter_file4b\")
+count=\$((count + 1))
+echo \"\$count\" >\"$counter_file4b\"
+exit 0
+")
+loop_died_log4b="$tmpdir/loop-died-4b.jsonl"
+output=$(XSM_LOOP_DIED_LOG="$loop_died_log4b" xsm_relaunch_loop "$fake_cap_marker" "$config4b" 0 0 "$repo_root4b" 2>&1)
+assert_contains "cap-marker-latest-run" '"last_run_id":"20260504T020000-new"' "$(cat "$loop_died_log4b")"
+assert_contains "cap-marker-tracker-age" '"tracker_file_age_secs":' "$(cat "$loop_died_log4b")"
 
 unset XSM_RELAUNCH_DISABLE_PATH_POLL
 
@@ -169,7 +193,7 @@ audit_log="$tmpdir/restarts.jsonl"
 ) &
 updater_pid=$!
 final_rc=0
-output=$(XSM_RELAUNCH_AUDIT_LOG="$audit_log" xsm_relaunch_loop "$fake_path_change" "$config5" 0 4 "$repo_root" 0.1 2>&1) || final_rc=$?
+output=$(XSM_RELAUNCH_AUDIT_LOG="$audit_log" XSM_RELAUNCH_DEBOUNCE_SECONDS=0 xsm_relaunch_loop "$fake_path_change" "$config5" 0 4 "$repo_root" 0.1 2>&1) || final_rc=$?
 wait "$updater_pid"
 final_count=$(cat "$counter_file5")
 assert_eq "path-change-final-rc" 5 "$final_rc"

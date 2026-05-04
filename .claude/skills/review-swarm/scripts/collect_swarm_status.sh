@@ -41,6 +41,22 @@ section "XSM PROCESS"
 pgrep -af 'python.*xsm|/xsm ' 2>/dev/null | grep -v -i helper || echo "(no xsm process found)"
 
 # ------------------------------------------------------------------
+section "XSM LOOP-DIED MARKER"
+LOOP_DIED_LOG="$XSM_DIR/loop-died.jsonl"
+if [ -f "$LOOP_DIED_LOG" ]; then
+  LATEST_LOOP_DIED=$(tail -1 "$LOOP_DIED_LOG")
+  if command -v jq >/dev/null 2>&1; then
+    printf '%s\n' "$LATEST_LOOP_DIED" |
+      jq -r '"loop died at \(.timestamp // "unknown"), reason=\(.reason // "unknown"), restarts=\(.restarts // "unknown"), last_rc=\(.last_rc // "unknown"), last_run_id=\(.last_run_id // "")"'
+  else
+    echo "loop died marker present: $LATEST_LOOP_DIED"
+  fi
+  echo "marker file: $LOOP_DIED_LOG"
+else
+  echo "(no loop-died marker)"
+fi
+
+# ------------------------------------------------------------------
 section "XSM DAEMON PANE (xc:0.2, last $PANE_LINES lines)"
 if "${TMUX[@]}" has-session -t "$TMUX_SESSION" 2>/dev/null; then
   "${TMUX[@]}" capture-pane -pt "${TMUX_SESSION}:0.2" -S "-${PANE_LINES}" 2>/dev/null || echo "(xc:0.2 not found)"
