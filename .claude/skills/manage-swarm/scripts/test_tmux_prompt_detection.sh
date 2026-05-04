@@ -152,6 +152,13 @@ dirty_gemini_clear_payload="$(cat <<'EOF'
 EOF
 )"
 
+clean_prompt_after_clear_payload="$(cat <<'EOF'
+❯ /clear
+Claude Code cleared.
+❯ 
+EOF
+)"
+
 assert_ready "codex ui prompt" "$codex_ready_payload"
 assert_ready "claude prompt" "$claude_ready_payload"
 assert_ready "shell prompt" "$shell_ready_payload"
@@ -163,6 +170,7 @@ assert_not_ready "rejected clear message" "$rejected_clear_payload"
 assert_not_ready "dirty claude /clear buffer" "$dirty_claude_clear_payload"
 assert_not_ready "dirty codex /clear buffer" "$dirty_codex_clear_payload"
 assert_not_ready "dirty gemini /clear buffer" "$dirty_gemini_clear_payload"
+assert_ready "clean prompt after /clear" "$clean_prompt_after_clear_payload"
 assert_agent_ui "codex ui history" "$codex_ready_payload"
 assert_agent_ui "gemini ui history" "$gemini_ready_payload"
 assert_not_agent_ui "shell history" "$shell_ready_payload"

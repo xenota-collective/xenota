@@ -37,8 +37,9 @@ tmux_pane_ready_for_input() {
     awk 'NF { print }' <<<"$recent" | tail -n 12
   )"
   last_line="$(tail -n 1 <<<"$bottom")"
+  last_prompt_line="$(grep -E '^[[:space:]]*[❯›>]' <<<"$bottom" | tail -n 1 || true)"
 
-  if grep -Eq '^[[:space:]]*[❯›>][[:space:]]+/[[:alnum:]_-]+' <<<"$bottom"; then
+  if [[ -n "$last_prompt_line" ]] && grep -Eq '^[[:space:]]*[❯›>][[:space:]]+/[[:alnum:]_-]+' <<<"$last_prompt_line"; then
     return 1
   fi
 
