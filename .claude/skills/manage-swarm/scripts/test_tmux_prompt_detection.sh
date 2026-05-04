@@ -125,6 +125,33 @@ What should Claude do instead?
 EOF
 )"
 
+dirty_claude_clear_payload="$(cat <<'EOF'
+Some prior output
+
+❯ /clear
+EOF
+)"
+
+dirty_codex_clear_payload="$(cat <<'EOF'
+OpenAI Codex
+
+› /clear
+
+  gpt-5.4 medium · 91% left · ~/projects/xenota
+EOF
+)"
+
+dirty_gemini_clear_payload="$(cat <<'EOF'
+✦ Task complete.
+? for shortcuts
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > /clear
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ workspace (/directory)                                       branch
+ ~/projects/xenota/.worktrees/horizon                         horizon/xc-st1n.3-dynamic-tool-registration
+EOF
+)"
+
 assert_ready "codex ui prompt" "$codex_ready_payload"
 assert_ready "claude prompt" "$claude_ready_payload"
 assert_ready "shell prompt" "$shell_ready_payload"
@@ -133,6 +160,9 @@ assert_ready "zsh arrow prompt with branch and dirty marker" "$zsh_arrow_ready_p
 assert_ready "zsh arrow prompt after worktree closeout" "$zsh_arrow_supervisor_payload"
 assert_not_ready "busy codex footer without prompt" "$busy_payload"
 assert_not_ready "rejected clear message" "$rejected_clear_payload"
+assert_not_ready "dirty claude /clear buffer" "$dirty_claude_clear_payload"
+assert_not_ready "dirty codex /clear buffer" "$dirty_codex_clear_payload"
+assert_not_ready "dirty gemini /clear buffer" "$dirty_gemini_clear_payload"
 assert_agent_ui "codex ui history" "$codex_ready_payload"
 assert_agent_ui "gemini ui history" "$gemini_ready_payload"
 assert_not_agent_ui "shell history" "$shell_ready_payload"
