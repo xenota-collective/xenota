@@ -471,6 +471,18 @@ Healthy closeout means:
 - all landing PRs are merged or otherwise explicitly closed
 - the owning epic/bead has a final closeout note with merged SHAs and residual follow-ups
 
+### Verify xenon stays on main (mandatory)
+
+Before declaring the landing complete, run the explicit branch+SHA verifier:
+
+```bash
+bash /Users/jv/projects/xenota/.claude/skills/manage-swarm/scripts/verify_xenon_on_main.sh
+```
+
+It exits non-zero if the live xenon working tree is on a feature branch or at a SHA other than the registered submodule pointer. **Do not declare the landing complete on a non-zero exit** — the live xsm runtime reads source from the working tree, so a drifted branch silently runs ahead-of-main code and the relaunch loop tracks the wrong SHA. Recover per the verifier's hint, then re-run.
+
+This check exists because during a 2026-05-05 landing session the xenon working tree silently drifted onto a feature branch while the outer pointer was correctly bumped — runtime appeared healthy for several hours before the divergence was noticed. The script makes that class of drift impossible to miss.
+
 ### XSM Restart Check
 
 After workspace realignment, check whether the landed xenon changes affect XSM runtime. If they do, the live wrangle daemon must be restarted on the new code.

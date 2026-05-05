@@ -142,6 +142,20 @@ There is no human-operator role separate from xsm and the supervisor. xsm IS the
 
 A gate sitting unanswered for >1 wrangle pass is **catastrophic system failure**, not "waiting on human." The wrangler's job in that state is twofold: (a) tactically answer the gate so the worker resumes immediately, (b) rebuild the supervisor's prompt with stricter wording, file a system bead, and change the code so the failure cannot recur.
 
+**What counts as "operator intervention" (broader than just worker panes):** anything the swarm should have done autonomously but did not. This includes — and is not limited to — manually merging an xenon PR, manually bumping the xenota submodule pointer, manually restarting xsm, dispatching a sub-agent (e.g. dev-coder) when a configured worker should have taken the bead, and any cleanup of phantom tmux windows or stuck worktrees. Each of these is a *failure of the autonomous system*, not a maintenance chore. The cure is fewer-but-deeper fixes that close the gap so the swarm does the action itself next time, not more actions taken by you. Reading "no operator intervention" as "no `tmux send-keys` to a worker" while you merge six PRs and bump pointers is the wrong reading.
+
+**Goal-state check before every wrangle tick.** Before any classification, before any tool call, answer one sentence: "is a worker currently executing a backlog bead?" If no, that is the only signal that matters. PR throughput, beads filed, agents spawned — none of those are progress unless the operator explicitly named them. A 30-tick session with six landed PRs and zero workers actually working is a *failed* session.
+
+**Pathological-metric pause.** If the same xsm warning appears in two consecutive wrangle runs (e.g. `observation pass exceeded budget`, `interrupt_guard_blocked` on the same lane, `provision_failed` on the same agent), STOP shipping side fixes. That metric IS the load-bearing P0. File the bead, and either ship a fix that addresses *that* metric or escalate to the operator with options. Adjacent fixes layered on a broken pipeline are theatre.
+
+**Two no-op ticks → kill the loop.** A no-op tick is one that produces no new signal AND takes no useful action (i.e. observe-only because nothing converged). Two of those in a row means the cadence is wrong or the system is stuck at a layer this loop cannot reach. Run `CronDelete <id>` (or `/loop stop`) and surface the situation to the operator with a tight summary and 2–3 options.
+
+**Three stuck ticks → escalate.** Three ticks of "still stuck on X" means the approach is wrong. Stop, summarize, ask the operator for redirection. Continuing the loop is not progress.
+
+**One in-flight delegated agent at a time.** Do not spawn a second `dev-coder` while one is already running for this loop. Parallel fixes against an unstable substrate are speculation, not execution — the substrate has to be stable enough that each fix can actually be tested. Use `TaskList` to check before dispatching.
+
+**Test-failure regression rule.** A test that fails after your merge is *your breakage* until proven otherwise. Capture pre-merge test results, compare post-merge, and refuse to declare the landing successful if any test newly fails. Calling regressions "pre-existing" without evidence is how this session shipped six PRs on top of a broken test suite.
+
 Operator gate resolution policy (xsm/supervisor must apply this in-band):
 
 - **Claude permission dialog** ("Do you want to make this edit to <file>? 1.Yes 2.Yes-and-allow-edit-own-settings 3.No"):

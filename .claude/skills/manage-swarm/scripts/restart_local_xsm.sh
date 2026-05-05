@@ -13,6 +13,22 @@ target_input="${1:-xc:0.2}"
 config_path="${2:-$repo_root/.xsm-local/swarm-backlog.yaml}"
 xsm_bin="${3:-$repo_root/xenon/packages/xsm/.venv/bin/xsm}"
 
+# Refuse to launch xsm if the live xenon submodule is not on `main` at the
+# SHA registered by the xenota outer pointer. The editable install reads
+# from the working tree, so a drifted branch silently runs ahead-of-main
+# code and the relaunch loop tracks the wrong sha. (Lesson learned from
+# 2026-05-05 session where a feature-branch checkout in xenon both crashed
+# xsm at import-time AND later silently mounted unmerged code into the
+# runtime.) Bypass with XSM_RESTART_SKIP_VERIFY=1 only for emergencies.
+if [[ -z "${XSM_RESTART_SKIP_VERIFY:-}" ]]; then
+  if [[ -x "$script_dir/verify_xenon_on_main.sh" ]]; then
+    if ! REPO="$repo_root" "$script_dir/verify_xenon_on_main.sh" >&2; then
+      echo "restart_local_xsm: refusing to launch — xenon working tree drifted; recover per the verifier hint, or set XSM_RESTART_SKIP_VERIFY=1 to override" >&2
+      exit 3
+    fi
+  fi
+fi
+
 # xc-6tdu2: Resolve the xsm runtime pane via the ``@xsm_role=runtime``
 # tmux user option instead of relying on the literal ``xc:0.2`` index.
 # Pane indices shift when the workmux sidebar is toggled, so a

@@ -73,6 +73,17 @@ if [[ -z "$ps_lines" ]]; then
   ps_lines="$(ps -axo pid=,command=)"
 fi
 
+# Refuse to signal a restart if the live xenon working tree has drifted
+# off main. The signal-based restart relies on xsm_relaunch_loop respawning
+# from the working-tree source; a drifted branch silently runs ahead-of-main
+# code. Bypass with XSM_RESTART_SKIP_VERIFY=1 only for emergencies.
+if [[ -z "${XSM_RESTART_SKIP_VERIFY:-}" && -x "$script_dir/verify_xenon_on_main.sh" ]]; then
+  if ! REPO="$repo_root" "$script_dir/verify_xenon_on_main.sh" >&2; then
+    echo "restart_xsm: refusing to signal restart — xenon working tree drifted; recover per the verifier hint, or set XSM_RESTART_SKIP_VERIFY=1 to override" >&2
+    exit 3
+  fi
+fi
+
 pids=()
 while IFS= read -r line; do
   [[ -n "$line" ]] || continue
