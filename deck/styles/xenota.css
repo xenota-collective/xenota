@@ -358,3 +358,17 @@
     transform: rotate(90deg);
   }
 }
+
+/* Workaround for a Slidev 52.2.5 CSS bleed:
+ * #slidev-goto-dialog is parked at top:-80px when closed, but its inner
+ * autocomplete list renders every slide title (~620px tall) and overflows
+ * the container, re-entering the viewport from the top. Clamp it.
+ */
+#slidev-goto-dialog {
+  overflow: hidden;
+  max-height: 0;
+}
+#slidev-goto-dialog:focus-within {
+  overflow: visible;
+  max-height: none;
+}
