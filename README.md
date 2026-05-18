@@ -18,6 +18,12 @@ Or if already cloned:
 git submodule update --init --recursive
 ```
 
+Install the git hooks (a pre-commit pointer guard that blocks committing a
+stale `xenon`/`handbook` submodule pointer):
+```bash
+ln -s ../../scripts/pointer-guard-pre-commit.sh .git/hooks/pre-commit
+```
+
 ## Bead Labels
 
 Component labels for organizing work:
